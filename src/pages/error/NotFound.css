@@ -1,0 +1,73 @@
+/* src/pages/error/NotFound.css */
+
+.error-wrapper {
+    background-color: #556B2F; /* Olive Green Background */
+    height: 100vh;
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 20px;
+    box-sizing: border-box;
+}
+
+.error-card {
+    background-color: #F0EAD6; /* Cream Card */
+    padding: 60px 40px;
+    border-radius: 16px;
+    text-align: center;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+    max-width: 500px;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    animation: popIn 0.3s ease-out;
+}
+
+@keyframes popIn {
+    from { transform: scale(0.9); opacity: 0; }
+    to { transform: scale(1); opacity: 1; }
+}
+
+.error-code {
+    font-size: 6rem;
+    font-weight: 800;
+    color: #8B4513; /* Brown Accent */
+    line-height: 1;
+    margin: 0;
+}
+
+.error-title {
+    font-size: 1.8rem;
+    color: #2D2D2D;
+    margin-top: 10px;
+    margin-bottom: 10px;
+}
+
+.error-message {
+    color: #666;
+    margin-bottom: 30px;
+    font-size: 1.1rem;
+    line-height: 1.5;
+}
+
+.btn-home {
+    background-color: #556B2F;
+    color: white;
+    border: none;
+    padding: 14px 32px;
+    border-radius: 30px;
+    font-size: 1rem;
+    font-weight: bold;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    transition: background 0.2s, transform 0.1s;
+}
+
+.btn-home:hover {
+    background-color: #3e4f22;
+    transform: scale(1.05);
+}
