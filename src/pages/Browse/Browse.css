@@ -1,0 +1,203 @@
+/* OUTER WRAPPER */
+.browse-wrapper {
+    background-color: var(--color-primary);
+    padding: 12px;
+    height: calc(100vh - 64px);
+    width: 100vw;
+    display: flex;
+    gap: 10px; /* Crucial: No gap here */
+    overflow: hidden;
+}
+
+/* --- SIDEBAR STYLING --- */
+.filter-sidebar {
+    background-color: #E8E8D0;
+    border-radius: 12px;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    height: 100%;
+
+    /* ANIMATION PROPS */
+    /* We animate flex-basis to smoothly grow/shrink the space */
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* CLOSED STATE (The Fix) */
+.filter-sidebar.hidden {
+    /* Nuclear Zeroing */
+    width: 0 !important;
+    min-width: 0 !important;
+    flex: 0 0 0 !important; /* Don't grow, Don't shrink, Base size 0 */
+
+    padding: 0 !important;
+    margin: 0 !important;
+    border: none;
+    opacity: 0;
+}
+
+/* OPEN STATE */
+.filter-sidebar.visible {
+    width: 250px;
+    min-width: 250px; /* Force it to stay wide */
+    padding: 20px;
+    margin-right: 12px; /* Add the gap only when open */
+    opacity: 1;
+}
+
+/* SIDEBAR CONTENT (Prevents text wrapping ugliness during anim) */
+.filter-header, .filter-group, .filter-actions {
+    min-width: 210px; /* Ensures content doesn't squash while closing */
+}
+
+/* REST OF THE CSS (Container, Grid, etc.) REMAINS THE SAME */
+.browse-container {
+    background-color: #F0EAD6;
+    border-radius: 20px;
+    padding: 24px;
+    flex: 1; /* Fills remaining space */
+    width: 100%;
+    height: 100%;
+    overflow-y: auto;
+    box-shadow: inset 0 2px 10px rgba(0,0,0,0.05);
+}
+
+.browse-header {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin-bottom: 30px;
+}
+
+.product-grid {
+    display: grid;
+    /* Force 3 columns */
+    grid-template-columns: repeat(3, 1fr);
+    gap: 24px;
+    padding-bottom: 40px;
+}
+
+/* ... keep your existing product card styles ... */
+.close-btn { background: none; border: none; cursor: pointer; color: #555; display: flex; align-items: center; }
+.filter-group { margin-bottom: 24px; }
+.filter-group h3 { font-size: 0.9rem; color: #8B4513; margin-bottom: 8px; font-weight: bold; }
+.filter-group label { display: block; margin-bottom: 8px; cursor: pointer; font-size: 0.9rem; }
+.filter-actions { display: flex; flex-direction: column; gap: 8px; }
+.btn-secondary { background-color: #768F48; color: white; border: none; padding: 10px; border-radius: 8px; cursor: pointer; }
+
+
+/* --- MAIN CONTAINER (CREAM CARD) --- */
+.browse-container {
+    background-color: #F0EAD6;
+    border-radius: 20px;
+    padding: 24px;
+
+    /* Grow to fill all available space */
+    flex-grow: 1;
+    width: 100%; /* Ensures it stretches */
+
+    height: 100%;
+    overflow-y: auto;
+    box-shadow: inset 0 2px 10px rgba(0,0,0,0.05);
+}
+
+/* HEADER & SEARCH */
+.browse-header {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin-bottom: 30px;
+}
+
+.filter-circle-btn {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    background-color: #E8E8D0;
+    border: 1px solid rgba(0,0,0,0.1);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    flex-shrink: 0;
+}
+
+.search-capsule {
+    flex: 1;
+    background-color: #E8E8D0;
+    border: 1px solid #C0C0A0;
+    border-radius: 30px;
+    height: 44px;
+    display: flex;
+    align-items: center;
+    padding: 0 16px;
+}
+.search-capsule input { background: transparent; border: none; outline: none; font-size: 1rem; width: 100%; margin-left: 10px; }
+
+
+/* --- PRODUCT GRID (FIXED 3 COLUMNS) --- */
+.product-grid {
+    display: grid;
+    /* Force exactly 3 columns */
+    grid-template-columns: repeat(3, 1fr);
+    gap: 24px;
+    padding-bottom: 40px;
+}
+
+/* PRODUCT TILE */
+.product-tile {
+    background-color: #FDFDF5;
+    border-radius: 16px;
+    padding: 16px;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.06);
+    display: flex;
+    flex-direction: column;
+    transition: transform 0.2s;
+    height: 100%;
+    min-height: 160px; /* Ensure consistent height */
+}
+
+.product-tile:hover { transform: translateY(-3px); box-shadow: 0 8px 16px rgba(0,0,0,0.1); }
+
+.tile-tag {
+    color: #A03C3C;
+    font-size: 0.75rem;
+    font-weight: bold;
+    margin-bottom: 12px;
+}
+
+.tile-content {
+    display: flex;
+    gap: 16px;
+    align-items: flex-start;
+    flex: 1;
+}
+
+.tile-image {
+    width: 90px;
+    height: 90px;
+    flex-shrink: 0;
+    border-radius: 8px;
+    overflow: hidden;
+    background-color: #ccc;
+}
+.tile-image img { width: 100%; height: 100%; object-fit: cover; }
+
+.tile-info {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    height: 90px;
+    flex: 1;
+}
+
+.tile-info h3 { font-size: 1rem; font-weight: bold; color: #2D2D2D; margin: 0; line-height: 1.2; }
+.tile-info p { font-size: 0.8rem; color: #555; margin: 4px 0 0 0; line-height: 1.2; }
+.tile-price { margin-top: auto; font-weight: bold; color: #8B4513; font-size: 1rem; }
+
+/* Responsive: Switch to 2 columns on smaller screens if needed */
+@media (max-width: 1024px) {
+    .product-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
