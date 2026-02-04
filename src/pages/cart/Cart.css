@@ -1,0 +1,186 @@
+/* Wrapper: Full screen Green Background (Matches Browse) */
+.cart-wrapper {
+    background-color: var(--color-primary); /* Olive Green */
+    padding: 12px;
+    height: calc(100vh - 64px);
+    width: 100vw;
+    display: flex;
+    overflow: hidden;
+}
+
+/* Main Container: Cream Card */
+.cart-container {
+    background-color: #F0EAD6; /* Cream */
+    border-radius: 20px;
+    padding: 40px;
+    flex: 1;
+    width: 100%;
+    height: 100%;
+    overflow-y: auto;
+    box-shadow: inset 0 2px 10px rgba(0,0,0,0.05);
+    display: flex;
+    flex-direction: column;
+    align-items: center; /* Centers the list */
+}
+
+/* List Layout */
+.cart-list {
+    width: 100%;
+    max-width: 700px; /* Limits width so items look like the screenshot */
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    margin-bottom: 40px;
+}
+
+/* Individual Item Card */
+.cart-item {
+    background-color: #F8F5EC; /* Slightly lighter cream/white */
+    border-radius: 16px;
+    padding: 16px 24px;
+    display: flex;
+    align-items: center;
+    gap: 24px;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.05); /* Soft drop shadow */
+}
+
+/* Image */
+.cart-image {
+    width: 80px;
+    height: 80px;
+    border-radius: 8px;
+    overflow: hidden;
+    flex-shrink: 0;
+}
+.cart-image img { width: 100%; height: 100%; object-fit: cover; }
+
+/* Details */
+.cart-details {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.cart-details h3 {
+    font-size: 1.2rem;
+    font-weight: normal;
+    color: #2D2D2D;
+}
+
+/* Qty Controls: [Trash] 1 [+] */
+.qty-controls {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.icon-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: #2D2D2D;
+    display: flex;
+    align-items: center;
+}
+.icon-btn:hover { opacity: 0.7; }
+
+.qty-number {
+    font-size: 1.1rem;
+    font-weight: bold;
+    color: #2D2D2D;
+}
+
+/* Price */
+.cart-price {
+    font-size: 1.1rem;
+    color: #2D2D2D;
+    font-weight: 500;
+    min-width: 100px;
+    text-align: right;
+}
+
+/* Remove Button (Green Pill) */
+.btn-remove {
+    background-color: #768F48; /* Light Olive */
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 6px;
+    font-size: 0.85rem;
+    cursor: pointer;
+    font-weight: 500;
+    letter-spacing: 0.5px;
+}
+.btn-remove:hover { background-color: #556B2F; }
+
+/* Footer & Proceed Button */
+.cart-footer {
+    margin-top: auto;
+    padding-top: 20px;
+}
+
+.btn-proceed {
+    background-color: #768F48;
+    color: white;
+    border: none;
+    padding: 12px 32px;
+    border-radius: 8px;
+    font-size: 1.1rem;
+    font-weight: bold;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    text-transform: uppercase;
+    font-family: serif; /* Matches screenshot font vibe */
+    letter-spacing: 1px;
+}
+.btn-proceed:hover { background-color: #556B2F; }
+
+/* ... existing styles ... */
+
+.cart-empty-box {
+    background-color: #F0EAD6; /* Cream color */
+    padding: 60px 40px;
+    border-radius: 12px;
+    text-align: center;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    max-width: 500px;
+    width: 90%;
+    margin-top: 40px;
+    margin-bottom: 90px;
+    margin-left: 500px;
+    margin-right: 500px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+
+.cart-empty-box h2 {
+    color: #2D2D2D;
+    margin-bottom: 10px;
+    font-size: 1.8rem;
+}
+
+.cart-empty-box p {
+    color: #666;
+    margin-bottom: 25px;
+    font-size: 1.1rem;
+}
+
+.btn-browse-empty {
+    background-color: #556B2F; /* Green button */
+    color: white;
+    border: none;
+    padding: 12px 30px;
+    border-radius: 25px;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.btn-browse-empty:hover {
+    background-color: #3e4f22;
+}
