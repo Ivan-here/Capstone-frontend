@@ -1,0 +1,132 @@
+:root {
+    /* FIGMA PALETTE VARIABLES */
+    --color-primary: #556B2F;       /* Olive Green */
+    --color-primary-dark: #3B4D1E;
+    --color-primary-light: #768F48;
+
+    --color-background: #F5F5DC;    /* Cream/Beige */
+    --color-card: #FDFDF5;          /* Lighter Cream */
+
+    --color-accent: #8B4513;        /* Brown Text */
+    --color-text-main: #2D2D2D;     /* Dark Grey */
+    --color-border: rgba(85, 107, 47, 0.2);
+}
+
+/* --- CRITICAL FIX START --- */
+/* 1. Reset everything to 0 margin/padding */
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+/* 2. Force the app to fill the screen & hide browser scrollbars */
+html, body {
+    width: 100%;
+    height: 100%;
+    margin: 0;
+    padding: 0;
+    overflow: hidden; /* This kills the outer white scrollbar */
+    font-family: 'Inter', sans-serif;
+    background-color: var(--color-background);
+    color: var(--color-text-main);
+}
+/* --- CRITICAL FIX END --- */
+
+/* Layout Utilities */
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+/* Button Styles */
+.btn-icon {
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: white;
+    transition: opacity 0.2s;
+}
+
+.btn-icon:hover {
+    opacity: 0.8;
+}
+
+/* Shared Components */
+.btn-primary {
+    background-color: var(--color-primary);
+    color: white;
+    padding: 10px 16px;
+    border-radius: 8px;
+    border: none;
+    cursor: pointer;
+}
+
+/* NAVBAR STYLES */
+.navbar-wrapper {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+}
+
+.navbar-top {
+    background-color: var(--color-primary);
+    height: 64px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 32px;
+    color: white;
+}
+
+.nav-title {
+    font-family: serif; /* Matches Figma "Welcome" font */
+    font-size: 2rem;
+    letter-spacing: 0.1em;
+}
+
+.nav-spacer, .nav-icons {
+    width: 120px; /* Balances the center title */
+}
+
+.nav-icons {
+    display: flex;
+    justify-content: flex-end;
+    gap: 24px;
+}
+
+.navbar-bottom {
+    background-color: #D8D8C0; /* Darker cream for tabs */
+    height: 40px;
+    display: flex;
+    border-bottom: 1px solid var(--color-border);
+}
+
+.nav-tab {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-decoration: none;
+    color: var(--color-primary-dark);
+    font-weight: 500;
+    transition: background 0.3s;
+}
+
+.nav-tab:hover {
+    background-color: var(--color-primary);
+    color: white;
+}
+
+.nav-tab.active {
+    background-color: #E8E8D0;
+    font-weight: bold;
+    box-shadow: inset 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.nav-divider {
+    width: 1px;
+    background-color: rgba(85, 107, 47, 0.2);
+    height: 100%;
+}
