@@ -1,30 +1,36 @@
-import { listingClient } from './api/client';
+import { apiFetch } from "./http";
 
 export const listingService = {
-    // GET /api/listings (Fetches all active products)
-    getAllListings: async () => {
+    // GET /api/listings
+    async getAllListings() {
         try {
-            const response = await listingClient.get('/listings');
-            return response.data;
+            return await apiFetch("/api/listings");
         } catch (error) {
             console.error("Failed to fetch listings:", error);
             throw error;
         }
     },
 
-    // 2. Get Single Listing (NEW)
-    getListingById: async (id) => {
+    // GET /api/listings/{id}
+    async getListingById(id) {
         try {
-            const response = await listingClient.get(`/listings/${id}`);
-            return response.data;
+            return await apiFetch(`/api/listings/${id}`);
         } catch (error) {
             console.error(`Failed to fetch listing ${id}:`, error);
             throw error;
         }
     },
 
-    // 3. Create (Existing)
-    createFarmListing: async (data) => {
-        return await listingClient.post('/listings/farm', data);
-    }
+    // POST /api/listings/farm
+    async createFarmListing(data) {
+        try {
+            return await apiFetch("/api/listings/farm", {
+                method: "POST",
+                body: JSON.stringify(data),
+            });
+        } catch (error) {
+            console.error("Failed to create farm listing:", error);
+            throw error;
+        }
+    },
 };

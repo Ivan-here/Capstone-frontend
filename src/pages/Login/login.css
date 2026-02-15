@@ -1,10 +1,9 @@
 .loginPage {
-    width: 100%;
-    height: 100%;
-    display: grid;
-    place-items: center;
-    background: var(--color-primary);
-    padding: 24px;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: #5b6f2d;
 }
 
 .loginCard {
@@ -28,22 +27,29 @@
 .loginForm {
     display: flex;
     flex-direction: column;
+    align-items: center;
     gap: 18px;
+    width: 100%;
+}
+.loginForm input {
+    width: 280px;
+    padding: 8px 12px;
+    border-radius: 6px;
+    border: 1px solid #ccc;
 }
 
 .fieldRow {
-    display: grid;
-    grid-template-columns: 190px 1fr;
+    display: flex;
+    flex-direction: column;
     align-items: center;
-    gap: 12px;
+    width: 100%;
 }
 
 .fieldLabel {
-    font-weight: 700;
-    color: #3e3b32;
-    text-align: right;
+    margin-bottom: 6px;
+    font-weight: 500;
+    text-align: center;
 }
-
 .submitRow {
     display: flex;
     justify-content: center;
@@ -51,8 +57,14 @@
 }
 
 .loginBtn {
-    min-width: 140px;
-    border-radius: 10px;
+    font-size: 15px;
+    padding: 8px 28px;
+    border-radius: 8px;
+    background-color: #4f6125;
+    color: white;
+    border: none;
+    cursor: pointer;
+    transition: 0.2s ease;
 }
 
 .loginFooter {
