@@ -181,3 +181,29 @@ html, body {
     font-size: 12px;
     color: #c0392b;
 }
+
+.chip {
+    display: inline-flex;
+    align-items: center;
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    background-color: #f0f0f0;
+    color: #333;
+    cursor: default;
+    transition: all 0.2s ease;
+}
+
+.chip:hover {
+    transform: translateY(-1px);
+}
+
+.chipPrimary {
+    background-color: #2e7dff;
+    color: white;
+}
+
+.chipSuccess {
+    background-color: #2ecc71;
+    color: white;
+}

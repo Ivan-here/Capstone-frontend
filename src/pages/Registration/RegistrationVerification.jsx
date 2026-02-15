@@ -3,8 +3,8 @@ import "./registration-verification.css";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
 import { profileService } from "@/services/profile.service";
 
-import Button from "@/components/layout/Button";
-import Input from "@/components/layout/Input";
+import Button from "@/components/ui/Button";
+import Input from "@/components/ui/Input";
 import { profileInternalService } from "@/services/profileInternal.service";
 
 export default function RegistrationVerification() {
