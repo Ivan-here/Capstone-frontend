@@ -1,0 +1,278 @@
+/* ================================
+   PROFILE PAGE LAYOUT
+   ================================ */
+
+.profilePage {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+}
+
+/* Allow scrolling ONLY inside main content */
+.profileMain {
+    flex: 1;
+    overflow-y: auto;
+    padding: 24px;
+    display: flex;
+    justify-content: center;
+}
+
+/* Main profile card container */
+.profileContainer {
+    width: 100%;
+    max-width: 1200px;
+    background-color: var(--color-card);
+    border-radius: 12px;
+    border: 1px solid var(--color-border);
+    padding: 20px;
+
+    display: grid;
+    grid-template-columns: 360px 1fr;
+    gap: 20px;
+}
+
+/* Columns */
+.leftCol,
+.rightCol {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+/* ================================
+   PROFILE TABS (User / Business)
+   ================================ */
+
+.tabRow {
+    display: flex;
+    border-radius: 8px;
+    overflow: hidden;
+    border: 1px solid var(--color-border);
+    background-color: #e8e8d0;
+}
+
+.tabBtn {
+    flex: 1;
+    padding: 10px 0;
+    background: transparent;
+    border: none;
+    font-weight: 600;
+    color: var(--color-primary-dark);
+    cursor: pointer;
+}
+
+.tabBtn.active {
+    background-color: var(--color-card);
+    box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+/* ================================
+   SHARED CARD STYLES
+   ================================ */
+
+.card {
+    background-color: var(--color-card);
+    border: 1px solid var(--color-border);
+    border-radius: 12px;
+    padding: 16px;
+}
+
+/* ================================
+   USER PROFILE LEFT
+   ================================ */
+
+.profileCard {
+    display: grid;
+    grid-template-columns: 96px 1fr;
+    gap: 16px;
+    align-items: center;
+}
+
+.avatar {
+    width: 96px;
+    height: 96px;
+    border-radius: 50%;
+    background-color: #dddcc8;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.avatarInner {
+    font-size: 42px;
+}
+
+.profileMeta .name {
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--color-text-main);
+}
+
+.profileMeta .role {
+    font-weight: 600;
+    margin-top: 2px;
+}
+
+.profileMeta .location {
+    font-size: 14px;
+    color: #666;
+    margin-bottom: 8px;
+}
+
+/* About */
+.cardHeader {
+    display: flex;
+    justify-content: space-between;
+    font-weight: 600;
+}
+
+.aboutText {
+    font-size: 14px;
+    line-height: 1.4;
+}
+
+/* Follow grid */
+.followGrid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 10px;
+    margin-top: 10px;
+}
+
+.followAvatar {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    background-color: #dddcc8;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* ================================
+   RIGHT COLUMN
+   ================================ */
+
+.sectionTitle {
+    font-size: 18px;
+    font-weight: 700;
+    text-align: center;
+    margin-bottom: 12px;
+}
+
+/* Preferences chips */
+.chipRow {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    justify-content: center;
+}
+
+/* ================================
+   STATS
+   ================================ */
+
+.statsHeader {
+    font-weight: 700;
+    margin-bottom: 10px;
+}
+
+.statsRow {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 10px;
+}
+
+.statBox {
+    background-color: #f0f0e4;
+    border-radius: 10px;
+    padding: 10px;
+    text-align: center;
+}
+
+.statValue {
+    font-size: 20px;
+    font-weight: 700;
+}
+
+.statLabel {
+    font-size: 13px;
+    font-weight: 600;
+}
+
+.statPrivacy {
+    font-size: 11px;
+    font-style: italic;
+    color: #777;
+}
+
+/* ================================
+   REVIEWS
+   ================================ */
+
+.reviewList {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+}
+
+.reviewItem {
+    display: grid;
+    grid-template-columns: 48px 1fr;
+    gap: 12px;
+    border-top: 1px solid var(--color-border);
+    padding-top: 12px;
+}
+
+.miniAvatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background-color: #dddcc8;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.reviewTop {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+}
+
+.reviewName {
+    font-weight: 600;
+}
+
+.reviewDate {
+    font-size: 12px;
+    font-style: italic;
+    color: #777;
+}
+
+.reviewText {
+    font-size: 14px;
+    margin-top: 6px;
+}
+
+/* Stars */
+.stars {
+    margin: 4px 0;
+}
+
+.star {
+    opacity: 0.3;
+}
+
+.star.on {
+    opacity: 1;
+}
+
+/* ================================
+   BUSINESS PLACEHOLDER
+   ================================ */
+
+.placeholderCard {
+    text-align: center;
+}
