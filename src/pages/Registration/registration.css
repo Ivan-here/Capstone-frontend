@@ -1,0 +1,121 @@
+.registerPage {
+    width: 100%;
+    height: 100%;
+    display: grid;
+    place-items: center;
+    background: var(--color-primary);
+    padding: 24px;
+}
+
+.registerCard {
+    width: min(720px, 92vw);
+    background: var(--color-background);
+    border-radius: 14px;
+    border: 1px solid var(--color-border);
+    box-shadow: 0 12px 28px rgba(0, 0, 0, 0.25);
+    padding: 28px 34px 22px;
+}
+
+.registerTitle {
+    text-align: center;
+    font-family: serif;
+    letter-spacing: 0.12em;
+    color: #3e3b32;
+    margin-bottom: 18px;
+    font-size: 38px;
+}
+
+.registerForm {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+}
+
+.twoColRow {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 18px;
+}
+
+.fieldRow {
+    display: grid;
+    grid-template-columns: 160px 1fr;
+    align-items: center;
+    gap: 12px;
+}
+
+.fieldLabel {
+    font-weight: 700;
+    color: #3e3b32;
+    text-align: right;
+}
+
+/* Select styling */
+.selectWrap {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.select {
+    padding: 10px 12px;
+    border-radius: 8px;
+    border: 1px solid rgba(0, 0, 0, 0.25);
+    font-size: 14px;
+    background: white;
+}
+
+.select:focus {
+    outline: none;
+    border-color: var(--color-primary);
+}
+
+.selectError {
+    border-color: #c0392b;
+}
+
+/* Button row */
+.submitRow {
+    display: flex;
+    justify-content: center;
+    margin-top: 6px;
+}
+
+.registerBtn {
+    min-width: 140px;
+    border-radius: 10px;
+}
+
+/* Footer */
+.registerFooter {
+    margin-top: 18px;
+    display: flex;
+    justify-content: center;
+    gap: 8px;
+    color: #3e3b32;
+}
+
+.loginLink {
+    color: var(--color-primary);
+    font-weight: 700;
+    text-decoration: none;
+}
+
+.loginLink:hover {
+    text-decoration: underline;
+}
+
+/* Responsive */
+@media (max-width: 720px) {
+    .twoColRow {
+        grid-template-columns: 1fr;
+    }
+
+    .fieldRow {
+        grid-template-columns: 1fr;
+    }
+
+    .fieldLabel {
+        text-align: left;
+    }
+}
