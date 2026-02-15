@@ -1,44 +1,63 @@
 import { apiFetch } from "./http";
 
-const TOKEN_KEY = "accessToken";
-const USER_KEY = "currentUser";
+const TOKEN_KEY = "accessToken"; // match http.js getToken()
+
+function saveToken(token) {
+    if (token) localStorage.setItem(TOKEN_KEY, token);
+}
+
+function clearToken() {
+    localStorage.removeItem(TOKEN_KEY);
+}
 
 export const authService = {
-    async login({ identifier, password }) {
-        const payload = { login: identifier, password };
-        const data = await apiFetch("/auth/login", {
-            method: "POST",
-            body: JSON.stringify(payload),
-        });
+    async login({ login, password }) {
+        try {
+            const data = await apiFetch("/auth/login", {
+                method: "POST",
+                body: JSON.stringify({ login, password }),
+            });
 
-        if (data?.token) localStorage.setItem(TOKEN_KEY, data.token);
-        localStorage.setItem(USER_KEY, JSON.stringify(data));
-        return data;
+            saveToken(data.token);
+            return data;
+
+        } catch (err) {
+            if (err.status === 401) {
+                throw new Error("Invalid email or password.");
+            }
+
+            throw new Error("Something went wrong. Please try again.");
+        }
     },
 
     async register(form) {
-        // match your RegisterRequest record: email, password, username, firstName, lastName, displayName?
+        // Match your RegisterRequest fields in backend:
+        // email, password, username, firstName, lastName, displayName(optional)
         const data = await apiFetch("/auth/register", {
             method: "POST",
-            body: JSON.stringify(form),
+            body: JSON.stringify({
+                email: form.email,
+                password: form.password,
+                username: form.username,
+                firstName: form.firstName,
+                lastName: form.lastName,
+                displayName: `${form.firstName} ${form.lastName}`.trim(),
+            }),
         });
 
-        if (data?.token) localStorage.setItem(TOKEN_KEY, data.token);
-        localStorage.setItem(USER_KEY, JSON.stringify(data));
+        saveToken(data.token);
         return data;
     },
 
     logout() {
-        localStorage.removeItem(TOKEN_KEY);
-        localStorage.removeItem(USER_KEY);
+        clearToken();
     },
 
     getToken() {
         return localStorage.getItem(TOKEN_KEY);
     },
 
-    getCurrentUser() {
-        const raw = localStorage.getItem(USER_KEY);
-        return raw ? JSON.parse(raw) : null;
+    isLoggedIn() {
+        return !!localStorage.getItem(TOKEN_KEY);
     },
 };

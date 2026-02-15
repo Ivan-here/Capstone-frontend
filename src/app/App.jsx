@@ -5,6 +5,10 @@ import Browse from '../pages/Browse/Browse.jsx';
 import ProductDetails from '../pages/ProductDetails/ProductDetails';
 import Cart from '../pages/cart/Cart.jsx';
 import NotFound from '../pages/error/NotFound';
+import LoginPage from "../pages/Login/LoginPage.jsx";
+import RegistrationPage from "../pages/Registration/RegistrationPage.jsx";
+import RegistrationVerification from "../pages/Registration/RegistrationVerification.jsx";
+import ProfilePage from "../pages/Profile/ProfilePage.jsx";
 import { CartProvider } from '../pages/cart/CartContext';
 
 // IMPORT THE SPLASH SCREEN
@@ -32,8 +36,12 @@ function App() {
         <CartProvider>
             <BrowserRouter>
                 <Routes>
+                    <Route path="/login" element={<LoginPage />} />
+                    <Route path="/register" element={<RegistrationPage />} />
+                    <Route path="/register/verify/:role" element={<RegistrationVerification />} />
                     <Route element={<AppLayout />}>
                         <Route path="/" element={<Navigate to="/browse" replace />} />
+                        <Route path="/profile" element={<ProfilePage />} />
                         <Route path="/browse" element={<Browse />} />
                         <Route path="/product/:id" element={<ProductDetails />} />
                         <Route path="/cart" element={<Cart />} />

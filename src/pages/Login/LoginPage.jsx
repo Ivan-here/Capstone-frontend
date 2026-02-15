@@ -1,14 +1,14 @@
 import { useState } from "react";
 import "./login.css";
 
-import Button from "@/components/layout/Button";
-import Input from "@/components/layout/Input";
+import Button from "@/components/ui/Button";
+import Input from "@/components/ui/Input";
 import { authService } from "@/services/auth.service";
 import { useNavigate } from "react-router-dom";
 
 export default function LoginPage() {
     const [form, setForm] = useState({
-        identifier: "",
+        login: "",
         password: "",
     });
 
@@ -23,7 +23,7 @@ export default function LoginPage() {
 
     function validate() {
         const e = {};
-        if (!form.identifier.trim()) e.identifier = "Email or username is required.";
+        if (!form.login.trim()) e.login = "Email or username is required.";
         if (!form.password) e.password = "Password is required.";
         return e;
     }
@@ -59,9 +59,9 @@ export default function LoginPage() {
                     <div className="fieldRow">
                         <label className="fieldLabel">Email / Username:</label>
                         <Input
-                            value={form.identifier}
-                            onChange={(e) => setField("identifier", e.target.value)}
-                            error={errors.identifier}
+                            value={form.login}
+                            onChange={(e) => setField("login", e.target.value)}
+                            error={errors.login}
                         />
                     </div>
 

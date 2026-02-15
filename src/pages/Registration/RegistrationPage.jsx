@@ -2,8 +2,8 @@ import { useState } from "react";
 import "./registration.css";
 import { useNavigate } from "react-router-dom";
 
-import Button from "@/components/layout/Button";
-import Input from "@/components/layout/Input";
+import Button from "@/components/ui/Button";
+import Input from "@/components/ui/Input";
 import { authService } from "@/services/auth.service";
 import { profileService } from "@/services/profile.service";
 
@@ -102,24 +102,22 @@ export default function RegistrationPage() {
                 <form className="registerForm" onSubmit={onSubmit}>
                     {errors.form && <div className="formError">{errors.form}</div>}
 
-                    <div className="twoColRow">
-                        <div className="fieldRow">
-                            <label className="fieldLabel">First Name:</label>
-                            <Input
-                                value={form.firstName}
-                                onChange={(ev) => setField("firstName", ev.target.value)}
-                                error={errors.firstName}
-                            />
-                        </div>
+                    <div className="fieldRow">
+                        <label className="fieldLabel">First Name:</label>
+                        <Input
+                            value={form.firstName}
+                            onChange={(ev) => setField("firstName", ev.target.value)}
+                            error={errors.firstName}
+                        />
+                    </div>
 
-                        <div className="fieldRow">
-                            <label className="fieldLabel">Last Name:</label>
-                            <Input
-                                value={form.lastName}
-                                onChange={(ev) => setField("lastName", ev.target.value)}
-                                error={errors.lastName}
-                            />
-                        </div>
+                    <div className="fieldRow">
+                        <label className="fieldLabel">Last Name:</label>
+                        <Input
+                            value={form.lastName}
+                            onChange={(ev) => setField("lastName", ev.target.value)}
+                            error={errors.lastName}
+                        />
                     </div>
 
                     <div className="fieldRow">
