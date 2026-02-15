@@ -4,6 +4,7 @@ import axios from 'axios';
 const PROFILE_BASE_URL = 'http://localhost:8081/profile';
 const VERIFICATION_BASE_URL = 'http://localhost:8083/api/verification';
 const LISTING_BASE_URL = 'http://localhost:8084/api';
+const BASE_URL = "http://localhost:9000";
 
 // 2. Helper to attach JWT token to requests
 const authInterceptor = (config) => {
