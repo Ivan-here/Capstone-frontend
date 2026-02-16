@@ -3,41 +3,49 @@
    Keeps existing color variables
    ================================ */
 
-.profilePage {
-    min-height: 100%;
+.profilePage{
+    min-height: 100vh;
     display: flex;
     flex-direction: column;
 }
 
 /* Main content area */
+
 .profileMain {
     flex: 1;
     overflow-y: auto;
-    padding: 28px 22px;
+    padding: 0 24px 24px;
     display: flex;
     justify-content: center;
+    align-items: flex-start;
+
+    margin-top: 15px;
+}
+.profilePage--view .profileMain {
+    margin-top: -45px; /* only profile view page */
 }
 
-/* Container */
 .profileContainer {
     width: 100%;
-    max-width: 1200px;
+    max-width: 1500px;
 
-    /* Make it read as a panel even if card color = background */
+    /* THIS is what makes it stretch */
+    min-height: calc(100vh - 140px);
+
     background: rgba(255, 255, 255, 0.16);
     border: 1px solid rgba(0, 0, 0, 0.10);
     border-radius: 18px;
-    padding: 18px;
+    padding: 18px 18px 300px;
 
     display: grid;
-    align-items: start;
     grid-template-columns: 380px 1fr;
     gap: 18px;
 
-    /* subtle elevation */
+    align-items: start;
+    align-content: start;
+
     box-shadow: 0 10px 30px rgba(0, 0, 0, 0.06);
 }
-
 /* Columns */
 .leftCol,
 .rightCol {
@@ -585,4 +593,27 @@
     font-size: 13px;
     opacity: 0.75;
     line-height: 1.35;
+}
+.textArea{
+    width: 100%;
+    border-radius: 12px;
+    border: 1px solid rgba(0,0,0,0.15);
+    padding: 10px 12px;
+    font: inherit;
+    background: #fff;
+}
+.select{
+    width: 100%;
+    height: 42px;
+    border-radius: 12px;
+    border: 1px solid rgba(0,0,0,0.15);
+    padding: 0 10px;
+    background: #fff;
+    font: inherit;
+}
+.inputError{ color: #b43a3a; font-weight: 700; font-size: 13px; }
+.formError{ color: #b43a3a; font-weight: 800; margin-bottom: 10px; }
+input:disabled {
+    opacity: 0.75;
+    cursor: not-allowed;
 }

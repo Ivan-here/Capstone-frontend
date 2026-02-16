@@ -66,6 +66,7 @@ export default function RegistrationPage() {
                 // ⚠️ Rename keys to match PersonalProfileRequest
                 firstName: form.firstName,
                 lastName: form.lastName,
+                username: form.username,
                 contactNumber: form.contactNumber,
                 email: form.email,
             });

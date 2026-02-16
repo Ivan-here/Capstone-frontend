@@ -1,10 +1,12 @@
 import Button from "@/components/ui/Button";
+import {useNavigate} from "react-router-dom";
 
 export default function UserProfileLeft({ profile, aboutExpanded, onToggleAbout }) {
     const aboutShort =
         profile?.about?.length > 140 ? profile.about.slice(0, 140) + "..." : profile?.about;
 
     const fullName = `${profile?.firstName ?? ""} ${profile?.lastName ?? ""}`.trim();
+    const navigate = useNavigate();
 
     return (
         <>
@@ -18,7 +20,7 @@ export default function UserProfileLeft({ profile, aboutExpanded, onToggleAbout 
                     <div className="role">{profile.role}</div>
                     <div className="location">{profile.location}</div>
 
-                    <Button className="primaryBtn" variant="primary">
+                    <Button className="primaryBtn" variant="primary" type="button" onClick={() => navigate("/profile/edit")}>
                         Edit profile
                     </Button>
                 </div>
