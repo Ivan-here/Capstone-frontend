@@ -1,11 +1,11 @@
 import React from 'react';
 import { Outlet } from 'react-router-dom';
-import Navbar from '../../components/layout/Navbar';
+import RoleNavbar from "@/components/layout/RoleNavbar";
 
 const AppLayout = () => {
     return (
         <div className="app-container">
-            <Navbar />
+            <RoleNavbar />
 
 
             <main className="w-full">

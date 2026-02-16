@@ -7,6 +7,8 @@ import Notifications from '../../pages/notification/Notifications.jsx';
 const NavbarFarmer = () => {
     const location = useLocation();
     const [showNotifications, setShowNotifications] = useState(false);
+    const token = localStorage.getItem("accessToken");
+    const userLink = token ? "/profile" : "/login";
 
     // Helper: Check if we are on the Cart page
     const isCartActive = location.pathname === '/cart';
@@ -32,7 +34,9 @@ const NavbarFarmer = () => {
                         </button>
                     </Link>
 
-                    <button className="btn-icon"><User size={24} /></button>
+                    <Link to={userLink} className="btn-icon">
+                        <User size={24} />
+                    </Link>
                     <button className="btn-icon"><Settings size={24} /></button>
                 </div>
             </div>
