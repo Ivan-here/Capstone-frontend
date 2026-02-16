@@ -25,14 +25,24 @@ export default function ProfilePage() {
             try {
                 setLoading(true);
                 const data = await profileService.getMe();
-                setUserProfile(data.personalProfile ?? null);
+
+                if (!data?.personalProfile) {
+                    authService.logout();
+                    navigate("/login", { replace: true });
+                    return;
+                }
+                setUserProfile(data.personalProfile);
                 setBusinessProfile(data.businessProfile ?? null);
+                // eslint-disable-next-line no-unused-vars
+            } catch (err) {
+                // If backend returns 401 or anything suspicious
+                authService.logout();
+                navigate("/login", { replace: true });
             } finally {
                 setLoading(false);
             }
         })();
-    }, []);
-
+    }, [navigate]);
     const hasBusinessProfile = !!businessProfile;
 
     function logout() {
@@ -41,10 +51,9 @@ export default function ProfilePage() {
     }
 
     if (loading) return <div className="profilePage">Loading...</div>;
-    if (!userProfile) return <div className="profilePage">No personal profile found.</div>;
 
     return (
-        <div className="profilePage">
+        <div className="profilePage profilePage--view">
             <header className="profileTopbar">
                 <div className="profileTitleSpacer" />
                 <button className="logoutBtn" onClick={logout}>Logout</button>

@@ -12,6 +12,7 @@ const Navbar = () => {
 
     // Helper: Check if we are currently on the Cart page
     const isCartActive = location.pathname === '/cart';
+    const isProfileActive = location.pathname.indexOf("/profile") === 0;
 
     return (
         <div className="navbar-wrapper relative">
@@ -20,40 +21,37 @@ const Navbar = () => {
             <div className="navbar-top">
                 <div className="nav-spacer"></div>
 
-                <h1 className="nav-title">WELCOME</h1>
+                <h1 className="nav-title">LOCALLY</h1>
 
                 <div className="nav-icons">
                     {/* BELL ICON */}
                     <button
-                        className="btn-icon"
+                        className={`btn-icon ${showNotifications ? "is-active" : ""}`}
                         onClick={() => setShowNotifications(!showNotifications)}
                     >
-                        <Bell size={24} />
+                        <Bell size={22} />
                     </button>
 
                     {/* --- UPDATED SECTION START --- */}
                     {/* CART ICON: Linked to /cart with Active Style */}
                     <Link to="/cart">
                         <button
-                            className="btn-icon"
-                            style={isCartActive ? {
-                                backgroundColor: '#8B4513', // Brown background
-                                borderRadius: '50%',
-                                width: '40px',
-                                height: '40px',
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'center'
-                            } : {}}
+                            className={`btn-icon ${isCartActive ? "is-active" : ""}`}
                         >
-                            <ShoppingCart size={24} />
+                            <ShoppingCart size={22} />
                         </button>
                     </Link>
                     {/* --- UPDATED SECTION END --- */}
-                    <Link to={userLink} className="btn-icon">
-                        <User size={24} />
+                    <Link to={userLink}>
+                        <button
+                            className={`btn-icon ${isProfileActive ? "is-active" : ""}`}
+                        >
+                            <User size={22} />
+                        </button>
                     </Link>
-                    <button className="btn-icon"><Settings size={24} /></button>
+                    <button className="btn-icon">
+                        <Settings size={22} />
+                    </button>
                 </div>
             </div>
 
