@@ -1,0 +1,97 @@
+.loginPage {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: #5b6f2d;
+}
+
+.loginCard {
+    width: min(680px, 92vw);
+    background: var(--color-background);
+    border-radius: 14px;
+    border: 1px solid var(--color-border);
+    box-shadow: 0 12px 28px rgba(0, 0, 0, 0.25);
+    padding: 30px 36px 22px;
+}
+
+.loginTitle {
+    text-align: center;
+    font-family: serif;
+    letter-spacing: 0.12em;
+    color: #3e3b32;
+    margin-bottom: 22px;
+    font-size: 38px;
+}
+
+.loginForm {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 18px;
+    width: 100%;
+}
+.loginForm input {
+    width: 280px;
+    padding: 8px 12px;
+    border-radius: 6px;
+    border: 1px solid #ccc;
+}
+
+.fieldRow {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 100%;
+}
+
+.fieldLabel {
+    margin-bottom: 6px;
+    font-weight: 500;
+    text-align: center;
+}
+.submitRow {
+    display: flex;
+    justify-content: center;
+    margin-top: 8px;
+}
+
+.loginBtn {
+    font-size: 15px;
+    padding: 8px 28px;
+    border-radius: 8px;
+    background-color: #4f6125;
+    color: white;
+    border: none;
+    cursor: pointer;
+    transition: 0.2s ease;
+}
+
+.loginFooter {
+    margin-top: 22px;
+    display: flex;
+    justify-content: center;
+    gap: 8px;
+    color: #3e3b32;
+}
+
+.registerLink {
+    color: var(--color-primary);
+    font-weight: 700;
+    text-decoration: none;
+}
+
+.registerLink:hover {
+    text-decoration: underline;
+}
+
+/* Responsive */
+@media (max-width: 720px) {
+    .fieldRow {
+        grid-template-columns: 1fr;
+    }
+
+    .fieldLabel {
+        text-align: left;
+    }
+}

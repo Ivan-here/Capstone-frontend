@@ -7,6 +7,8 @@ import Notifications from '../../pages/notification/Notifications.jsx';
 const Navbar = () => {
     const location = useLocation();
     const [showNotifications, setShowNotifications] = useState(false);
+    const token = localStorage.getItem("accessToken");
+    const userLink = token ? "/profile" : "/login";
 
     // Helper: Check if we are currently on the Cart page
     const isCartActive = location.pathname === '/cart';
@@ -48,8 +50,9 @@ const Navbar = () => {
                         </button>
                     </Link>
                     {/* --- UPDATED SECTION END --- */}
-
-                    <button className="btn-icon"><User size={24} /></button>
+                    <Link to={userLink} className="btn-icon">
+                        <User size={24} />
+                    </Link>
                     <button className="btn-icon"><Settings size={24} /></button>
                 </div>
             </div>
