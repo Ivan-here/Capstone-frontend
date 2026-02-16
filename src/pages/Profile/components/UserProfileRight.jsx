@@ -14,6 +14,8 @@ function StatBox({ value, label, privacy }) {
 export default function UserProfileRight({ profile }) {
     const stats = profile?.stats || {};
 
+    const fullName = `${profile?.firstName ?? ""} ${profile?.lastName ?? ""}`.trim();
+
     return (
         <>
             <PreferencesChips preferences={profile.preferences || []} />
@@ -34,7 +36,7 @@ export default function UserProfileRight({ profile }) {
                 </div>
             </div>
 
-            <RatingsReviews fullName={profile.fullName} ratings={profile.ratings || []} />
+            <RatingsReviews fullName={fullName} ratings={profile.ratings || []} />
         </>
     );
 }

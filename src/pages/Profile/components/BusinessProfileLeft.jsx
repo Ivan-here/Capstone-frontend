@@ -1,26 +1,39 @@
 import Button from "@/components/ui/Button";
 
 export default function BusinessProfileLeft({ businessProfile }) {
-    // businessProfile can be null for now. This is a placeholder UI.
     const displayName = businessProfile?.businessName || "Your Business";
     const businessType = businessProfile?.businessType || "Business";
     const address = businessProfile?.address || "No address set";
 
     return (
-        <div className="card placeholderCard">
-            <div className="sectionTitle">Business Profile</div>
-
-            <div style={{ display: "grid", gap: 6 }}>
-                <div className="name" style={{ fontSize: 22 }}>
-                    {displayName}
+        <>
+            <div className="card profileCard businessProfileCard">
+                <div className="avatar" aria-hidden="true">
+                    <div className="avatarInner">🙂</div>
                 </div>
-                <div className="role">{businessType}</div>
-                <div className="location">{address}</div>
+
+                <div className="profileMeta">
+                    <div className="name">{displayName}</div>
+                    <div className="role">{businessType}</div>
+                    <div className="location">{address}</div>
+
+                    <Button className="primaryBtn" variant="primary">
+                        Edit business profile
+                    </Button>
+                </div>
             </div>
 
-            <Button className="primaryBtn" variant="primary">
-                Edit business profile
-            </Button>
-        </div>
+            <div className="card aboutCard businessAboutCard">
+                <div className="cardHeader">
+                    <span>About</span>
+                    <span className="muted">Public</span>
+                </div>
+
+                <p className="aboutText">
+                    {businessProfile?.description?.trim() ||
+                        "Add a short description of your business..."}
+                </p>
+            </div>
+        </>
     );
 }

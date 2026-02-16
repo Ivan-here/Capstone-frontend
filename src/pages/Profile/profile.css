@@ -1,35 +1,41 @@
 /* ================================
-   PROFILE PAGE LAYOUT
+   PROFILE PAGE — CLEAN DASHBOARD
+   Keeps existing color variables
    ================================ */
 
 .profilePage {
-    width: 100%;
-    height: 100%;
+    min-height: 100%;
     display: flex;
     flex-direction: column;
 }
 
-/* Allow scrolling ONLY inside main content */
+/* Main content area */
 .profileMain {
     flex: 1;
     overflow-y: auto;
-    padding: 24px;
+    padding: 28px 22px;
     display: flex;
     justify-content: center;
 }
 
-/* Main profile card container */
+/* Container */
 .profileContainer {
     width: 100%;
     max-width: 1200px;
-    background-color: var(--color-card);
-    border-radius: 12px;
-    border: 1px solid var(--color-border);
-    padding: 20px;
+
+    /* Make it read as a panel even if card color = background */
+    background: rgba(255, 255, 255, 0.16);
+    border: 1px solid rgba(0, 0, 0, 0.10);
+    border-radius: 18px;
+    padding: 18px;
 
     display: grid;
-    grid-template-columns: 360px 1fr;
-    gap: 20px;
+    align-items: start;
+    grid-template-columns: 380px 1fr;
+    gap: 18px;
+
+    /* subtle elevation */
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.06);
 }
 
 /* Columns */
@@ -37,34 +43,53 @@
 .rightCol {
     display: flex;
     flex-direction: column;
-    gap: 16px;
+    gap: 14px;
+}
+
+/* Responsive */
+@media (max-width: 980px) {
+    .profileContainer {
+        grid-template-columns: 1fr;
+        padding: 14px;
+    }
 }
 
 /* ================================
-   PROFILE TABS (User / Business)
+   TABS (User / Business)
    ================================ */
 
 .tabRow {
-    display: flex;
-    border-radius: 8px;
-    overflow: hidden;
-    border: 1px solid var(--color-border);
-    background-color: #e8e8d0;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+
+    background: rgba(0, 0, 0, 0.06);
+    border: 1px solid rgba(0, 0, 0, 0.10);
+    border-radius: 14px;
+    padding: 8px;
 }
 
 .tabBtn {
-    flex: 1;
-    padding: 10px 0;
+    height: 40px;
+    border-radius: 10px;
+    border: 1px solid transparent;
     background: transparent;
-    border: none;
-    font-weight: 600;
+    font-weight: 700;
+    letter-spacing: 0.2px;
     color: var(--color-primary-dark);
     cursor: pointer;
+    transition: transform 120ms ease, background 120ms ease, border-color 120ms ease;
+}
+
+.tabBtn:hover {
+    background: rgba(255, 255, 255, 0.18);
+    transform: translateY(-1px);
 }
 
 .tabBtn.active {
-    background-color: var(--color-card);
-    box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.1);
+    background: var(--color-card);
+    border-color: rgba(0, 0, 0, 0.12);
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.08);
 }
 
 /* ================================
@@ -72,82 +97,123 @@
    ================================ */
 
 .card {
-    background-color: var(--color-card);
+    background: var(--color-card);
     border: 1px solid var(--color-border);
-    border-radius: 12px;
+    border-radius: 16px;
     padding: 16px;
+    box-shadow: 0 8px 18px rgba(0, 0, 0, 0.05);
+}
+
+/* nice internal header row */
+.cardHeader {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    font-weight: 800;
+    letter-spacing: 0.2px;
+    margin-bottom: 10px;
+}
+
+.muted {
+    color: rgba(0, 0, 0, 0.55);
+    font-size: 13px;
 }
 
 /* ================================
    USER PROFILE LEFT
    ================================ */
 
-.profileCard {
-    display: grid;
-    grid-template-columns: 96px 1fr;
+.profileCard{
+    display:grid;
+    grid-template-columns: 120px 1fr;
     gap: 16px;
-    align-items: center;
+    align-items:center;
 }
 
 .avatar {
-    width: 96px;
-    height: 96px;
+    width: 84px;
+    height: 84px;
     border-radius: 50%;
-    background-color: #dddcc8;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    background: rgba(0, 0, 0, 0.08);
+    border: 1px solid rgba(0, 0, 0, 0.12);
+    display: grid;
+    place-items: center;
 }
 
 .avatarInner {
-    font-size: 42px;
+    font-size: 38px;
 }
 
 .profileMeta .name {
     font-size: 22px;
-    font-weight: 700;
+    font-weight: 900;
     color: var(--color-text-main);
+    line-height: 1.1;
 }
 
 .profileMeta .role {
-    font-weight: 600;
-    margin-top: 2px;
+    margin-top: 4px;
+    font-weight: 800;
+    color: rgba(0, 0, 0, 0.75);
 }
 
 .profileMeta .location {
-    font-size: 14px;
-    color: #666;
-    margin-bottom: 8px;
+    margin-top: 2px;
+    font-size: 13px;
+    color: rgba(0, 0, 0, 0.55);
+    margin-bottom: 10px;
 }
 
 /* About */
-.cardHeader {
-    display: flex;
-    justify-content: space-between;
-    font-weight: 600;
-}
-
 .aboutText {
     font-size: 14px;
-    line-height: 1.4;
+    line-height: 1.5;
+    color: rgba(0, 0, 0, 0.75);
+    margin: 0;
 }
 
-/* Follow grid */
+/* link button style (used in your components) */
+.linkBtn {
+    border: none;
+    background: transparent;
+    padding: 0;
+    cursor: pointer;
+    font-weight: 700;
+    text-decoration: underline;
+    color: var(--color-primary-dark);
+}
+
+.linkBtn:hover {
+    opacity: 0.85;
+}
+
+/* Follow */
 .followGrid {
     display: grid;
-    grid-template-columns: repeat(4, 1fr);
+    grid-template-columns: repeat(7, 1fr);
     gap: 10px;
     margin-top: 10px;
 }
 
+@media (max-width: 980px) {
+    .followGrid {
+        grid-template-columns: repeat(8, 1fr);
+    }
+}
+
 .followAvatar {
-    width: 48px;
-    height: 48px;
+    width: 44px;
+    height: 44px;
     border-radius: 50%;
-    background-color: #dddcc8;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    background: rgba(0, 0, 0, 0.08);
+    border: 1px solid rgba(0, 0, 0, 0.12);
+    display: grid;
+    place-items: center;
+}
+
+.seeMore {
+    margin-top: 10px;
 }
 
 /* ================================
@@ -155,114 +221,137 @@
    ================================ */
 
 .sectionTitle {
-    font-size: 18px;
-    font-weight: 700;
-    text-align: center;
-    margin-bottom: 12px;
+    font-size: 16px;
+    font-weight: 900;
+    letter-spacing: 0.3px;
+    text-align: left;
+    margin-bottom: 10px;
 }
 
-/* Preferences chips */
-.chipRow {
+/* Preferences chips row */
+.prefsCard .chipRow {
     display: flex;
     flex-wrap: wrap;
     gap: 8px;
-    justify-content: center;
 }
 
 /* ================================
    STATS
    ================================ */
 
-.statsHeader {
-    font-weight: 700;
+.statsCard .statsHeader {
+    font-weight: 900;
     margin-bottom: 10px;
 }
 
 .statsRow {
     display: grid;
-    grid-template-columns: repeat(5, 1fr);
+    grid-template-columns: repeat(5, minmax(0, 1fr));
     gap: 10px;
 }
 
+@media (max-width: 980px) {
+    .statsRow {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
 .statBox {
-    background-color: #f0f0e4;
-    border-radius: 10px;
-    padding: 10px;
+    background: rgba(0, 0, 0, 0.05);
+    border: 1px solid rgba(0, 0, 0, 0.08);
+    border-radius: 14px;
+    padding: 12px;
     text-align: center;
 }
 
 .statValue {
     font-size: 20px;
-    font-weight: 700;
+    font-weight: 900;
+    color: rgba(0, 0, 0, 0.78);
 }
 
 .statLabel {
-    font-size: 13px;
-    font-weight: 600;
+    margin-top: 4px;
+    font-size: 12px;
+    font-weight: 800;
+    text-transform: lowercase;
+    color: rgba(0, 0, 0, 0.70);
 }
 
 .statPrivacy {
+    margin-top: 2px;
     font-size: 11px;
     font-style: italic;
-    color: #777;
+    color: rgba(0, 0, 0, 0.55);
 }
 
 /* ================================
    REVIEWS
    ================================ */
 
-.reviewList {
+.reviewsCard .reviewList {
     display: flex;
     flex-direction: column;
-    gap: 14px;
+    gap: 12px;
 }
 
 .reviewItem {
     display: grid;
-    grid-template-columns: 48px 1fr;
+    grid-template-columns: 44px 1fr;
     gap: 12px;
-    border-top: 1px solid var(--color-border);
     padding-top: 12px;
+    border-top: 1px solid rgba(0, 0, 0, 0.10);
 }
 
 .miniAvatar {
     width: 40px;
     height: 40px;
     border-radius: 50%;
-    background-color: #dddcc8;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    background: rgba(0, 0, 0, 0.08);
+    border: 1px solid rgba(0, 0, 0, 0.12);
+    display: grid;
+    place-items: center;
 }
 
 .reviewTop {
     display: flex;
     justify-content: space-between;
     align-items: baseline;
+    gap: 12px;
 }
 
 .reviewName {
-    font-weight: 600;
+    font-weight: 900;
+    color: rgba(0, 0, 0, 0.78);
 }
 
 .reviewDate {
     font-size: 12px;
+    color: rgba(0, 0, 0, 0.55);
     font-style: italic;
-    color: #777;
 }
 
 .reviewText {
     font-size: 14px;
     margin-top: 6px;
+    color: rgba(0, 0, 0, 0.72);
+}
+
+.reviewItemName {
+    margin-top: 6px;
+    font-size: 12px;
+    font-weight: 800;
+    color: rgba(0, 0, 0, 0.62);
 }
 
 /* Stars */
 .stars {
-    margin: 4px 0;
+    margin: 6px 0 2px;
 }
 
 .star {
-    opacity: 0.3;
+    opacity: 0.25;
+    font-size: 14px;
 }
 
 .star.on {
@@ -270,9 +359,230 @@
 }
 
 /* ================================
-   BUSINESS PLACEHOLDER
+   BUSINESS PLACEHOLDERS
    ================================ */
 
 .placeholderCard {
+    text-align: left;
+}
+
+.primaryBtn {
+    width: 100%;
+    margin-top: 10px;
+}
+
+/* Make the entire profile container bigger and stronger */
+.profileContainer {
+    padding: 28px;
+    border-radius: 18px;
+}
+
+/* Make left profile card slightly larger */
+.profileCard {
+    padding: 22px;
+    border-radius: 18px;
+}
+
+/* Bigger avatar */
+.avatar {
+    width: 120px;
+    height: 120px;
+}
+
+.avatarInner {
+    font-size: 48px;
+}
+
+/* Bigger name */
+.profileMeta .name {
+    font-size: 28px;
+}
+
+/* Slightly larger role/location */
+.profileMeta .role {
+    font-size: 16px;
+}
+
+.profileMeta .location {
+    font-size: 14px;
+}
+
+/* Make profile page background same as edit button */
+
+/* Make inner container slightly lighter so it separates */
+.profileContainer {
+    background-color: rgba(255,255,255,0.15);
+    backdrop-filter: blur(2px);
+}
+.profileTopbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px 24px;
+}
+/* Top bar */
+.profileTopbar{
+    display:flex;
+    justify-content:flex-end;
+    align-items:center;
+    padding: 14px 22px;
+}
+
+/* (if you kept spacer) */
+.profileTitleSpacer{
+    flex: 1;
+}
+
+/* Red logout button */
+.logoutBtn{
+    background: #b43a3a;
+    color: #fff;
+    border: 1px solid rgba(0,0,0,0.18);
+    border-radius: 10px;
+    padding: 8px 14px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: transform .12s ease, opacity .12s ease;
+}
+
+.logoutBtn:hover{
+    opacity: 0.92;
+    transform: translateY(-1px);
+}
+
+.profilePage{
+    min-height: 100vh;
+    background: #556B2F;
+}
+
+/* Main area should NOT paint green */
+.profileMain{
+    background: transparent;
+}
+
+/* BIG panel (the one holding all cards) -> BEIGE */
+.profileContainer{
+    background: #efe9d6 !important;          /* beige */
+    border: 1px solid rgba(0,0,0,0.12) !important;
+    box-shadow: 0 14px 40px rgba(0,0,0,0.22);
+    border-radius: 18px;
+}
+
+/* All inner cards -> a touch lighter than the panel */
+.card{
+    background: #f8f5ea !important;          /* lighter beige */
+    border: 1px solid rgba(0,0,0,0.10);
+    border-radius: 16px;
+}
+.profileContainer{
+    height: auto !important;
+    min-height: 0 !important;
+    align-self: start;
+}
+/* ==============================
+   BUSINESS TAB STYLES
+   ============================== */
+
+.businessProfileCard {
+    /* same as personal, just ensure spacing is nice */
+}
+
+.businessAboutCard .aboutText {
+    margin: 0;
+}
+
+/* Documents panel */
+.businessDocsCard .sectionTitle {
     text-align: center;
+}
+
+.businessDocRow {
+    display: grid;
+    grid-template-columns: 220px 1fr;
+    gap: 12px;
+    align-items: start;
+    margin-top: 10px;
+}
+
+.businessDocTitle {
+    font-weight: 800;
+}
+
+.businessDocMeta b {
+    font-weight: 900;
+}
+
+@media (max-width: 980px) {
+    .businessDocRow {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* Business stats tighter like mock */
+.businessStatsRow {
+    grid-template-columns: repeat(4, 1fr);
+}
+
+@media (max-width: 980px) {
+    .businessStatsRow {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+/* Products */
+.businessProductsCard .sectionTitle {
+    text-align: center;
+}
+
+.productGrid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 14px;
+    margin-top: 12px;
+}
+
+@media (max-width: 980px) {
+    .productGrid {
+        grid-template-columns: 1fr;
+    }
+}
+
+.productCard {
+    display: grid;
+    grid-template-columns: 120px 1fr;
+    gap: 12px;
+    padding: 12px;
+    border-radius: 14px;
+    border: 1px solid rgba(0,0,0,0.10);
+    background: #f8f5ea;
+}
+
+.productImg {
+    width: 120px;
+    height: 90px;
+    border-radius: 12px;
+    background: rgba(0,0,0,0.06);
+    display: grid;
+    place-items: center;
+    font-size: 22px;
+}
+
+.productName {
+    font-weight: 900;
+    font-size: 16px;
+}
+
+.productMeta {
+    display: flex;
+    gap: 12px;
+    margin-top: 4px;
+    font-weight: 700;
+    opacity: 0.8;
+}
+
+.productDesc {
+    margin-top: 6px;
+    font-size: 13px;
+    opacity: 0.75;
+    line-height: 1.35;
 }
