@@ -8,6 +8,8 @@ const NavbarRestaurant = () => {
     const location = useLocation();
     const [showNotifications, setShowNotifications] = useState(false);
     const isCartActive = location.pathname === '/cart';
+    const token = localStorage.getItem("accessToken");
+    const userLink = token ? "/profile" : "/login";
 
     return (
         <div className="navbar-wrapper relative">
@@ -23,7 +25,9 @@ const NavbarRestaurant = () => {
                             <ShoppingCart size={24} />
                         </button>
                     </Link>
-                    <button className="btn-icon"><User size={24} /></button>
+                    <Link to={userLink} className="btn-icon">
+                        <User size={24} />
+                    </Link>
                     <button className="btn-icon"><Settings size={24} /></button>
                 </div>
             </div>

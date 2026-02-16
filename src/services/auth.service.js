@@ -1,4 +1,5 @@
 import { apiFetch } from "./http";
+import {getRolesFromToken} from "@/services/jwt.js";
 
 const TOKEN_KEY = "accessToken"; // match http.js getToken()
 
@@ -18,7 +19,7 @@ export const authService = {
                 body: JSON.stringify({ login, password }),
             });
 
-            saveToken(data.token);
+            saveToken(data.accessToken);
             return data;
 
         } catch (err) {
@@ -41,11 +42,11 @@ export const authService = {
                 username: form.username,
                 firstName: form.firstName,
                 lastName: form.lastName,
-                displayName: `${form.firstName} ${form.lastName}`.trim(),
+                displayName: form.displayName?.trim() || `${form.firstName} ${form.lastName}`.trim(),
             }),
         });
 
-        saveToken(data.token);
+        saveToken(data.accessToken);
         return data;
     },
 
@@ -59,5 +60,13 @@ export const authService = {
 
     isLoggedIn() {
         return !!localStorage.getItem(TOKEN_KEY);
+    },
+    getRoles() {
+        const token = localStorage.getItem("accessToken");
+        return getRolesFromToken(token);
+    },
+
+    hasRole(role) {
+        return this.getRoles().includes(role);
     },
 };

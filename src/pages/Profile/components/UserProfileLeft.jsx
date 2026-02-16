@@ -4,6 +4,8 @@ export default function UserProfileLeft({ profile, aboutExpanded, onToggleAbout 
     const aboutShort =
         profile?.about?.length > 140 ? profile.about.slice(0, 140) + "..." : profile?.about;
 
+    const fullName = `${profile?.firstName ?? ""} ${profile?.lastName ?? ""}`.trim();
+
     return (
         <>
             <div className="card profileCard">
@@ -12,7 +14,7 @@ export default function UserProfileLeft({ profile, aboutExpanded, onToggleAbout 
                 </div>
 
                 <div className="profileMeta">
-                    <div className="name">{profile.fullName}</div>
+                    <div className="name">{fullName || "Your Name"}</div>
                     <div className="role">{profile.role}</div>
                     <div className="location">{profile.location}</div>
 

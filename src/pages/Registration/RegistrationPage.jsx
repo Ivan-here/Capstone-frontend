@@ -11,11 +11,11 @@ export default function RegistrationPage() {
     const [form, setForm] = useState({
         firstName: "",
         lastName: "",
+        displayName: "",
         role: "",
         email: "",
         username: "",
         password: "",
-        contactNumber: "",
     });
 
     const navigate = useNavigate();
@@ -34,7 +34,9 @@ export default function RegistrationPage() {
         if (!form.firstName.trim()) e.firstName = "First name is required.";
         if (!form.lastName.trim()) e.lastName = "Last name is required.";
         if (!form.role) e.role = "Please select a role.";
-
+        if (form.displayName && form.displayName.trim().length > 120) {
+            e.displayName = "Display name is too long.";
+        }
         if (!form.email.trim()) e.email = "Email is required.";
         else if (!/^\S+@\S+\.\S+$/.test(form.email.trim())) e.email = "Invalid email.";
 
@@ -43,10 +45,6 @@ export default function RegistrationPage() {
 
         if (!form.password) e.password = "Password is required.";
         else if (form.password.length < 6) e.password = "Min 6 characters.";
-
-        if (!form.contactNumber.trim()) e.contactNumber = "Contact number is required.";
-        else if (!/^[0-9+\-() ]{7,}$/.test(form.contactNumber.trim()))
-            e.contactNumber = "Invalid phone number.";
 
         return e;
     }
@@ -157,6 +155,15 @@ export default function RegistrationPage() {
                     </div>
 
                     <div className="fieldRow">
+                        <label className="fieldLabel">Display Name (optional):</label>
+                        <Input
+                            value={form.displayName}
+                            onChange={(ev) => setField("displayName", ev.target.value)}
+                            error={errors.displayName}
+                        />
+                    </div>
+
+                    <div className="fieldRow">
                         <label className="fieldLabel">Password:</label>
                         <Input
                             type="password"
@@ -165,16 +172,6 @@ export default function RegistrationPage() {
                             error={errors.password}
                         />
                     </div>
-
-                    <div className="fieldRow">
-                        <label className="fieldLabel">Contact Number:</label>
-                        <Input
-                            value={form.contactNumber}
-                            onChange={(ev) => setField("contactNumber", ev.target.value)}
-                            error={errors.contactNumber}
-                        />
-                    </div>
-
                     <div className="submitRow">
                         <Button type="submit" variant="primary" className="registerBtn" disabled={loading}>
                             {loading ? "Registering..." : "Register"}
