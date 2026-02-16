@@ -62,17 +62,14 @@ export default function RegistrationVerification() {
             // 1) Create business profile for the logged-in user (JWT required)
             await profileService.upsertBusiness({
                 // ⚠️ adjust keys if your BusinessProfileRequest uses different field names
-                businessName: form.name,
+                name: form.name,
                 businessType: String(role || "").toUpperCase(), // FARMER / NGO / RESTAURANT
                 address: form.address,
-                businessEmail: form.email,
+                email: form.email,
                 description: form.description,
             });
 
-            await profileInternalService.verifyUser(userId);
-
-            alert("Business profile created + verified (dev).");
-            navigate("/profile");
+            navigate("/");
         } catch (err) {
             setErrors((p) => ({
                 ...p,
