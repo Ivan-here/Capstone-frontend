@@ -10,6 +10,8 @@ import RegistrationPage from "../pages/Registration/RegistrationPage.jsx";
 import RegistrationVerification from "../pages/Registration/RegistrationVerification.jsx";
 import ProfilePage from "../pages/Profile/ProfilePage.jsx";
 import { CartProvider } from '../pages/cart/CartContext';
+import EditPersonalProfilePage from "@/pages/Profile/EditPersonalProfilePage";
+import EditBusinessProfilePage from "@/pages/Profile/EditBusinessProfilePage";
 
 // IMPORT THE SPLASH SCREEN
 import SplashScreen from '../pages/Splash/Splash.jsx';
@@ -42,6 +44,8 @@ function App() {
                     <Route element={<AppLayout />}>
                         <Route path="/" element={<Navigate to="/browse" replace />} />
                         <Route path="/profile" element={<ProfilePage />} />
+                        <Route path="/profile/edit" element={<EditPersonalProfilePage />} />
+                        <Route path="/profile/business/edit" element={<EditBusinessProfilePage />} />
                         <Route path="/browse" element={<Browse />} />
                         <Route path="/product/:id" element={<ProductDetails />} />
                         <Route path="/cart" element={<Cart />} />
