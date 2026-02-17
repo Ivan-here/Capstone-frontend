@@ -26,6 +26,7 @@ export default function EditPersonalProfilePage() {
         firstName: "",
         lastName: "",
         username: "",
+        displayName: "",
         email: "",
         role: "",
         location: "",
@@ -47,6 +48,7 @@ export default function EditPersonalProfilePage() {
                     firstName: p?.firstName ?? "",
                     lastName: p?.lastName ?? "",
                     username: p?.username ?? "",
+                    displayName: p?.displayName ?? "",
                     email: p?.email ?? "",
                     role: p?.role ?? "",
                     location: p?.location ?? "",
@@ -90,7 +92,7 @@ export default function EditPersonalProfilePage() {
                 email: form.email.trim(),
 
                 // optional
-                role: form.role.trim() || null,
+                displayName: form.displayName.trim() || null,
                 location: form.location.trim() || null,
                 phone: form.phone.trim() || null,
                 about: form.about.trim() || null,
@@ -134,6 +136,11 @@ export default function EditPersonalProfilePage() {
                             <div className="muted" style={{ fontSize: 12 }}>
                                 Username can’t be changed.
                             </div>
+                            <Input
+                                value={form.displayName}
+                                onChange={(e) => setField("displayName", e.target.value)}
+                                placeholder="Display name (optional)"
+                            />
                             <Input
                                 value={form.email}
                                 onChange={(e) => setField("email", e.target.value)}

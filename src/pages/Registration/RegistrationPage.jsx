@@ -67,6 +67,7 @@ export default function RegistrationPage() {
                 firstName: form.firstName,
                 lastName: form.lastName,
                 username: form.username,
+                displayName: form.displayName,
                 contactNumber: form.contactNumber,
                 email: form.email,
             });
