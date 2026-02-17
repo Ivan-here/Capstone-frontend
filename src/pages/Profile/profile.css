@@ -22,12 +22,12 @@
     margin-top: 15px;
 }
 .profilePage--view .profileMain {
-    margin-top: -45px; /* only profile view page */
+    margin-top: 15px; /* only profile view page */
 }
 
 .profileContainer {
     width: 100%;
-    max-width: 1500px;
+    max-width: 1270px;
 
     /* THIS is what makes it stretch */
     min-height: calc(100vh - 140px);

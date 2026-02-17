@@ -54,11 +54,6 @@ export default function ProfilePage() {
 
     return (
         <div className="profilePage profilePage--view">
-            <header className="profileTopbar">
-                <div className="profileTitleSpacer" />
-                <button className="logoutBtn" onClick={logout}>Logout</button>
-            </header>
-
             <main className="profileMain">
                 <div className="profileContainer">
                     <section className="leftCol">
@@ -89,6 +84,11 @@ export default function ProfilePage() {
                             }} />
                         )}
                     </section>
+                    <div className="profileFooter">
+                        <button className="logoutBtn logoutBtnBottom" onClick={logout}>
+                            Logout
+                        </button>
+                    </div>
                 </div>
             </main>
         </div>
