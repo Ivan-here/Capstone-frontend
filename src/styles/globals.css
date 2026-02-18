@@ -26,7 +26,8 @@ html, body {
     height: 100%;
     margin: 0;
     padding: 0;
-    overflow: hidden; /* This kills the outer white scrollbar */
+    overflow-x: hidden; /* This kills the outer white scrollbar */
+    overflow-y: auto;
     font-family: 'Inter', sans-serif;
     background-color: var(--color-background);
     color: var(--color-text-main);
@@ -42,15 +43,48 @@ html, body {
 
 /* Button Styles */
 .btn-icon {
-    background: none;
-    border: none;
-    cursor: pointer;
-    color: white;
-    transition: opacity 0.2s;
-}
+    width: 42px;
+    height: 42px;
+    min-width: 42px;
+    min-height: 42px;
+    border-radius: 50%;
 
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+
+    background: transparent;
+    border: 1px solid transparent;
+
+    padding: 0;
+    margin: 0;
+
+    cursor: pointer;
+
+    transition: all 0.15s ease;
+}
+.btn-icon:focus {
+    outline: none;
+}
 .btn-icon:hover {
-    opacity: 0.8;
+    background-color: rgba(0, 0, 0, 0.15);
+}
+.btn-icon:active {
+    transform: scale(0.97);
+    outline: none;
+    box-shadow: none
+}
+.btn-icon:focus-visible {
+    outline: none;
+    box-shadow: none
+}
+.btn-icon svg {
+    color: #ffffff; /* white on olive header */
+}
+.btn-icon.is-active {
+    background-color: rgba(0, 0, 0, 0.25);
+    outline: none;
+    box-shadow: none
 }
 
 /* Shared Components */
