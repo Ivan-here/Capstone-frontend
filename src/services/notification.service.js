@@ -1,4 +1,4 @@
-const baseUrl = "http://localhost:8085"; 
+const baseUrl = "/notifications-api";
 
 async function httpJson(url, options = {}) {
   const res = await fetch(url, {
@@ -30,5 +30,5 @@ export const notificationService = {
 
   async ping() {
     return httpJson(`${baseUrl}/ping`);
-  }
+  },
 };
