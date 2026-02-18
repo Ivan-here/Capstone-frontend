@@ -1,9 +1,14 @@
 import Button from "@/components/ui/Button";
+import {useNavigate} from "react-router-dom";
 
 export default function UserProfileLeft({ profile, aboutExpanded, onToggleAbout }) {
     const aboutShort =
         profile?.about?.length > 140 ? profile.about.slice(0, 140) + "..." : profile?.about;
 
+    const fullName = `${profile?.firstName ?? ""} ${profile?.lastName ?? ""}`.trim();
+    const hasDisplayName = profile?.displayName?.trim();
+    const displayName = hasDisplayName ? profile.displayName.trim() : fullName;
+    const navigate = useNavigate();
     return (
         <>
             <div className="card profileCard">
@@ -12,11 +17,16 @@ export default function UserProfileLeft({ profile, aboutExpanded, onToggleAbout 
                 </div>
 
                 <div className="profileMeta">
-                    <div className="name">{profile.fullName}</div>
+                    <div className="name">{displayName}</div>
+                    {hasDisplayName && (
+                        <div className="muted" style={{ fontSize: 14 }}>
+                            {fullName}
+                        </div>
+                    )}
                     <div className="role">{profile.role}</div>
                     <div className="location">{profile.location}</div>
 
-                    <Button className="primaryBtn" variant="primary">
+                    <Button className="primaryBtn" variant="primary" type="button" onClick={() => navigate("/profile/edit")}>
                         Edit profile
                     </Button>
                 </div>

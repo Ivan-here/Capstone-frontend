@@ -34,22 +34,24 @@
 }
 
 
-.fieldLabel {
-    margin-bottom: 6px;
-    font-weight: 700;
-    color: #3e3b32;
-    text-align: center;
-}
-
-.fieldRow {
-    display: flex;
-    flex-direction: column;
+.registerPage .fieldRow {
+    display: grid;
+    grid-template-columns: 170px 1fr; /* left = label, right = input */
     align-items: center;
+    gap: 12px;
     width: 100%;
 }
 
-.registerForm input,
-.registerForm select {
+/* label on the left, aligned nicely */
+.registerPage .fieldLabel {
+    margin: 0;              /* important: remove bottom margin */
+    font-weight: 700;
+    color: #3e3b32;
+    text-align: right;      /* label hugs the input */
+}
+
+.registerPage .registerForm input,
+.registerPage .registerForm select {
     width: 320px;
     padding: 8px 12px;
     border-radius: 6px;
@@ -96,7 +98,6 @@
     cursor: pointer;
     transition: 0.2s ease;
 }
-
 
 /* Footer */
 .registerFooter {
