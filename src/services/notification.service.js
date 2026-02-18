@@ -1,4 +1,4 @@
-const baseUrl = "http://localhost:8085"; // change if your backend runs elsewhere
+const baseUrl = "http://localhost:8085"; 
 
 async function httpJson(url, options = {}) {
   const res = await fetch(url, {

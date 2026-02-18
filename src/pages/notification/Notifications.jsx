@@ -82,7 +82,7 @@ const Notifications = ({ isOpen, onClose }) => {
         try {
           data = await notificationService.listByUser(userId);
 
-          // If backend returns empty, use fallback so UI still looks good
+         
           if (!data || data.length === 0) data = DUMMY_NOTIFICATIONS;
         } catch (e) {
           data = DUMMY_NOTIFICATIONS;
