@@ -10,6 +10,7 @@ import RegistrationPage from "../pages/Registration/RegistrationPage.jsx";
 import RegistrationVerification from "../pages/Registration/RegistrationVerification.jsx";
 import ProfilePage from "../pages/Profile/ProfilePage.jsx";
 import { CartProvider } from '../pages/cart/CartContext';
+import Community from '../pages/community/Community.jsx';
 import EditPersonalProfilePage from "@/pages/Profile/EditPersonalProfilePage";
 import EditBusinessProfilePage from "@/pages/Profile/EditBusinessProfilePage";
 
@@ -49,7 +50,7 @@ function App() {
                         <Route path="/browse" element={<Browse />} />
                         <Route path="/product/:id" element={<ProductDetails />} />
                         <Route path="/cart" element={<Cart />} />
-                        <Route path="/community" element={<div className="p-10 text-center">Community Page Coming Soon</div>} />
+                        <Route path="/community" element={<Community />} />
                         <Route path="*" element={<NotFound />} />
                     </Route>
                 </Routes>
