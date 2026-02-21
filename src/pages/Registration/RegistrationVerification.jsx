@@ -5,7 +5,6 @@ import { profileService } from "@/services/profile.service";
 
 import Button from "@/components/ui/Button";
 import Input from "@/components/ui/Input";
-import { profileInternalService } from "@/services/profileInternal.service";
 
 export default function RegistrationVerification() {
     const { role } = useParams();
@@ -61,10 +60,9 @@ export default function RegistrationVerification() {
 
             // 1) Create business profile for the logged-in user (JWT required)
             await profileService.upsertBusiness({
-                // ⚠️ adjust keys if your BusinessProfileRequest uses different field names
+                address: form.address,
                 name: form.name,
                 businessType: String(role || "").toUpperCase(), // FARMER / NGO / RESTAURANT
-                address: form.address,
                 email: form.email,
                 description: form.description,
             });
