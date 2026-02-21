@@ -1,4 +1,4 @@
-const baseUrl = "/notifications-api";
+const baseUrl = "http://localhost:9000/notifications-api";
 
 async function httpJson(url, options = {}) {
   const res = await fetch(url, {
