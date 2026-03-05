@@ -1,0 +1,61 @@
+.grid-card {
+    background: transparent;
+    border: 1px solid #D1CBB3;
+    border-radius: 20px;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.grid-card-content {
+    display: flex;
+    gap: 15px;
+    align-items: flex-start;
+}
+
+.grid-img {
+    width: 90px;
+    height: 90px;
+    border-radius: 12px;
+    object-fit: cover;
+}
+
+.grid-text h3 {
+    margin: 0;
+    font-size: 18px;
+    color: #333;
+}
+
+.grid-desc {
+    margin: 5px 0;
+    font-size: 14px;
+    color: #666;
+    line-height: 1.2;
+}
+
+.grid-price {
+    color: #8B3A3A;
+    font-weight: bold;
+    font-size: 18px;
+    margin: 8px 0 0;
+}
+
+.grid-card-actions {
+    display: flex;
+    gap: 15px;
+    margin-top: 10px;
+}
+
+.btn-grid-edit, .btn-grid-delete {
+    flex: 1;
+    padding: 8px;
+    border-radius: 8px;
+    border: none;
+    font-weight: 600;
+    color: white;
+    cursor: pointer;
+}
+
+.btn-grid-edit { background-color: #7A8F70; }
+.btn-grid-delete { background-color: #8B3A3A; }

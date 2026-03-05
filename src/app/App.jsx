@@ -16,6 +16,10 @@ import EditBusinessProfilePage from "@/pages/Profile/EditBusinessProfilePage";
 
 // IMPORT THE SPLASH SCREEN
 import SplashScreen from '../pages/Splash/Splash.jsx';
+import FarmersHub from "@/pages/FarmerHub/FarmersHub.jsx";
+import ProductEditor from "@/pages/FarmerHub/ProductEditor.jsx";
+import SurplusEditor from "@/pages/RestaurantHub/SurplusEditor.jsx";
+import RestaurantHub from "@/pages/RestaurantHub/RestaurantHub.jsx";
 
 function App() {
     // 1. STATE: Is the app loading?
@@ -52,6 +56,12 @@ function App() {
                         <Route path="/cart" element={<Cart />} />
                         <Route path="/community" element={<Community />} />
                         <Route path="*" element={<NotFound />} />
+                        <Route path="/farmer-hub" element={<FarmersHub />} />
+                        <Route path="/add-product" element={<ProductEditor mode="add" />} />
+                        <Route path="/edit-product/:id" element={<ProductEditor mode="edit" />} />
+                        <Route path="/restaurant-hub" element={<RestaurantHub />} />
+                        <Route path="/add-surplus" element={<SurplusEditor mode="add" />} />
+                        <Route path="/edit-surplus/:id" element={<SurplusEditor mode="edit" />} />
                     </Route>
                 </Routes>
             </BrowserRouter>
