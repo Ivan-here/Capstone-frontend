@@ -1,8 +1,17 @@
 import React, { useState, useEffect } from 'react';
 import { Filter, Search, X } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { listingService } from '../../services/listing.service';
+import { listingService } from '@/services/listing.service.js';
 import './Browse.css';
+
+// Helper to turn "2026-03-20T23:59:59" into "Mar 20, 2026"
+const formatDate = (dateString) => {
+    if (!dateString) return '';
+    const datePart = dateString.split('T')[0]; // Grabs just the "2026-03-20"
+    const [year, month, day] = datePart.split('-');
+    const date = new Date(year, month - 1, day);
+    return date.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
+};
 
 const Browse = () => {
     const [listings, setListings] = useState([]);
@@ -15,8 +24,6 @@ const Browse = () => {
 
     const navigate = useNavigate();
 
-    // --- 1. DEFINE CATEGORY GROUPS ---
-    // This connects your Filter Buttons (Keys) to your Backend Data (Values)
     const CATEGORY_GROUPS = {
         "Vegetables": ["vegetables", "veggies", "food", "farm_product"],
         "Fruits": ["fruits", "fruit", "food", "farm_product"],
@@ -30,13 +37,20 @@ const Browse = () => {
                 setLoading(true);
                 const data = await listingService.getAllListings();
 
-                const mappedData = data.map(item => ({
-                    ...item,
-                    id: item.listingId || item.id,
-                    // Fallback image logic
-                    imageUrl: item.imageUrl || "https://images.unsplash.com/photo-1550989460-0adf9ea622e2?auto=format&fit=crop&w=400&q=80",
-                    tag: item.type === "SURPLUS_FOOD" ? "Donation !" : ""
-                }));
+                const mappedData = data.map(item => {
+                    const firstImage = item.imageUrls && item.imageUrls.length > 0
+                        ? item.imageUrls[0]
+                        : "https://images.unsplash.com/photo-1550989460-0adf9ea622e2?auto=format&fit=crop&w=400&q=80";
+
+                    return {
+                        ...item,
+                        id: item.listingId || item.id,
+                        imageUrl: firstImage,
+                        // Apply the beautiful date formatting here!
+                        expiryDate: formatDate(item.expiryDate),
+                        tag: item.price === 0 ? "Donation !" : ""
+                    };
+                });
 
                 setListings(mappedData);
                 setLoading(false);
@@ -58,25 +72,27 @@ const Browse = () => {
         }
     };
 
-    // --- SMART FILTER LOGIC ---
     const filteredListings = listings.filter(item => {
-        // 1. Search Filter
         const matchesSearch = item.title.toLowerCase().includes(searchTerm.toLowerCase());
-
-        // 2. Category Filter (The Smart Part)
         let matchesCategory = true;
 
         if (selectedCategories.length > 0) {
-            // Check if the item's backend category exists in ANY of the selected filter groups
             matchesCategory = selectedCategories.some(filterName => {
                 const allowedValues = CATEGORY_GROUPS[filterName] || [filterName.toLowerCase()];
-                // We check if the item's category (e.g., "food") is in the allowed list for this filter
                 return item.category && allowedValues.includes(item.category.toLowerCase());
             });
         }
 
         return matchesSearch && matchesCategory;
     });
+
+    const formatQuantityText = (qty, unit) => {
+        if (!unit) return qty;
+        if (unit.toLowerCase() === 'each' || unit.toLowerCase() === 'item') {
+            return `${qty} available`;
+        }
+        return `${qty} ${unit}`;
+    };
 
     if (loading) return <div className="browse-wrapper center-content"><h2>Loading Fresh Products...</h2></div>;
     if (error) return <div className="browse-wrapper center-content"><h2>{error}</h2></div>;
@@ -95,7 +111,6 @@ const Browse = () => {
                 <div className="filter-scroll-area">
                     <div className="filter-group">
                         <h3>Category</h3>
-                        {/* Render buttons for our defined Groups */}
                         {Object.keys(CATEGORY_GROUPS).map(cat => (
                             <label key={cat}>
                                 <input
@@ -150,11 +165,24 @@ const Browse = () => {
                                 {item.tag && <div className="tile-tag">{item.tag}</div>}
                                 <div className="tile-content">
                                     <div className="tile-image">
-                                        <img src={item.imageUrl} alt={item.title} />
+                                        <img
+                                            src={item.imageUrl}
+                                            alt={item.title}
+                                            style={{ objectFit: 'cover' }}
+                                        />
                                     </div>
                                     <div className="tile-info">
                                         <h3>{item.title}</h3>
-                                        <p>{item.description}</p>
+
+                                        <p>{formatQuantityText(item.quantity, item.unit)}{item.description ? `, ${item.description}` : ''}</p>
+
+                                        {/* Now renders safely and cleanly! */}
+                                        {item.price === 0 && item.expiryDate && (
+                                            <p style={{ fontWeight: '600', color: '#A03C3C', marginTop: '2px', fontSize: '0.8rem' }}>
+                                                Available Until: {item.expiryDate}
+                                            </p>
+                                        )}
+
                                         <div className="tile-price">
                                             {item.price > 0 ? `$${Number(item.price).toFixed(2)}/${item.unit}` : "Free"}
                                         </div>

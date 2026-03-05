@@ -1,6 +1,6 @@
-const BASE_URL = "http://localhost:9000";
+export const BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:9000";
 
-function getToken() {
+export function getToken() {
     return localStorage.getItem("accessToken");
 }
 
