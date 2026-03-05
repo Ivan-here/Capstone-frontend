@@ -33,9 +33,7 @@ export default function ProfilePage() {
                 }
                 setUserProfile(data.personalProfile);
                 setBusinessProfile(data.businessProfile ?? null);
-                // eslint-disable-next-line no-unused-vars
             } catch (err) {
-                // If backend returns 401 or anything suspicious
                 authService.logout();
                 navigate("/login", { replace: true });
             } finally {
@@ -43,6 +41,7 @@ export default function ProfilePage() {
             }
         })();
     }, [navigate]);
+
     const hasBusinessProfile = !!businessProfile;
 
     function logout() {
@@ -78,10 +77,10 @@ export default function ProfilePage() {
                         {activeTab === "USER" ? (
                             <UserProfileRight profile={userProfile} />
                         ) : (
-                            <BusinessProfileRight businessStats={{
-                                activeListings: businessProfile?.activeListings ?? 0,
-                                ordersThisMonth: businessProfile?.ordersThisMonth ?? 0
-                            }} />
+                            <BusinessProfileRight
+                                businessProfile={businessProfile}
+                                userId={userProfile.userId}
+                            />
                         )}
                     </section>
                     <div className="profileFooter">

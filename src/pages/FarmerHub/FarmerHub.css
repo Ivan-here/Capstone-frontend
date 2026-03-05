@@ -1,0 +1,73 @@
+.hub-internal-container {
+    background-color: transparent;
+    padding: 30px 0;
+}
+
+.hub-toolbar {
+    display: flex;
+    gap: 15px;
+    align-items: center;
+    margin-bottom: 30px;
+}
+
+.filter-icon-btn {
+    background: transparent;
+    border: 1px solid #333;
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+}
+
+.hub-search-input {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    background: transparent;
+    padding: 12px 20px;
+    border-radius: 50px;
+    border: 1px solid #7A8F70;
+}
+
+.hub-search-input input {
+    border: none;
+    outline: none;
+    width: 100%;
+    margin-left: 10px;
+    font-size: 16px;
+    background: transparent;
+}
+
+.add-product-btn {
+    background-color: #7A8F70;
+    color: white;
+    padding: 12px 25px;
+    border-radius: 12px;
+    border: none;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+/* Updated Grid Layout */
+.hub-listing-grid {
+    display: grid;
+    /* This forces exactly 3 wide cards per row, matching your browse page */
+    grid-template-columns: repeat(3, 1fr);
+    gap: 25px;
+}
+
+/* Optional: Ensures it doesn't break on smaller laptops/tablets */
+@media (max-width: 1200px) {
+    .hub-listing-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (max-width: 768px) {
+    .hub-listing-grid {
+        grid-template-columns: 1fr;
+    }
+}

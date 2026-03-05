@@ -2,6 +2,7 @@ import { useMemo, useState } from "react";
 import "./registration-verification.css";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
 import { profileService } from "@/services/profile.service";
+import { verificationService } from "@/services/verification.service"; // NEW IMPORT
 
 import Button from "@/components/ui/Button";
 import Input from "@/components/ui/Input";
@@ -13,7 +14,7 @@ export default function RegistrationVerification() {
     const location = useLocation();
     const navigate = useNavigate();
 
-    const userId = location.state?.userId; // passed from Register page
+    const userId = location.state?.userId;
 
     const [form, setForm] = useState({
         name: "",
@@ -43,8 +44,10 @@ export default function RegistrationVerification() {
         if (!form.email.trim()) e.email = `${ui.emailLabel} is required.`;
         else if (!/^\S+@\S+\.\S+$/.test(form.email.trim())) e.email = "Invalid email.";
 
-        // DEV FOR NOW: no documents required
-        // if (!form.documents || form.documents.length === 0) e.documents = "Please upload verification documents.";
+        // ACTIVATED: Documents are now mandatory!
+        if (!form.documents || form.documents.length === 0) {
+            e.documents = "Please upload verification documents to prove your business is legitimate.";
+        }
 
         return e;
     }
@@ -58,15 +61,35 @@ export default function RegistrationVerification() {
         try {
             setLoading(true);
 
-            // 1) Create business profile for the logged-in user (JWT required)
+            // 1) Create business profile
             await profileService.upsertBusiness({
                 address: form.address,
                 name: form.name,
-                businessType: String(role || "").toUpperCase(), // FARMER / NGO / RESTAURANT
+                businessType: String(role || "").toUpperCase(),
                 email: form.email,
                 description: form.description,
             });
 
+            // 2) Build FormData for Verification Service
+            const formData = new FormData();
+
+            // Build the JSON DTO exactly as backend expects
+            const verificationRequest = {
+                userId: userId,
+                type: String(role || "").toUpperCase()
+            };
+
+            formData.append("request", new Blob([JSON.stringify(verificationRequest)], {
+                type: "application/json"
+            }));
+
+            // Append the actual file (taking the first file since backend expects one)
+            formData.append("document", form.documents[0]);
+
+            // 3) Submit to Verification Backend
+            await verificationService.submitVerification(formData);
+
+            // Navigate to home/dashboard upon complete success
             navigate("/");
         } catch (err) {
             setErrors((p) => ({
@@ -103,7 +126,7 @@ export default function RegistrationVerification() {
 
         if (r === "NGO") {
             return {
-                title: "REGISTER AS A NGO",
+                title: "REGISTER AS AN NGO",
                 nameLabel: "Organization Name",
                 addressLabel: "Organization Address",
                 emailLabel: "Organization email",
@@ -164,7 +187,6 @@ export default function RegistrationVerification() {
                         />
                     </div>
 
-                    {/* keep upload UI if you want, but it's not validated/used yet */}
                     <div className="fieldRow">
                         <label className="fieldLabel">Verification Documents:</label>
                         <div className="uploadWrap">
@@ -174,18 +196,15 @@ export default function RegistrationVerification() {
                                 <input
                                     type="file"
                                     className="uploadInput"
-                                    multiple
                                     onChange={(e) => setField("documents", e.target.files)}
                                 />
                             </label>
 
                             {form.documents && form.documents.length > 0 && (
                                 <div className="fileList">
-                                    {Array.from(form.documents).map((f) => (
-                                        <div key={f.name} className="fileItem">
-                                            {f.name}
-                                        </div>
-                                    ))}
+                                    <div className="fileItem">
+                                        {form.documents[0].name}
+                                    </div>
                                 </div>
                             )}
 
