@@ -63,10 +63,9 @@ export default function RegistrationPage() {
 
             // 2) ALWAYS create/upsert personal profile
             await profileService.upsertPersonal({
-                // ⚠️ Rename keys to match PersonalProfileRequest
-                firstName: form.firstName,
-                lastName: form.lastName,
                 username: form.username,
+                lastName: form.lastName,
+                firstName: form.firstName,
                 displayName: form.displayName,
                 contactNumber: form.contactNumber,
                 email: form.email,
