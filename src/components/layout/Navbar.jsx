@@ -11,7 +11,7 @@ const Navbar = () => {
     const userLink = token ? "/profile" : "/login";
 
     // Helper: Check if we are currently on the Cart page
-    const isCartActive = location.pathname === '/cart';
+    const isCartActive = location.pathname.startsWith('/cart');
     const isProfileActive = location.pathname.indexOf("/profile") === 0;
 
     return (
@@ -72,7 +72,7 @@ const Navbar = () => {
                 <div className="nav-divider"></div>
                 <Link
                     to="/community"
-                    className={`nav-tab ${location.pathname === '/community' ? 'active' : ''}`}
+                    className={`nav-tab ${location.pathname.startsWith('/community') || location.pathname.startsWith('/ngo-hub') ? 'active' : ''}`}
                 >
                     COMMUNITY
                 </Link>
