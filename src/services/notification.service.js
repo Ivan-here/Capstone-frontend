@@ -1,36 +1,49 @@
-import { BASE_URL } from "./http";
+import { apiFetch } from "./http";
 
-const baseUrl = `${BASE_URL}/notifications-api`;
+function buildQuery(params = {}) {
+  const search = new URLSearchParams();
 
-async function httpJson(url, options = {}) {
-  const res = await fetch(url, {
-    headers: { "Content-Type": "application/json", ...(options.headers || {}) },
-    ...options,
+  Object.entries(params).forEach(([key, value]) => {
+    if (value !== undefined && value !== null && value !== "") {
+      search.set(key, value);
+    }
   });
 
-  if (!res.ok) {
-    const text = await res.text().catch(() => "");
-    throw new Error(`HTTP ${res.status}: ${text || res.statusText}`);
-  }
-
-  const contentType = res.headers.get("content-type") || "";
-  if (contentType.includes("application/json")) return res.json();
-  return null;
+  const query = search.toString();
+  return query ? `?${query}` : "";
 }
 
 export const notificationService = {
-  async listByUser(userId) {
-    return httpJson(`${baseUrl}/notifications?userId=${encodeURIComponent(userId)}`);
+  listByUser(userId, filters = {}) {
+    return apiFetch(`/notifications${buildQuery({ userId, ...filters })}`);
   },
 
-  async create(notification) {
-    return httpJson(`${baseUrl}/notifications`, {
+  getUnreadCount(userId) {
+    return apiFetch(`/notifications/unread-count${buildQuery({ userId })}`);
+  },
+
+  create(notification) {
+    return apiFetch(`/notifications`, {
       method: "POST",
       body: JSON.stringify(notification),
     });
   },
 
-  async ping() {
-    return httpJson(`${baseUrl}/ping`);
+  markRead(notificationId, read = true) {
+    return apiFetch(`/notifications/${notificationId}/read${buildQuery({ read })}`, {
+      method: "PATCH",
+    });
+  },
+
+  markAllRead(userId) {
+    return apiFetch(`/notifications/user/${encodeURIComponent(userId)}/read-all`, {
+      method: "PATCH",
+    });
+  },
+
+  delete(notificationId) {
+    return apiFetch(`/notifications/${notificationId}`, {
+      method: "DELETE",
+    });
   },
 };

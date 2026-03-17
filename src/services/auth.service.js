@@ -84,6 +84,11 @@ export const authService = {
         return getRolesFromToken(token);
     },
 
+    getUserId() {
+        const payload = this.getUserPayload();
+        return payload?.userId || payload?.sub || null;
+    },
+
     hasRole(role) {
         const normalized = String(role).toUpperCase().replace(/^ROLE_/, "").trim();
         return this.getRoles()

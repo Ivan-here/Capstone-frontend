@@ -1,142 +1,109 @@
 import React, { useEffect, useMemo, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import './Notifications.css';
 import { notificationService } from '../../services/notification.service';
+import { authService } from '../../services/auth.service';
 import { timeAgo, titleFromType } from '../../utils/notification.utils';
 
-const READ_STORAGE_KEY = "read-notification-ids";
-
-/** Fallback demo notifications */
-const DUMMY_NOTIFICATIONS = [
-  {
-    id: "dummy-1",
-    userId: "demo-user-1",
-    type: "alert",
-    message: "The apples in your cart are no longer available",
-    createdAt: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
-    read: false,
-  },
-  {
-    id: "dummy-2",
-    userId: "demo-user-1",
-    type: "success",
-    message: "The baked goods you reserved are available",
-    createdAt: new Date(Date.now() - 3 * 60 * 60 * 1000).toISOString(),
-    read: false,
-  },
-  {
-    id: "dummy-3",
-    userId: "demo-user-1",
-    type: "info",
-    message: "There are new posts in the community",
-    createdAt: new Date(Date.now() - 6 * 60 * 60 * 1000).toISOString(),
-    read: true,
-  },
-  {
-    id: "dummy-4",
-    userId: "demo-user-1",
-    type: "info",
-    message: "There is one new like on your post",
-    createdAt: new Date(Date.now() - 10 * 60 * 60 * 1000).toISOString(),
-    read: true,
-  },
-];
-
-function getUserId() {
-  // Temporary until you have auth/login
-  return localStorage.getItem("userId") || "demo-user-1";
-}
-
-function getReadSet() {
-  try {
-    const raw = localStorage.getItem(READ_STORAGE_KEY);
-    const arr = raw ? JSON.parse(raw) : [];
-    return new Set(arr);
-  } catch {
-    return new Set();
-  }
-}
-
-function saveReadSet(set) {
-  localStorage.setItem(READ_STORAGE_KEY, JSON.stringify([...set]));
+function mapNotification(n) {
+  return {
+    id: n.id,
+    title: titleFromType(n.type, n.title),
+    time: timeAgo(n.createdAt),
+    message: n.message,
+    type: n.type,
+    read: !!n.read,
+    createdAt: n.createdAt,
+    targetUrl: n.targetUrl || null,
+    actorDisplayName: n.actorDisplayName || null,
+    actorUsername: n.actorUsername || null,
+    referenceId: n.referenceId || null,
+  };
 }
 
 const Notifications = ({ isOpen, onClose }) => {
+  const navigate = useNavigate();
   const [notes, setNotes] = useState([]);
-  const [readSet, setReadSet] = useState(() => getReadSet());
   const [loading, setLoading] = useState(false);
-  const [errMsg, setErrMsg] = useState("");
+  const [errMsg, setErrMsg] = useState('');
 
-  const unreadCount = useMemo(() => notes.filter(n => !n.read).length, [notes]);
+  const userId = authService.getUserId();
+  const isLoggedIn = authService.isLoggedIn();
+  const unreadCount = useMemo(() => notes.filter((n) => !n.read).length, [notes]);
 
   useEffect(() => {
     if (!isOpen) return;
 
     const load = async () => {
+      if (!isLoggedIn || !userId) {
+        setNotes([]);
+        setErrMsg('');
+        return;
+      }
+
       try {
-        setErrMsg("");
+        setErrMsg('');
         setLoading(true);
 
-        const userId = getUserId();
-
-        let data;
-        try {
-          data = await notificationService.listByUser(userId);
-
-         
-          if (!data || data.length === 0) data = DUMMY_NOTIFICATIONS;
-        } catch (e) {
-          data = DUMMY_NOTIFICATIONS;
-
-        }
-        const freshReadSet = getReadSet();
-
-        const mapped = (data || []).map((n) => {
-          const locallyRead = freshReadSet.has(n.id);
-          return {
-            id: n.id,
-            title: titleFromType(n.type),
-            time: timeAgo(n.createdAt),
-            message: n.message,
-            type: n.type,
-            read: !!n.read || locallyRead,
-            createdAt: n.createdAt
-          };
-        });
+        const data = await notificationService.listByUser(userId);
+        const mapped = (Array.isArray(data) ? data : []).map(mapNotification);
 
         setNotes(mapped);
       } catch (e) {
-        setErrMsg(e.message || "Failed to load notifications");
+        setErrMsg(e.message || 'Failed to load notifications.');
+        setNotes([]);
       } finally {
         setLoading(false);
       }
     };
 
     load();
-  }, [isOpen]);
+  }, [isOpen, isLoggedIn, userId]);
 
-  const markOneRead = (id) => {
-    const next = new Set(readSet);
-    next.add(id);
-    setReadSet(next);
-    saveReadSet(next);
+  const handleNotificationClick = async (note) => {
+    try {
+      if (!note.read) {
+        const updated = await notificationService.markRead(note.id, true);
+        setNotes((prev) => prev.map((item) => (
+          item.id === note.id
+            ? (updated ? mapNotification(updated) : { ...item, read: true })
+            : item
+        )));
+      }
+    } catch (e) {
+      setErrMsg(e.message || 'Failed to update the notification.');
+    }
 
-    setNotes(prev => prev.map(n => n.id === id ? { ...n, read: true } : n));
+    if (note.targetUrl) {
+      navigate(note.targetUrl);
+      onClose?.();
+    }
   };
 
-  const markAllRead = () => {
-    const next = new Set(readSet);
-    notes.forEach(n => next.add(n.id));
-    setReadSet(next);
-    saveReadSet(next);
+  const markAllRead = async () => {
+    if (!userId || unreadCount === 0) return;
 
-    setNotes(prev => prev.map(n => ({ ...n, read: true })));
+    try {
+      const updated = await notificationService.markAllRead(userId);
+      if (Array.isArray(updated) && updated.length > 0) {
+        const updatedMap = new Map(updated.map((item) => [item.id, item]));
+        setNotes((prev) => prev.map((item) => {
+          const fresh = updatedMap.get(item.id);
+          return fresh ? mapNotification(fresh) : { ...item, read: true };
+        }));
+      } else {
+        setNotes((prev) => prev.map((item) => ({ ...item, read: true })));
+      }
+      setErrMsg('');
+    } catch (e) {
+      setErrMsg(e.message || 'Failed to mark all notifications as read.');
+    }
   };
 
   if (!isOpen) return null;
 
   return (
     <>
-      {}
       <div className="notification-backdrop" onClick={onClose}></div>
 
       <div className="notification-dropdown">
@@ -146,22 +113,34 @@ const Notifications = ({ isOpen, onClose }) => {
           <button
             className="notification-markall"
             onClick={markAllRead}
-            disabled={unreadCount === 0}
+            disabled={!isLoggedIn || unreadCount === 0}
             title="Mark all as read"
           >
             Mark all read
           </button>
         </div>
 
+        {!isLoggedIn && (
+          <div className="notification-meta">Log in to see your notifications.</div>
+        )}
+
         {loading && <div className="notification-meta">Loading...</div>}
         {errMsg && <div className="notification-error">{errMsg}</div>}
 
         <div className="notification-list">
-          {notes.map((note) => (
+          {!loading && isLoggedIn && notes.map((note) => (
             <div
               key={note.id}
-              className={`notification-item ${note.read ? "read" : "unread"}`}
-              onClick={() => markOneRead(note.id)}
+              className={`notification-item ${note.read ? 'read' : 'unread'}`}
+              onClick={() => handleNotificationClick(note)}
+              role="button"
+              tabIndex={0}
+              onKeyDown={(event) => {
+                if (event.key === 'Enter' || event.key === ' ') {
+                  event.preventDefault();
+                  handleNotificationClick(note);
+                }
+              }}
             >
               <div className="note-top-row">
                 <span className="note-title">
@@ -171,10 +150,11 @@ const Notifications = ({ isOpen, onClose }) => {
                 <span className="note-time">{note.time}</span>
               </div>
               <p className="note-message">{note.message}</p>
+              {note.targetUrl && <div className="note-action">Open</div>}
             </div>
           ))}
 
-          {!loading && !errMsg && notes.length === 0 && (
+          {!loading && isLoggedIn && !errMsg && notes.length === 0 && (
             <div className="notification-meta">No notifications yet.</div>
           )}
         </div>

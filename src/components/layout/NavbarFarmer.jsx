@@ -11,7 +11,7 @@ const NavbarFarmer = () => {
     const userLink = token ? "/profile" : "/login";
 
     // Helper: Check if we are on the Cart page
-    const isCartActive = location.pathname === '/cart';
+    const isCartActive = location.pathname.startsWith('/cart');
     const isProfileActive = location.pathname.indexOf("/profile") === 0;
 
     return (
@@ -59,7 +59,7 @@ const NavbarFarmer = () => {
             <div className="navbar-bottom">
                 <Link
                     to="/community"
-                    className={`nav-tab ${location.pathname === '/community' ? 'active' : ''}`}
+                    className={`nav-tab ${location.pathname.startsWith('/community') || location.pathname.startsWith('/ngo-hub') ? 'active' : ''}`}
                 >
                     COMMUNITY
                 </Link>
@@ -77,7 +77,7 @@ const NavbarFarmer = () => {
 
                 <Link
                     to="/farmer-hub"
-                    className={`nav-tab ${location.pathname === '/farmer-hub' ? 'active' : ''}`}
+                    className={`nav-tab ${location.pathname.startsWith('/farmer-hub') ? 'active' : ''}`}
                 >
                     FARMER'S HUB
                 </Link>
