@@ -465,7 +465,7 @@ const Community = () => {
             <div className="composer-title-row">
               <div>
                 <h2 className="composer-title">Create a post</h2>
-                <p className="composer-subtitle">This writes directly into the new community-service backend.</p>
+                <p className="composer-subtitle">Make a post!</p>
               </div>
               {isLoggedIn && (
                 <div className="composer-meta-chip">
