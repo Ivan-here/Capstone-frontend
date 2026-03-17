@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Star, ArrowLeft, CheckCircle } from 'lucide-react';
-import { listingService } from '../../services/listing.service';
+import { listingService } from '@/services/listing.service.js';
 import { useCart } from '../cart/CartContext.jsx';
 import './ProductDetails.css';
 
@@ -15,43 +15,43 @@ const ProductDetails = () => {
     const [error, setError] = useState(null);
     const [mainImage, setMainImage] = useState("");
 
-    // 1. Toast State (Keep this!)
+    // Toast State for "Add to Cart" feedback
     const [showToast, setShowToast] = useState(false);
 
-    // --- FETCH DATA (Listing Only) ---
     useEffect(() => {
         const loadPageData = async () => {
             try {
                 setLoading(true);
 
-                // Fetch Listing
+                // Fetch Listing from Backend
                 const data = await listingService.getListingById(id);
 
-                // Map Data (Simple Seller Name based on ID)
+                // Use the Cloudinary URLs from your MongoDB
+                // Fallback to a single placeholder only if the array is empty
+                const productImages = data.imageUrls && data.imageUrls.length > 0
+                    ? data.imageUrls
+                    : ["https://images.unsplash.com/photo-1550989460-0adf9ea622e2?auto=format&fit=crop&w=600&q=80"];
+
                 const mappedProduct = {
                     id: data.listingId || data.id,
                     title: data.title,
                     price: data.price,
                     unit: data.unit,
                     description: data.description,
-                    rating: 4.5,
+                    rating: 4.5, // Currently static, can be linked to a review service later
                     seller: {
-                        // Just show the ID for now
-                        name: `Seller #${data.ownerId ? data.ownerId.substring(0,6) : "Unknown"}`,
+                        // Use the actual businessName returned by your Listing Service
+                        name: data.businessName || `Seller #${data.ownerId?.substring(0,6)}`,
                         bio: "This seller is verified and uses sustainable farming practices."
                     },
-                    images: [
-                        data.imageUrl || "https://images.unsplash.com/photo-1550989460-0adf9ea622e2?auto=format&fit=crop&w=600&q=80",
-                        "https://images.unsplash.com/photo-1605252814868-6c07156d9539?auto=format&fit=crop&w=150&q=80",
-                        "https://images.unsplash.com/photo-1559181567-c3190ca9959b?auto=format&fit=crop&w=150&q=80"
-                    ]
+                    images: productImages
                 };
 
                 setProduct(mappedProduct);
-                setMainImage(mappedProduct.images[0]);
+                setMainImage(productImages[0]); // Default to the first Cloudinary image
                 setLoading(false);
             } catch (err) {
-                console.error(err);
+                console.error("Error loading product details:", err);
                 setError("Product not found or service is down.");
                 setLoading(false);
             }
@@ -60,11 +60,10 @@ const ProductDetails = () => {
         if (id) loadPageData();
     }, [id]);
 
-    // 2. Handle Add to Cart with Toast
     const handleAddToCart = () => {
         addToCart(product);
         setShowToast(true);
-        setTimeout(() => setShowToast(false), 3000); // Hide after 3 seconds
+        setTimeout(() => setShowToast(false), 3000);
     };
 
     if (loading) return <div className="pd-wrapper center-content"><h2>Loading details...</h2></div>;
@@ -74,7 +73,7 @@ const ProductDetails = () => {
     return (
         <div className="pd-wrapper">
 
-            {/* 3. TOAST NOTIFICATION POPUP */}
+            {/* TOAST NOTIFICATION POPUP */}
             {showToast && (
                 <div className="toast-notification">
                     <CheckCircle size={20} className="toast-success-icon" />
@@ -88,7 +87,7 @@ const ProductDetails = () => {
                 </button>
 
                 <div className="pd-content">
-                    {/* LEFT COLUMN */}
+                    {/* LEFT COLUMN: Gallery & Actions */}
                     <div className="pd-left-column">
                         <div className="gallery-wrapper">
                             <div className="thumbnails">
@@ -98,12 +97,12 @@ const ProductDetails = () => {
                                         src={img}
                                         className={`thumb ${mainImage === img ? 'active' : ''}`}
                                         onClick={() => setMainImage(img)}
-                                        alt="thumbnail"
+                                        alt={`Thumbnail ${idx + 1}`}
                                     />
                                 ))}
                             </div>
                             <div className="main-image-box">
-                                <img src={mainImage} alt="Main Product" />
+                                <img src={mainImage} alt={product.title} />
                             </div>
                         </div>
 
@@ -120,7 +119,7 @@ const ProductDetails = () => {
 
                             <button
                                 className="btn-cart"
-                                onClick={handleAddToCart} // <--- Uses the Toast function
+                                onClick={handleAddToCart}
                             >
                                 Add to cart
                             </button>
@@ -139,7 +138,7 @@ const ProductDetails = () => {
                         </div>
                     </div>
 
-                    {/* RIGHT COLUMN */}
+                    {/* RIGHT COLUMN: Product Info */}
                     <div className="pd-right-column">
                         <h1 className="pd-title">{product.title}</h1>
 
