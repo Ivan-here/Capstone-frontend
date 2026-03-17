@@ -27,9 +27,7 @@
 
 .profileContainer {
     width: 100%;
-    max-width: 1450px;
-
-    /* THIS is what makes it stretch */
+    max-width: 1400px;
     min-height: calc(100vh - 140px);
 
     background: rgba(255, 255, 255, 0.16);
