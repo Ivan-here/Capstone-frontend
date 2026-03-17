@@ -7,7 +7,7 @@ import Notifications from '../../pages/notification/Notifications.jsx';
 const NavbarRestaurant = () => {
     const location = useLocation();
     const [showNotifications, setShowNotifications] = useState(false);
-    const isCartActive = location.pathname === '/cart';
+    const isCartActive = location.pathname.startsWith('/cart');
     const isProfileActive = location.pathname.indexOf("/profile") === 0;
     const token = localStorage.getItem("accessToken");
     const userLink = token ? "/profile" : "/login";
@@ -53,7 +53,7 @@ const NavbarRestaurant = () => {
 
             {/* BOTTOM TABS: Community | Browse | Restaurant's Hub */}
             <div className="navbar-bottom">
-                <Link to="/community" className={`nav-tab ${location.pathname === '/community' ? 'active' : ''}`}>
+                <Link to="/community" className={`nav-tab ${location.pathname.startsWith('/community') || location.pathname.startsWith('/ngo-hub') ? 'active' : ''}`}>
                     COMMUNITY
                 </Link>
 
@@ -65,7 +65,7 @@ const NavbarRestaurant = () => {
 
                 <div className="nav-divider"></div>
 
-                <Link to="/restaurant-hub" className={`nav-tab ${location.pathname === '/restaurant-hub' ? 'active' : ''}`}>
+                <Link to="/restaurant-hub" className={`nav-tab ${location.pathname.startsWith('/restaurant-hub') ? 'active' : ''}`}>
                     RESTAURANT'S HUB
                 </Link>
             </div>

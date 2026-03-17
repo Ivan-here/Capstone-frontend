@@ -57,6 +57,24 @@ export const authService = {
     getToken() {
         return localStorage.getItem(TOKEN_KEY);
     },
+    // Add this right under getToken()
+    getUserPayload() {
+        const token = this.getToken();
+        if (!token) return null;
+        try {
+            // Decode the payload (middle part of the JWT)
+            const base64Url = token.split('.')[1];
+            const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+            const jsonPayload = decodeURIComponent(window.atob(base64).split('').map(function(c) {
+                return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+            }).join(''));
+
+            return JSON.parse(jsonPayload);
+        } catch (error) {
+            console.error("Failed to decode token", error);
+            return null;
+        }
+    },
 
     isLoggedIn() {
         return !!localStorage.getItem(TOKEN_KEY);
@@ -64,6 +82,11 @@ export const authService = {
     getRoles() {
         const token = localStorage.getItem("accessToken");
         return getRolesFromToken(token);
+    },
+
+    getUserId() {
+        const payload = this.getUserPayload();
+        return payload?.userId || payload?.sub || null;
     },
 
     hasRole(role) {
