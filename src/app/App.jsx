@@ -14,6 +14,17 @@ import Community from '../pages/community/Community.jsx';
 import EditPersonalProfilePage from "@/pages/Profile/EditPersonalProfilePage";
 import EditBusinessProfilePage from "@/pages/Profile/EditBusinessProfilePage";
 
+import AdminDashboard from "../pages/admin/AdminDashboard.jsx";
+import AdminUsers from "../pages/admin/AdminUsers.jsx";
+import AdminListings from "../pages/admin/AdminListings.jsx";
+import AdminOrders from "../pages/admin/AdminOrders.jsx";
+import AdminReservations from "../pages/admin/AdminReservations.jsx";
+import AdminProfiles from "../pages/admin/AdminProfiles.jsx";
+import AdminVerifications from "../pages/admin/AdminVerifications.jsx";
+import AdminNotifications from "../pages/admin/AdminNotifications.jsx";
+import AdminRoute from "./AdminRoute.jsx";
+
+
 // IMPORT THE SPLASH SCREEN
 import SplashScreen from '../pages/Splash/Splash.jsx';
 import FarmersHub from "@/pages/FarmerHub/FarmersHub.jsx";
@@ -62,6 +73,16 @@ function App() {
                         <Route path="/restaurant-hub" element={<RestaurantHub />} />
                         <Route path="/add-surplus" element={<SurplusEditor mode="add" />} />
                         <Route path="/edit-surplus/:id" element={<SurplusEditor mode="edit" />} />
+
+                        <Route path="/admin" element={<AdminRoute><Navigate to="/admin/dashboard" replace /></AdminRoute>} />
+                        <Route path="/admin/dashboard" element={<AdminRoute><AdminDashboard /></AdminRoute>} />
+                        <Route path="/admin/users" element={<AdminRoute><AdminUsers /></AdminRoute>} />
+                        <Route path="/admin/listings" element={<AdminRoute><AdminListings /></AdminRoute>} />
+                        <Route path="/admin/orders" element={<AdminRoute><AdminOrders /></AdminRoute>} />
+                        <Route path="/admin/reservations" element={<AdminRoute><AdminReservations /></AdminRoute>} />
+                        <Route path="/admin/profiles" element={<AdminRoute><AdminProfiles /></AdminRoute>} />
+                        <Route path="/admin/verifications" element={<AdminRoute><AdminVerifications /></AdminRoute>} />
+                        <Route path="/admin/notifications" element={<AdminRoute><AdminNotifications /></AdminRoute>} />
                     </Route>
                 </Routes>
             </BrowserRouter>
