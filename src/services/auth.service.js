@@ -85,6 +85,9 @@ export const authService = {
     },
 
     hasRole(role) {
-        return this.getRoles().includes(role);
+        const normalized = String(role).toUpperCase().replace(/^ROLE_/, "").trim();
+        return this.getRoles()
+            .map(r => String(r).toUpperCase().replace(/^ROLE_/, "").trim())
+            .includes(normalized);
     },
 };
