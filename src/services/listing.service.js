@@ -1,8 +1,11 @@
 import { apiFetch, BASE_URL, getToken } from "./http";
 
 export const listingService = {
-    async getAllListings() {
-        try { return await apiFetch("/api/listings"); }
+    async getAllListings(role = "CITIZEN") {
+        try {
+            // Now passes the role as a query param
+            return await apiFetch(`/api/listings?role=${role}`);
+        }
         catch (error) { throw error; }
     },
 

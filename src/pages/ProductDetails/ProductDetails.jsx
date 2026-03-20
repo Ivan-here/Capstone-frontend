@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Star, ArrowLeft, CheckCircle } from 'lucide-react';
+import { ArrowLeft, CheckCircle, Lock } from 'lucide-react';
 import { listingService } from '@/services/listing.service.js';
+import { reviewService } from '@/services/reviewService.js';
+import StarRating from '../myOrders/StarRating.jsx';
 import { useCart } from '../cart/CartContext.jsx';
 import './ProductDetails.css';
 
@@ -14,80 +16,71 @@ const ProductDetails = () => {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const [mainImage, setMainImage] = useState("");
-
-    // Toast State for "Add to Cart" feedback
     const [showToast, setShowToast] = useState(false);
+
+    const [reviews, setReviews] = useState([]);
+    const [ratingData, setRatingData] = useState({ averageRating: 0, totalReviews: 0 });
+
+    const userRole = localStorage.getItem('userRole') || 'CITIZEN';
 
     useEffect(() => {
         const loadPageData = async () => {
             try {
                 setLoading(true);
+                const [data, avgData, reviewList] = await Promise.all([
+                    listingService.getListingById(id),
+                    reviewService.getAverageRating("LISTING", id),
+                    reviewService.getTargetReviews("LISTING", id)
+                ]);
 
-                // Fetch Listing from Backend
-                const data = await listingService.getListingById(id);
-
-                // Use the Cloudinary URLs from your MongoDB
-                // Fallback to a single placeholder only if the array is empty
-                const productImages = data.imageUrls && data.imageUrls.length > 0
+                const productImages = data.imageUrls?.length > 0
                     ? data.imageUrls
-                    : ["https://images.unsplash.com/photo-1550989460-0adf9ea622e2?auto=format&fit=crop&w=600&q=80"];
+                    : ["https://images.unsplash.com/photo-1550989460-0adf9ea622e2?auto=format&fit=crop&w=800&q=80"];
 
-                const mappedProduct = {
-                    id: data.listingId || data.id,
-                    title: data.title,
-                    price: data.price,
-                    unit: data.unit,
-                    description: data.description,
-                    rating: 4.5, // Currently static, can be linked to a review service later
+                setProduct({
+                    ...data,
+                    images: productImages,
                     seller: {
-                        // Use the actual businessName returned by your Listing Service
-                        name: data.businessName || `Seller #${data.ownerId?.substring(0,6)}`,
-                        bio: "This seller is verified and uses sustainable farming practices."
+                        name: data.businessName || "Local Partner",
+                        id: data.ownerId
                     },
-                    images: productImages
-                };
+                    isNgoOnly: data.visibility === "NGO_ONLY"
+                });
 
-                setProduct(mappedProduct);
-                setMainImage(productImages[0]); // Default to the first Cloudinary image
+                setMainImage(productImages[0]);
+                setRatingData(avgData);
+                setReviews(reviewList);
                 setLoading(false);
             } catch (err) {
-                console.error("Error loading product details:", err);
-                setError("Product not found or service is down.");
+                setError("Product not found.");
                 setLoading(false);
             }
         };
-
-        if (id) loadPageData();
+        loadPageData();
     }, [id]);
 
-    const handleAddToCart = () => {
-        addToCart(product);
-        setShowToast(true);
-        setTimeout(() => setShowToast(false), 3000);
-    };
-
-    if (loading) return <div className="pd-wrapper center-content"><h2>Loading details...</h2></div>;
+    if (loading) return <div className="pd-wrapper center-content"><h2>Loading...</h2></div>;
     if (error) return <div className="pd-wrapper center-content"><h2>{error}</h2></div>;
-    if (!product) return null;
+
+    const isLocked = product.isNgoOnly && userRole !== 'NGO';
 
     return (
         <div className="pd-wrapper">
-
-            {/* TOAST NOTIFICATION POPUP */}
             {showToast && (
                 <div className="toast-notification">
-                    <CheckCircle size={20} className="toast-success-icon" />
-                    <span>Successfully added to cart!</span>
+                    <CheckCircle className="toast-success-icon" size={20} />
+                    <span>Added to your basket!</span>
                 </div>
             )}
 
             <div className="pd-container">
                 <button onClick={() => navigate(-1)} className="back-link">
-                    <ArrowLeft size={20} /> Back to Browse
+                    <ArrowLeft size={18} />
+                    <span>Back to Browse</span>
                 </button>
 
                 <div className="pd-content">
-                    {/* LEFT COLUMN: Gallery & Actions */}
+                    {/* Left Column: Gallery */}
                     <div className="pd-left-column">
                         <div className="gallery-wrapper">
                             <div className="thumbnails">
@@ -97,61 +90,57 @@ const ProductDetails = () => {
                                         src={img}
                                         className={`thumb ${mainImage === img ? 'active' : ''}`}
                                         onClick={() => setMainImage(img)}
-                                        alt={`Thumbnail ${idx + 1}`}
+                                        alt="thumb"
                                     />
                                 ))}
                             </div>
                             <div className="main-image-box">
                                 <img src={mainImage} alt={product.title} />
+                                {product.isNgoOnly && <div className="pd-ngo-badge">NGO Exclusive</div>}
                             </div>
                         </div>
 
                         <div className="pd-buttons">
-                            <button
-                                className="btn-buy"
-                                onClick={() => {
-                                    addToCart(product);
-                                    navigate('/cart');
-                                }}
-                            >
-                                Buy Now
-                            </button>
-
-                            <button
-                                className="btn-cart"
-                                onClick={handleAddToCart}
-                            >
-                                Add to cart
-                            </button>
+                            {!isLocked && (
+                                <button className="btn-cart" onClick={() => { addToCart(product); setShowToast(true); setTimeout(()=>setShowToast(false), 3000); }}>
+                                    {product.price === 0 ? "Claim Donation" : "Add to Basket"}
+                                </button>
+                            )}
                         </div>
 
+                        {/* Reviews Section at bottom of left column or full width below */}
                         <div className="reviews-section">
                             <h3>Ratings and Reviews</h3>
-                            <div className="review-user">
-                                <span className="font-bold">Happy Customer</span>
-                                <div className="stars-row">
-                                    {[1, 2, 3, 4, 5].map(i => <Star key={i} size={14} fill="#FFD700" stroke="none"/>)}
-                                    <span className="review-text-inline">Great quality!</span>
-                                </div>
-                            </div>
-                            <button className="see-more">See more</button>
+                            {reviews.length === 0 ? (
+                                <p className="review-text-inline">No reviews yet.</p>
+                            ) : (
+                                reviews.map(r => (
+                                    <div key={r.id} className="review-user">
+                                        <div className="review-text-inline"><b>{r.isAnonymous ? "Anonymous" : r.reviewerName}</b></div>
+                                        <div className="stars-row">
+                                            <StarRating rating={r.rating} size={16} />
+                                            <span className="review-text-inline">{r.comment}</span>
+                                        </div>
+                                    </div>
+                                ))
+                            )}
                         </div>
                     </div>
 
-                    {/* RIGHT COLUMN: Product Info */}
+                    {/* Right Column: Info */}
                     <div className="pd-right-column">
                         <h1 className="pd-title">{product.title}</h1>
 
                         <div className="rating-row">
-                            <div className="stars">
-                                {[1,2,3,4].map(i => <Star key={i} size={18} fill="#FFD700" stroke="none"/>)}
-                                <Star size={18} stroke="#FFD700" fill="#FFD700" style={{clipPath: 'inset(0 50% 0 0)'}} />
-                            </div>
-                            <span className="rating-number">{product.rating} &rarr;</span>
+                            <StarRating rating={ratingData.averageRating} size={20} />
+                            <span className="rating-number">
+                                {ratingData.averageRating > 0 ? ratingData.averageRating.toFixed(1) : "New"}
+                                ({ratingData.totalReviews} reviews)
+                            </span>
                         </div>
 
                         <div className="pd-price">
-                            {product.price > 0 ? `$${product.price}/${product.unit}` : "Free"}
+                            {product.price > 0 ? `$${product.price}/${product.unit}` : "Free Donation"}
                         </div>
 
                         <div className="info-block">
@@ -161,11 +150,22 @@ const ProductDetails = () => {
 
                         <div className="info-block">
                             <h2>Seller Information</h2>
-                            <p>{product.seller.bio}</p>
-                            <button className="link-text">
-                                View {product.seller.name}'s profile &rarr;
+                            <p><b>{product.seller.name}</b></p>
+
+                            <button
+                                className="link-text"
+                                onClick={() => navigate(`/profile/${product.seller.id}`)}
+                            >
+                                View {product.seller.name}'s profile →
                             </button>
                         </div>
+
+                        {isLocked && (
+                            <div className="pd-locked-message">
+                                <Lock size={18}/>
+                                <span>Reserved for verified NGOs.</span>
+                            </div>
+                        )}
                     </div>
                 </div>
             </div>
