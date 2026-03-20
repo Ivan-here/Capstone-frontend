@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
+import { useParams, useNavigate } from "react-router-dom"; // Added useParams
 import { profileService } from "@/services/profile.service";
 import { authService } from "@/services/auth.service";
-import { useNavigate } from "react-router-dom";
 import "./profile.css";
 
 import ProfileTabs from "./components/ProfileTabs";
@@ -11,6 +11,10 @@ import BusinessProfileLeft from "./components/BusinessProfileLeft";
 import BusinessProfileRight from "./components/BusinessProfileRight";
 
 export default function ProfilePage() {
+    // 1. Get the userId from the URL parameter (/profile/:userId)
+    const { userId } = useParams();
+    const navigate = useNavigate();
+
     const [activeTab, setActiveTab] = useState("USER");
     const [aboutExpanded, setAboutExpanded] = useState(false);
 
@@ -18,29 +22,53 @@ export default function ProfilePage() {
     const [businessProfile, setBusinessProfile] = useState(null);
     const [loading, setLoading] = useState(true);
 
-    const navigate = useNavigate();
+    // Get your own ID from storage to check if you are viewing yourself
+    const myId = localStorage.getItem('userId');
+    const isViewingOthers = userId && userId !== myId;
 
     useEffect(() => {
-        (async () => {
+        const loadProfileData = async () => {
             try {
                 setLoading(true);
-                const data = await profileService.getMe();
+
+                // 2. Fetch logic: If looking at someone else, use getProfileById.
+                // Otherwise, use getMe() for your own private profile view.
+                const data = isViewingOthers
+                    ? await profileService.getProfileById(userId)
+                    : await profileService.getMe();
 
                 if (!data?.personalProfile) {
-                    authService.logout();
-                    navigate("/login", { replace: true });
+                    if (!isViewingOthers) {
+                        authService.logout();
+                        navigate("/login", { replace: true });
+                    }
                     return;
                 }
+
                 setUserProfile(data.personalProfile);
                 setBusinessProfile(data.businessProfile ?? null);
+
+                // 3. Auto-switch to Business tab if viewing a seller
+                if (isViewingOthers && data.businessProfile) {
+                    setActiveTab("BUSINESS");
+                } else {
+                    setActiveTab("USER");
+                }
+
             } catch (err) {
-                authService.logout();
-                navigate("/login", { replace: true });
+                console.error("Error loading profile:", err);
+                // Only boot to login if the error happened while trying to view your own profile
+                if (!isViewingOthers) {
+                    authService.logout();
+                    navigate("/login", { replace: true });
+                }
             } finally {
                 setLoading(false);
             }
-        })();
-    }, [navigate]);
+        };
+
+        loadProfileData();
+    }, [userId, navigate, isViewingOthers]);
 
     const hasBusinessProfile = !!businessProfile;
 
@@ -49,7 +77,8 @@ export default function ProfilePage() {
         navigate("/login");
     }
 
-    if (loading) return <div className="profilePage">Loading...</div>;
+    if (loading) return <div className="profilePage">Loading Profile...</div>;
+    if (!userProfile) return <div className="profilePage">Profile not found.</div>;
 
     return (
         <div className="profilePage profilePage--view">
@@ -67,9 +96,13 @@ export default function ProfilePage() {
                                 profile={userProfile}
                                 aboutExpanded={aboutExpanded}
                                 onToggleAbout={() => setAboutExpanded(v => !v)}
+                                isOwnProfile={!isViewingOthers} // Prop to hide "Edit" on others' profiles
                             />
                         ) : (
-                            <BusinessProfileLeft businessProfile={businessProfile} />
+                            <BusinessProfileLeft
+                                businessProfile={businessProfile}
+                                isOwnProfile={!isViewingOthers} // Hide edit button if not mine
+                            />
                         )}
                     </section>
 
@@ -79,15 +112,19 @@ export default function ProfilePage() {
                         ) : (
                             <BusinessProfileRight
                                 businessProfile={businessProfile}
-                                userId={userProfile.userId}
+                                userId={userProfile.userId || userId} // Pass the correct ID for stats fetching
                             />
                         )}
                     </section>
-                    <div className="profileFooter">
-                        <button className="logoutBtn logoutBtnBottom" onClick={logout}>
-                            Logout
-                        </button>
-                    </div>
+
+                    {/* 4. Only show logout on your own profile */}
+                    {!isViewingOthers && (
+                        <div className="profileFooter">
+                            <button className="logoutBtn logoutBtnBottom" onClick={logout}>
+                                Logout
+                            </button>
+                        </div>
+                    )}
                 </div>
             </main>
         </div>
