@@ -31,6 +31,7 @@ import FarmersHub from "@/pages/FarmerHub/FarmersHub.jsx";
 import ProductEditor from "@/pages/FarmerHub/ProductEditor.jsx";
 import SurplusEditor from "@/pages/RestaurantHub/SurplusEditor.jsx";
 import RestaurantHub from "@/pages/RestaurantHub/RestaurantHub.jsx";
+import MyOrders from "@/pages/myOrders/MyOrders.jsx";
 
 function App() {
     // 1. STATE: Is the app loading?
@@ -60,6 +61,8 @@ function App() {
                     <Route element={<AppLayout />}>
                         <Route path="/" element={<Navigate to="/browse" replace />} />
                         <Route path="/profile" element={<ProfilePage />} />
+                        <Route path="/profile/:userId" element={<ProfilePage />} />
+                        <Route path="/profile" element={<ProfilePage />} />
                         <Route path="/profile/edit" element={<EditPersonalProfilePage />} />
                         <Route path="/profile/business/edit" element={<EditBusinessProfilePage />} />
                         <Route path="/browse" element={<Browse />} />
@@ -83,6 +86,8 @@ function App() {
                         <Route path="/admin/profiles" element={<AdminRoute><AdminProfiles /></AdminRoute>} />
                         <Route path="/admin/verifications" element={<AdminRoute><AdminVerifications /></AdminRoute>} />
                         <Route path="/admin/notifications" element={<AdminRoute><AdminNotifications /></AdminRoute>} />
+                        <Route path="/my-orders" element={<MyOrders />} />
+
                     </Route>
                 </Routes>
             </BrowserRouter>

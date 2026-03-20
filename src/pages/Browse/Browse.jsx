@@ -4,10 +4,9 @@ import { useNavigate } from 'react-router-dom';
 import { listingService } from '@/services/listing.service.js';
 import './Browse.css';
 
-// Helper to turn "2026-03-20T23:59:59" into "Mar 20, 2026"
 const formatDate = (dateString) => {
     if (!dateString) return '';
-    const datePart = dateString.split('T')[0]; // Grabs just the "2026-03-20"
+    const datePart = dateString.split('T')[0];
     const [year, month, day] = datePart.split('-');
     const date = new Date(year, month - 1, day);
     return date.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
@@ -18,10 +17,8 @@ const Browse = () => {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const [showFilter, setShowFilter] = useState(false);
-
     const [searchTerm, setSearchTerm] = useState("");
     const [selectedCategories, setSelectedCategories] = useState([]);
-
     const navigate = useNavigate();
 
     const CATEGORY_GROUPS = {
@@ -35,7 +32,12 @@ const Browse = () => {
         const fetchListings = async () => {
             try {
                 setLoading(true);
-                const data = await listingService.getAllListings();
+
+                // 1. Get role from localStorage (Ensure your Login logic sets this!)
+                const userRole = localStorage.getItem('userRole') || 'CITIZEN';
+
+                // 2. Pass role to backend
+                const data = await listingService.getAllListings(userRole);
 
                 const mappedData = data.map(item => {
                     const firstImage = item.imageUrls && item.imageUrls.length > 0
@@ -46,8 +48,9 @@ const Browse = () => {
                         ...item,
                         id: item.listingId || item.id,
                         imageUrl: firstImage,
-                        // Apply the beautiful date formatting here!
                         expiryDate: formatDate(item.expiryDate),
+                        // Badge logic
+                        isNgoOnly: item.visibility === "NGO_ONLY",
                         tag: item.price === 0 ? "Donation !" : ""
                     };
                 });
@@ -56,7 +59,7 @@ const Browse = () => {
                 setLoading(false);
             } catch (err) {
                 console.error("Error loading listings:", err);
-                setError("Could not load products. Is the Listing Service running?");
+                setError("Could not load products.");
                 setLoading(false);
             }
         };
@@ -75,23 +78,20 @@ const Browse = () => {
     const filteredListings = listings.filter(item => {
         const matchesSearch = item.title.toLowerCase().includes(searchTerm.toLowerCase());
         let matchesCategory = true;
-
         if (selectedCategories.length > 0) {
             matchesCategory = selectedCategories.some(filterName => {
                 const allowedValues = CATEGORY_GROUPS[filterName] || [filterName.toLowerCase()];
                 return item.category && allowedValues.includes(item.category.toLowerCase());
             });
         }
-
         return matchesSearch && matchesCategory;
     });
 
     const formatQuantityText = (qty, unit) => {
         if (!unit) return qty;
-        if (unit.toLowerCase() === 'each' || unit.toLowerCase() === 'item') {
-            return `${qty} available`;
-        }
-        return `${qty} ${unit}`;
+        return (unit.toLowerCase() === 'each' || unit.toLowerCase() === 'item')
+            ? `${qty} available`
+            : `${qty} ${unit}`;
     };
 
     if (loading) return <div className="browse-wrapper center-content"><h2>Loading Fresh Products...</h2></div>;
@@ -107,26 +107,17 @@ const Browse = () => {
                     </div>
                     <button onClick={() => setShowFilter(false)} className="close-btn"><X size={20}/></button>
                 </div>
-
                 <div className="filter-scroll-area">
                     <div className="filter-group">
                         <h3>Category</h3>
                         {Object.keys(CATEGORY_GROUPS).map(cat => (
                             <label key={cat}>
-                                <input
-                                    type="checkbox"
-                                    checked={selectedCategories.includes(cat)}
-                                    onChange={() => toggleCategory(cat)}
-                                /> {cat}
+                                <input type="checkbox" checked={selectedCategories.includes(cat)} onChange={() => toggleCategory(cat)} /> {cat}
                             </label>
                         ))}
                     </div>
-
                     <div className="filter-actions">
-                        <button className="btn-secondary full-width" onClick={() => {
-                            setSearchTerm("");
-                            setSelectedCategories([]);
-                        }}>Reset All</button>
+                        <button className="btn-secondary full-width" onClick={() => { setSearchTerm(""); setSelectedCategories([]); }}>Reset All</button>
                     </div>
                 </div>
             </div>
@@ -140,12 +131,7 @@ const Browse = () => {
                     )}
                     <div className="search-capsule">
                         <Search size={20} className="search-icon"/>
-                        <input
-                            type="text"
-                            placeholder="search (e.g. cucumbers)"
-                            value={searchTerm}
-                            onChange={(e) => setSearchTerm(e.target.value)}
-                        />
+                        <input type="text" placeholder="search (e.g. cucumbers)" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
                     </div>
                 </div>
 
@@ -156,33 +142,30 @@ const Browse = () => {
                         </div>
                     ) : (
                         filteredListings.map((item) => (
-                            <div
-                                key={item.id}
-                                className="product-tile"
-                                onClick={() => navigate(`/product/${item.id}`)}
-                                style={{ cursor: 'pointer' }}
-                            >
+                            <div key={item.id} className="product-tile" onClick={() => navigate(`/product/${item.id}`)} style={{ cursor: 'pointer' }}>
+
+                                {/* DYNAMIC BADGES */}
                                 {item.tag && <div className="tile-tag">{item.tag}</div>}
+
+                                {item.isNgoOnly && (
+                                    <div className="tile-tag" style={{ backgroundColor: '#1e40af', top: item.tag ? '40px' : '10px' }}>
+                                        NGO Exclusive
+                                    </div>
+                                )}
+
                                 <div className="tile-content">
                                     <div className="tile-image">
-                                        <img
-                                            src={item.imageUrl}
-                                            alt={item.title}
-                                            style={{ objectFit: 'cover' }}
-                                        />
+                                        <img src={item.imageUrl} alt={item.title} style={{ objectFit: 'cover' }} />
                                     </div>
                                     <div className="tile-info">
                                         <h3>{item.title}</h3>
-
                                         <p>{formatQuantityText(item.quantity, item.unit)}{item.description ? `, ${item.description}` : ''}</p>
 
-                                        {/* Now renders safely and cleanly! */}
                                         {item.price === 0 && item.expiryDate && (
                                             <p style={{ fontWeight: '600', color: '#A03C3C', marginTop: '2px', fontSize: '0.8rem' }}>
                                                 Available Until: {item.expiryDate}
                                             </p>
                                         )}
-
                                         <div className="tile-price">
                                             {item.price > 0 ? `$${Number(item.price).toFixed(2)}/${item.unit}` : "Free"}
                                         </div>
