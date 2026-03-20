@@ -147,3 +147,29 @@
 .toast-success-icon {
     color: #4CAF50; /* Green checkmark */
 }
+
+
+.pd-ngo-badge {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    background-color: #1e40af; /* Deep Blue */
+    color: white;
+    padding: 8px 16px;
+    border-radius: 4px;
+    font-weight: 600;
+    font-size: 0.9rem;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+}
+
+.pd-locked-message {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    background-color: #f3f4f6;
+    padding: 16px;
+    border-radius: 8px;
+    color: #4b5563;
+    font-size: 0.9rem;
+    border: 1px solid #e5e7eb;
+}
