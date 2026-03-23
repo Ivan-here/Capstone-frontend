@@ -263,3 +263,69 @@
         grid-template-columns: 1fr;
     }
 }
+.admin-review-current-roles {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.admin-review-current-roles label {
+    font-size: 0.85rem;
+    color: #7A7A7A;
+    font-weight: 600;
+}
+
+.admin-review-role-preview {
+    background-color: #E8E8D0;
+    border-radius: 10px;
+    padding: 10px 12px;
+    font-size: 0.9rem;
+    color: #2D2D2D;
+}
+
+.admin-role-pill-removable {
+    padding-right: 6px;
+}
+
+.admin-role-pill-removable button {
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    color: #A03C3C;
+    font-size: 1rem;
+    line-height: 1;
+    margin-left: 4px;
+}
+
+.admin-role-pill-removable button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+.admin-role-management-box,
+.admin-verification-review-box {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.admin-role-management-box label,
+.admin-verification-review-box label {
+    font-size: 0.85rem;
+    color: #7A7A7A;
+    font-weight: 600;
+}
+
+.admin-role-management-note {
+    background-color: #F7F3E8;
+    border-radius: 10px;
+    padding: 10px 12px;
+    font-size: 0.85rem;
+    color: #666;
+    line-height: 1.4;
+}
+
+.admin-review-divider {
+    height: 1px;
+    background-color: rgba(0,0,0,0.08);
+    margin: 4px 0;
+}
