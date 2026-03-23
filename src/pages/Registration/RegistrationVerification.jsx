@@ -2,10 +2,10 @@ import { useMemo, useState } from "react";
 import "./registration-verification.css";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
 import { profileService } from "@/services/profile.service";
-import { verificationService } from "@/services/verification.service"; // NEW IMPORT
-
+import { verificationService } from "@/services/verification.service";
 import Button from "@/components/ui/Button";
 import Input from "@/components/ui/Input";
+import { authService } from "@/services/auth.service.js";
 
 export default function RegistrationVerification() {
     const { role } = useParams();
@@ -14,7 +14,7 @@ export default function RegistrationVerification() {
     const location = useLocation();
     const navigate = useNavigate();
 
-    const userId = location.state?.userId;
+    const userId = location.state?.userId || authService.getUserIdFromToken();
 
     const [form, setForm] = useState({
         name: "",
@@ -36,7 +36,6 @@ export default function RegistrationVerification() {
         const e = {};
 
         if (!userId) e.form = "Missing userId. Please register again and come back.";
-
         if (!form.name.trim()) e.name = `${ui.nameLabel} is required.`;
         if (!form.description.trim()) e.description = "Profile description is required.";
         if (!form.address.trim()) e.address = `${ui.addressLabel} is required.`;
@@ -44,7 +43,6 @@ export default function RegistrationVerification() {
         if (!form.email.trim()) e.email = `${ui.emailLabel} is required.`;
         else if (!/^\S+@\S+\.\S+$/.test(form.email.trim())) e.email = "Invalid email.";
 
-        // ACTIVATED: Documents are now mandatory!
         if (!form.documents || form.documents.length === 0) {
             e.documents = "Please upload verification documents to prove your business is legitimate.";
         }
@@ -61,40 +59,41 @@ export default function RegistrationVerification() {
         try {
             setLoading(true);
 
-            // 1) Create business profile
             await profileService.upsertBusiness({
                 address: form.address,
-                name: form.name,
+                businessName: form.name,
                 businessType: String(role || "").toUpperCase(),
                 email: form.email,
                 description: form.description,
             });
 
-            // 2) Build FormData for Verification Service
             const formData = new FormData();
-
-            // Build the JSON DTO exactly as backend expects
             const verificationRequest = {
-                userId: userId,
-                type: String(role || "").toUpperCase()
+                userId,
+                type: String(role || "").toUpperCase(),
             };
 
-            formData.append("request", new Blob([JSON.stringify(verificationRequest)], {
-                type: "application/json"
-            }));
-
-            // Append the actual file (taking the first file since backend expects one)
+            formData.append(
+                "request",
+                new Blob([JSON.stringify(verificationRequest)], {
+                    type: "application/json",
+                })
+            );
             formData.append("document", form.documents[0]);
 
-            // 3) Submit to Verification Backend
-            await verificationService.submitVerification(formData);
-
-            // Navigate to home/dashboard upon complete success
-            navigate("/");
+            try {
+                await verificationService.submitVerification(formData);
+                navigate("/");
+            } catch (verificationError) {
+                setErrors((p) => ({
+                    ...p,
+                    form: "Business profile saved, but document upload failed. Please retry verification.",
+                }));
+            }
         } catch (err) {
             setErrors((p) => ({
                 ...p,
-                form: err.message || "Verification failed",
+                form: err.message || "Registration failed",
             }));
         } finally {
             setLoading(false);
@@ -202,9 +201,7 @@ export default function RegistrationVerification() {
 
                             {form.documents && form.documents.length > 0 && (
                                 <div className="fileList">
-                                    <div className="fileItem">
-                                        {form.documents[0].name}
-                                    </div>
+                                    <div className="fileItem">{form.documents[0].name}</div>
                                 </div>
                             )}
 
@@ -214,7 +211,7 @@ export default function RegistrationVerification() {
 
                     <div className="submitRow">
                         <Button type="submit" variant="primary" className="registerBtn" disabled={loading}>
-                            {loading ? "Submitting..." : "Register"}
+                            {loading ? "Submitting..." : "Submit for Verification"}
                         </Button>
                     </div>
                 </form>
