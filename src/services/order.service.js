@@ -1,43 +1,104 @@
-const API_BASE_URL = 'http://localhost:9000/api';
+import { apiFetch } from "./http";
 
 export const orderService = {
-    // For Citizens/Shoppers
-    getOrdersByShopper: async (shopperId) => {
+
+    async getOrdersByShopper(shopperId) {
         if (!shopperId) return [];
         try {
-            const response = await fetch(`${API_BASE_URL}/orders?shopperId=${shopperId}`);
-            if (!response.ok) {
-                if (response.status === 404) return [];
-                throw new Error('Failed to fetch orders');
-            }
-            return await response.json();
+            return await apiFetch(`/api/orders?shopperId=${encodeURIComponent(shopperId)}`);
         } catch (error) {
             console.error("Error fetching shopper orders:", error);
-            return []; // Return empty array to keep UI from breaking
-        }
-    },
-
-    // For Farmers/Restaurants
-    getOrdersByRestaurant: async (restaurantId) => {
-        try {
-            const response = await fetch(`${API_BASE_URL}/orders/restaurant/${restaurantId}`);
-            if (!response.ok) throw new Error('Failed to fetch business orders');
-            return await response.json();
-        } catch (error) {
-            console.error("Error fetching business orders:", error);
             return [];
         }
     },
 
-    // For NGOs
-    getReservationsByNgo: async (ngoId) => {
+    async createOrder(payload) {
+        return await apiFetch("/api/orders", {
+            method: "POST",
+            body: JSON.stringify(payload),
+        });
+    },
+
+    async createPaymentIntent(orderId, shopperId) {
+        if (!orderId) throw new Error("orderId is required");
+        if (!shopperId) throw new Error("shopperId is required");
+
+        return await apiFetch(
+            `/api/orders/${encodeURIComponent(orderId)}/payment-intent?shopperId=${encodeURIComponent(shopperId)}`,
+            {
+                method: "POST",
+            }
+        );
+    },
+
+    async getPickupCode(orderId, shopperId) {
+        if (!orderId) throw new Error("orderId is required");
+        if (!shopperId) throw new Error("shopperId is required");
+
+        return await apiFetch(
+            `/api/orders/${encodeURIComponent(orderId)}/pickup-code?shopperId=${encodeURIComponent(shopperId)}`
+        );
+    },
+
+    async cancelOrder(orderId, actorUserId, reason = "") {
+        if (!orderId) throw new Error("orderId is required");
+        if (!actorUserId) throw new Error("actorUserId is required");
+
+        return await apiFetch(`/api/orders/${encodeURIComponent(orderId)}/cancel`, {
+            method: "POST",
+            body: JSON.stringify({
+                actorUserId,
+                reason,
+            }),
+        });
+    },
+
+    async getOrderById(orderId) {
+        if (!orderId) throw new Error("orderId is required");
+        return await apiFetch(`/api/orders/${encodeURIComponent(orderId)}`);
+    },
+
+    async getOrdersBySeller(sellerUserId) {
+        if (!sellerUserId) return [];
         try {
-            const response = await fetch(`${API_BASE_URL}/reservations?ngoId=${ngoId}`);
-            if (!response.ok) throw new Error('Failed to fetch reservations');
-            return await response.json();
+            return await apiFetch(`/api/orders/seller/${encodeURIComponent(sellerUserId)}`);
+        } catch (error) {
+            console.error("Error fetching seller orders:", error);
+            return [];
+        }
+    },
+
+    async markReadyForPickup(orderId, sellerUserId) {
+        if (!orderId) throw new Error("orderId is required");
+        if (!sellerUserId) throw new Error("sellerUserId is required");
+
+        return await apiFetch(`/api/orders/${encodeURIComponent(orderId)}/ready-for-pickup`, {
+            method: "POST",
+            body: JSON.stringify({ sellerUserId }),
+        });
+    },
+
+    async verifyPickupCode(orderId, sellerUserId, code) {
+        if (!orderId) throw new Error("orderId is required");
+        if (!sellerUserId) throw new Error("sellerUserId is required");
+        if (!code) throw new Error("pickup code is required");
+
+        return await apiFetch(`/api/orders/${encodeURIComponent(orderId)}/verify-pickup-code`, {
+            method: "POST",
+            body: JSON.stringify({
+                sellerUserId,
+                code,
+            }),
+        });
+    },
+
+    async getReservationsByNgo(ngoId) {
+        if (!ngoId) return [];
+        try {
+            return await apiFetch(`/api/reservations?ngoId=${encodeURIComponent(ngoId)}`);
         } catch (error) {
             console.error("Error fetching NGO reservations:", error);
             return [];
         }
-    }
+    },
 };

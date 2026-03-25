@@ -1,62 +1,117 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useEffect, useMemo, useState } from 'react';
 
 const CartContext = createContext();
 
 export const CartProvider = ({ children }) => {
-    // Initialize cart from LocalStorage if available
     const [cartItems, setCartItems] = useState(() => {
         const savedCart = localStorage.getItem('shopping-cart');
         return savedCart ? JSON.parse(savedCart) : [];
     });
 
-    // Save to LocalStorage whenever cart changes
     useEffect(() => {
         localStorage.setItem('shopping-cart', JSON.stringify(cartItems));
     }, [cartItems]);
 
-    // --- ACTIONS ---
-
-    // 1. Add Item
     const addToCart = (product) => {
         setCartItems((prevItems) => {
-            // Check if item already exists
             const existingItem = prevItems.find(item => item.id === product.id);
+
             if (existingItem) {
-                // If yes, just +1 quantity
                 return prevItems.map(item =>
-                    item.id === product.id ? { ...item, quantity: item.quantity + 1 } : item
+                    item.id === product.id
+                        ? { ...item, quantity: item.quantity + 1 }
+                        : item
                 );
             }
-            // If no, add new item with quantity 1
-            return [...prevItems, { ...product, quantity: 1 }];
+
+            return [
+                ...prevItems,
+                {
+                    ...product,
+                    quantity: 1,
+                }
+            ];
         });
     };
 
-    // 2. Remove Item
     const removeFromCart = (id) => {
         setCartItems(prev => prev.filter(item => item.id !== id));
     };
 
-    // 3. Update Quantity (Increase/Decrease)
     const updateQuantity = (id, change) => {
-        setCartItems(prev => prev.map(item => {
-            if (item.id === id) {
-                const newQty = item.quantity + change;
-                return newQty > 0 ? { ...item, quantity: newQty } : item;
-            }
-            return item;
-        }));
+        setCartItems(prev =>
+            prev
+                .map(item => {
+                    if (item.id === id) {
+                        const newQty = item.quantity + change;
+                        return newQty > 0 ? { ...item, quantity: newQty } : null;
+                    }
+                    return item;
+                })
+                .filter(Boolean)
+        );
     };
 
-    // 4. Calculate Total Price
-    const cartTotal = cartItems.reduce((total, item) => total + (item.price * item.quantity), 0);
+    const clearCart = () => {
+        setCartItems([]);
+    };
+
+    const removeSellerItems = (sellerId) => {
+        setCartItems(prev => prev.filter(item => item.ownerId !== sellerId));
+    };
+
+    const getItemsForSeller = (sellerId) => {
+        return cartItems.filter(item => item.ownerId === sellerId);
+    };
+
+    const cartTotal = cartItems.reduce(
+        (total, item) => total + (Number(item.price) * item.quantity),
+        0
+    );
+
+    const groupedCart = useMemo(() => {
+        const groups = {};
+
+        for (const item of cartItems) {
+            const sellerId = item.ownerId || "unknown-seller";
+
+            if (!groups[sellerId]) {
+                groups[sellerId] = {
+                    sellerId,
+                    sellerName: item.businessName || "Unknown Seller",
+                    items: [],
+                    subtotal: 0,
+                    totalQuantity: 0,
+                };
+            }
+
+            const lineTotal = Number(item.price) * item.quantity;
+
+            groups[sellerId].items.push(item);
+            groups[sellerId].subtotal += lineTotal;
+            groups[sellerId].totalQuantity += item.quantity;
+        }
+
+        return Object.values(groups);
+    }, [cartItems]);
 
     return (
-        <CartContext.Provider value={{ cartItems, addToCart, removeFromCart, updateQuantity, cartTotal }}>
+        <CartContext.Provider
+            value={{
+                cartItems,
+                groupedCart,
+                addToCart,
+                removeFromCart,
+                updateQuantity,
+                clearCart,
+                removeSellerItems,
+                getItemsForSeller,
+                cartTotal,
+            }}
+        >
             {children}
         </CartContext.Provider>
     );
 };
 
-// Custom Hook to use the cart easily
 export const useCart = () => useContext(CartContext);

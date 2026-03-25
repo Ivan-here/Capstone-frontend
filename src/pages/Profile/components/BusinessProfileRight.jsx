@@ -3,6 +3,7 @@ import { Star } from 'lucide-react';
 import { verificationService } from "@/services/verification.service";
 import { listingService } from "@/services/listing.service";
 import { reviewService } from "@/services/reviewService";
+import { paymentService } from "@/services/payment.service";
 import RatingsReviews from "./RatingsReviews";
 
 export default function BusinessProfileRight({ businessProfile, userId, isOwnProfile }) {
@@ -11,6 +12,7 @@ export default function BusinessProfileRight({ businessProfile, userId, isOwnPro
     const [loading, setLoading] = useState(true);
     const [businessReviews, setBusinessReviews] = useState([]);
     const [ratingData, setRatingData] = useState({ averageRating: 0, totalReviews: 0 });
+    const [paymentProfile, setPaymentProfile] = useState(null);
 
     const [showReviewForm, setShowReviewForm] = useState(false);
     const [newRating, setNewRating] = useState(5);
@@ -19,6 +21,7 @@ export default function BusinessProfileRight({ businessProfile, userId, isOwnPro
     const isRestaurant = businessProfile?.businessType === "RESTAURANT";
     const verified = businessProfile?.verified;
     const docStatus = verified ? "Verified" : "Pending verification";
+
 
     const refreshData = useCallback(async () => {
         if (!userId) return;
@@ -39,11 +42,18 @@ export default function BusinessProfileRight({ businessProfile, userId, isOwnPro
             if (!userId) return;
             try {
                 setLoading(true);
+
                 const vData = await verificationService.getUserVerification(userId).catch(() => null);
                 setVerificationDoc(vData);
+
+                const paymentData = await paymentService.getSellerPaymentProfile(userId).catch(() => null);
+                setPaymentProfile(paymentData);
+
                 await refreshData();
+
                 const allListings = await listingService.getAllListings();
                 setProducts(allListings.filter(l => l.ownerId === userId));
+
             } catch (err) {
                 console.error("Error loading business data", err);
             } finally {
@@ -52,6 +62,18 @@ export default function BusinessProfileRight({ businessProfile, userId, isOwnPro
         };
         loadInitialData();
     }, [userId, refreshData]);
+
+    const handleOnboarding = async () => {
+        try {
+            const res = await paymentService.createOnboardingLink(userId);
+            if (res?.url) {
+                window.location.href = res.url; // redirect to Stripe
+            }
+        } catch (err) {
+            console.error("Failed to start onboarding", err);
+            alert("Failed to start Stripe onboarding.");
+        }
+    };
 
     const handleSellerReviewSubmit = async () => {
         const currentUserId = localStorage.getItem('userId');
@@ -96,6 +118,25 @@ export default function BusinessProfileRight({ businessProfile, userId, isOwnPro
                             <a href={verificationDoc.documentUrl} target="_blank" rel="noreferrer" className="linkBtn">
                                 View uploaded document
                             </a>
+                        )}
+                        {isOwnProfile && (
+                            <div style={{ marginTop: "8px", fontSize: "12px" }}>
+                                Stripe:{" "}
+                                <b style={{ color: paymentProfile?.onboardingComplete ? "#2e7d32" : "#999" }}>
+                                    {paymentProfile?.onboardingComplete
+                                        ? "Ready to receive payments"
+                                        : "Not connected"}
+                                </b>
+                            </div>
+                        )}
+                        {isOwnProfile && !paymentProfile?.onboardingComplete && (
+                            <button
+                                onClick={handleOnboarding}
+                                className="linkBtn"
+                                style={{ marginTop: "8px", display: "inline-block" }}
+                            >
+                                Complete Stripe Onboarding
+                            </button>
                         )}
                     </div>
                 </div>
