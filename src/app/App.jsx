@@ -32,6 +32,7 @@ import ProductEditor from "@/pages/FarmerHub/ProductEditor.jsx";
 import SurplusEditor from "@/pages/RestaurantHub/SurplusEditor.jsx";
 import RestaurantHub from "@/pages/RestaurantHub/RestaurantHub.jsx";
 import MyOrders from "@/pages/myOrders/MyOrders.jsx";
+import NgoHub from "@/pages/NGO/NgoHub.jsx";
 
 function App() {
     // 1. STATE: Is the app loading?
@@ -87,6 +88,7 @@ function App() {
                         <Route path="/admin/verifications" element={<AdminRoute><AdminVerifications /></AdminRoute>} />
                         <Route path="/admin/notifications" element={<AdminRoute><AdminNotifications /></AdminRoute>} />
                         <Route path="/my-orders" element={<MyOrders />} />
+                        <Route path="/ngo-hub" element={<NgoHub />} />
 
                     </Route>
                 </Routes>

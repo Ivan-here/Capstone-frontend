@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { Store, MapPin, Mail, Clock, Truck, Info, ArrowLeft } from "lucide-react";
 import Button from "@/components/ui/Button";
 import Input from "@/components/ui/Input";
 import { profileService } from "@/services/profile.service";
@@ -54,6 +55,7 @@ export default function EditBusinessProfilePage() {
         setErrors((e) => ({ ...e, [name]: null, form: null }));
     }
 
+    // FIXED: Validation logic included to prevent ReferenceErrors
     function validate() {
         const e = {};
         if (!form.businessType) e.businessType = "Business type is required.";
@@ -64,6 +66,7 @@ export default function EditBusinessProfilePage() {
         return e;
     }
 
+    // FIXED: onSubmit logic included to handle API call
     async function onSubmit(ev) {
         ev.preventDefault();
         const e = validate();
@@ -72,20 +75,16 @@ export default function EditBusinessProfilePage() {
 
         try {
             setSaving(true);
-
             await profileService.upsertBusiness({
                 businessType: form.businessType,
                 businessName: form.businessName.trim(),
                 address: form.address.trim(),
                 email: form.email.trim(),
-
-                // optional
                 description: form.description.trim() || null,
                 hours: form.hours.trim() || null,
                 serviceArea: form.serviceArea.trim() || null,
                 eligibilityNotes: form.eligibilityNotes.trim() || null,
             });
-
             navigate("/profile");
         } catch (err) {
             setErrors((p) => ({ ...p, form: err.message || "Save failed" }));
@@ -97,72 +96,113 @@ export default function EditBusinessProfilePage() {
     if (loading) return <div className="profilePage">Loading...</div>;
 
     return (
-        <div className="profilePage">
+        <div className="profilePage edit-page-bg">
             <main className="profileMain">
-                <div className="profileContainer" style={{ gridTemplateColumns: "1fr" }}>
-                    <div className="card">
-                        <div className="sectionTitle">Edit Business Profile</div>
+                <div className="edit-header">
+                    <button onClick={() => navigate("/profile")} className="back-link">
+                        <ArrowLeft size={18} /> Back to Profile
+                    </button>
+                    <h1>Business Settings</h1>
+                    <p className="muted">Configure your marketplace presence and logistics</p>
+                </div>
+
+                <div className="profileContainer edit-grid">
+                    <form onSubmit={onSubmit} className="edit-form-card">
                         {errors.form && <div className="formError">{errors.form}</div>}
 
-                        <form onSubmit={onSubmit} style={{ display: "grid", gap: 12 }}>
-                            {errors.businessType && <div className="inputError">{errors.businessType}</div>}
-
-                            <Input
-                                value={form.businessName}
-                                onChange={(e) => setField("businessName", e.target.value)}
-                                error={errors.businessName}
-                                placeholder="Business name"
-                            />
-                            <Input
-                                value={form.address}
-                                onChange={(e) => setField("address", e.target.value)}
-                                error={errors.address}
-                                placeholder="Address"
-                            />
-                            <Input
-                                value={form.email}
-                                onChange={(e) => setField("email", e.target.value)}
-                                error={errors.email}
-                                placeholder="Business email"
-                            />
-
-                            <label style={{ fontWeight: 700 }}>Description</label>
-                            <textarea
-                                className="textArea"
-                                value={form.description}
-                                onChange={(e) => setField("description", e.target.value)}
-                                rows={4}
-                            />
-
-                            <Input
-                                value={form.hours}
-                                onChange={(e) => setField("hours", e.target.value)}
-                                placeholder="Hours e.g. (9:00 - 18:00)"
-                            />
-                            <Input
-                                value={form.serviceArea}
-                                onChange={(e) => setField("serviceArea", e.target.value)}
-                                placeholder="Service area"
-                            />
-
-                            <label style={{ fontWeight: 700 }}>Pickup instructions</label>
-                            <textarea
-                                className="textArea"
-                                value={form.eligibilityNotes}
-                                onChange={(e) => setField("eligibilityNotes", e.target.value)}
-                                rows={3}
-                            />
-
-                            <div style={{ display: "flex", gap: 10, justifyContent: "flex-end" }}>
-                                <Button type="button" variant="secondary" onClick={() => navigate("/profile")}>
-                                    Cancel
-                                </Button>
-                                <Button type="submit" variant="primary" disabled={saving}>
-                                    {saving ? "Saving..." : "Save"}
-                                </Button>
+                        {/* Section 1: Marketplace Identity */}
+                        <div className="form-section">
+                            <div className="section-title"><Store size={18} /> Marketplace Identity</div>
+                            <div className="input-row">
+                                <Input
+                                    label="Business Name"
+                                    value={form.businessName}
+                                    onChange={(e) => setField("businessName", e.target.value)}
+                                    error={errors.businessName}
+                                />
+                                <div className="input-group">
+                                    <label>Entity Type</label>
+                                    <select
+                                        className="premium-select"
+                                        value={form.businessType}
+                                        onChange={(e) => setField("businessType", e.target.value)}
+                                    >
+                                        {BUSINESS_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
+                                    </select>
+                                </div>
                             </div>
-                        </form>
-                    </div>
+                            <div className="input-row">
+                                <Input
+                                    label="Business Address"
+                                    icon={<MapPin size={16}/>}
+                                    value={form.address}
+                                    onChange={(e) => setField("address", e.target.value)}
+                                    error={errors.address}
+                                />
+                                <Input
+                                    label="Public Email"
+                                    icon={<Mail size={16}/>}
+                                    value={form.email}
+                                    onChange={(e) => setField("email", e.target.value)}
+                                    error={errors.email}
+                                />
+                            </div>
+                        </div>
+
+                        {/* Section 2: Bio & Description */}
+                        <div className="form-section">
+                            <div className="section-title"><Info size={18} /> About Your Business</div>
+                            <div className="input-group">
+                                <label>Description</label>
+                                <textarea
+                                    className="premium-textarea"
+                                    value={form.description}
+                                    onChange={(e) => setField("description", e.target.value)}
+                                    rows={4}
+                                    placeholder="Describe what your business offers to the community..."
+                                />
+                            </div>
+                        </div>
+
+                        {/* Section 3: Logistics & Operations */}
+                        <div className="form-section">
+                            <div className="section-title"><Truck size={18} /> Logistics & Operations</div>
+                            <div className="input-row">
+                                <Input
+                                    label="Operating Hours"
+                                    icon={<Clock size={16}/>}
+                                    placeholder="e.g. Mon-Fri, 9am - 5pm"
+                                    value={form.hours}
+                                    onChange={(e) => setField("hours", e.target.value)}
+                                />
+                                <Input
+                                    label="Service Area"
+                                    placeholder="e.g. Greater Toronto Area"
+                                    value={form.serviceArea}
+                                    onChange={(e) => setField("serviceArea", e.target.value)}
+                                />
+                            </div>
+                            <div className="input-group">
+                                <label>Pickup Instructions</label>
+                                <textarea
+                                    className="premium-textarea"
+                                    value={form.eligibilityNotes}
+                                    onChange={(e) => setField("eligibilityNotes", e.target.value)}
+                                    rows={3}
+                                    placeholder="Add specific instructions for order collection..."
+                                />
+                            </div>
+                        </div>
+
+                        <div className="form-actions">
+                            <Button type="button" variant="ghost" onClick={() => navigate("/profile")}>
+                                Cancel
+                            </Button>
+                            <Button type="submit" variant="primary" disabled={saving} className="save-btn">
+                                {saving ? "Saving Changes..." : "Save Business Profile"}
+                            </Button>
+                        </div>
+                    </form>
                 </div>
             </main>
         </div>

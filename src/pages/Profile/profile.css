@@ -615,3 +615,113 @@ input:disabled {
     opacity: 0.75;
     cursor: not-allowed;
 }
+
+/* Container Fixes */
+.edit-page-bg {
+    background-color: #fcfaf5; /* Softer background */
+    min-height: 100vh;
+    padding: 40px 20px;
+}
+
+.edit-grid {
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+}
+
+.edit-form-card {
+    background: #ffffff;
+    border-radius: 28px;
+    padding: 48px;
+    width: 100%;
+    max-width: 850px; /* Slightly wider for breathe room */
+    box-shadow: 0 20px 50px rgba(45, 58, 26, 0.05); /* Soft olive shadow */
+    border: 1px solid rgba(123, 139, 91, 0.1);
+}
+
+/* Header Styling */
+.edit-header h1 {
+    font-family: 'Playfair Display', serif; /* Or any elegant serif you have */
+    font-size: 2.8rem;
+    color: #2d3a1a;
+    letter-spacing: -0.02em;
+    margin-bottom: 8px;
+}
+
+.edit-header .muted {
+    font-size: 1.1rem;
+    color: #6a7a4c;
+    margin-bottom: 32px;
+}
+
+/* Section Spacing */
+.form-section {
+    margin-bottom: 48px;
+    padding-bottom: 32px;
+    border-bottom: 1px solid #f0f2ed;
+}
+
+.section-title {
+    font-size: 1.2rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: #4a5d23;
+    margin-bottom: 24px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+/* Input & Row Styling */
+.input-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 24px; /* More space between inputs */
+    margin-bottom: 20px;
+}
+
+.input-label {
+    display: block;
+    font-weight: 600;
+    font-size: 0.95rem;
+    color: #3e4a2c;
+    margin-bottom: 8px;
+}
+
+/* Premium Textarea & Input Overrides */
+.premium-textarea, .edit-form-card input {
+    width: 100%;
+    padding: 14px 16px;
+    border: 1.5px solid #e2e8da;
+    border-radius: 12px;
+    background: #f9fbf7;
+    font-size: 1rem;
+    transition: all 0.25s ease;
+}
+
+.premium-textarea:focus, .edit-form-card input:focus {
+    outline: none;
+    background: #ffffff;
+    border-color: #7b8b5b;
+    box-shadow: 0 0 0 4px rgba(123, 139, 91, 0.1);
+}
+
+.disabled-input {
+    background: #f0f2ed !important;
+    color: #8a9675;
+    border-color: #e2e8da !important;
+}
+
+/* Buttons */
+.save-btn {
+    padding: 14px 32px !important;
+    border-radius: 14px !important;
+    font-size: 1rem !important;
+    background-color: #4a5d23 !important;
+    transition: transform 0.2s ease !important;
+}
+
+.save-btn:hover {
+    transform: translateY(-2px);
+    background-color: #3e4a2c !important;
+}

@@ -1,134 +1,85 @@
-// src/components/ReviewModal.jsx
 import React, { useState } from 'react';
 import StarRating from './StarRating.jsx';
 import { reviewService } from '@/services/reviewService.js';
+import { X } from 'lucide-react';
 
-const ReviewModal = ({
-                         isOpen,
-                         onClose,
-                         orderId,
-                         targetId,
-                         targetType, // "SELLER" or "LISTING"
-                         reviewerId, // The ID of the currently logged-in user
-                         onSuccess
-                     }) => {
+const ReviewModal = ({ isOpen, onClose, orderId, targetId, targetType, reviewerId, onSuccess }) => {
     const [rating, setRating] = useState(0);
     const [comment, setComment] = useState('');
     const [isAnonymous, setIsAnonymous] = useState(false);
-
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [error, setError] = useState(null);
 
     if (!isOpen) return null;
 
+    const modalOverlayStyle = {
+        position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
+        backgroundColor: 'rgba(0, 0, 0, 0.6)', display: 'flex',
+        alignItems: 'center', justifyContent: 'center', zIndex: 1000,
+        backdropFilter: 'blur(4px)', padding: '20px'
+    };
+
+    const modalContentStyle = {
+        backgroundColor: '#F5F2E8', padding: '32px', borderRadius: '24px',
+        width: '100%', maxWidth: '450px', position: 'relative',
+        boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1)', border: '1px solid #E2DFD3'
+    };
+
     const handleSubmit = async (e) => {
         e.preventDefault();
-        setError(null);
-
-        if (rating === 0) {
-            setError("Please select a star rating.");
-            return;
-        }
-
+        if (rating === 0) return setError("Please select a star rating.");
         setIsSubmitting(true);
-
         try {
-            const reviewData = {
-                orderId,
-                reviewerId,
-                targetId,
-                targetType,
-                rating,
-                comment,
-                isAnonymous
-            };
-
-            await reviewService.createReview(reviewData);
-
-            // Reset state and close
-            setRating(0);
-            setComment('');
-            setIsAnonymous(false);
-            onSuccess(); // Trigger a refresh in the parent component
+            await reviewService.createReview({
+                orderId, reviewerId, targetId, targetType, rating, comment, isAnonymous
+            });
+            onSuccess();
             onClose();
         } catch (err) {
-            setError("Failed to submit review. Make sure this order is completed!");
+            setError("Failed to submit. Ensure the order is completed!");
         } finally {
             setIsSubmitting(false);
         }
     };
 
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 px-4">
-            <div className="bg-[#F5F2E8] rounded-xl shadow-lg w-full max-w-md p-6 relative">
-
-                {/* Close Button */}
-                <button
-                    onClick={onClose}
-                    className="absolute top-4 right-4 text-gray-500 hover:text-gray-800 text-2xl font-bold"
-                >
-                    &times;
+        <div style={modalOverlayStyle} onClick={onClose}>
+            <div style={modalContentStyle} onClick={e => e.stopPropagation()}>
+                <button onClick={onClose} style={{ position: 'absolute', top: '20px', right: '20px', background: 'none', border: 'none', cursor: 'pointer', color: '#666' }}>
+                    <X size={24} />
                 </button>
 
-                <h2 className="text-2xl font-serif font-bold text-gray-800 mb-4">
-                    How was your experience?
-                </h2>
+                <h2 style={{ fontFamily: 'serif', fontSize: '1.75rem', color: '#3B422D', marginBottom: '8px', marginTop: 0 }}>How was your experience?</h2>
+                <p style={{ color: '#666', marginBottom: '24px', fontSize: '0.95rem' }}>Your feedback helps our local community grow.</p>
 
-                <form onSubmit={handleSubmit} className="space-y-5">
-                    {/* Star Rating Input */}
-                    <div className="flex flex-col items-center space-y-2 py-4 bg-white rounded-lg border border-[#E2DFD3]">
-                        <span className="text-sm font-medium text-gray-600">Tap to rate</span>
-                        <StarRating
-                            rating={rating}
-                            maxStars={5}
-                            isInteractive={true}
-                            onRatingChange={setRating}
-                            size="w-10 h-10" // Bigger stars for the modal
-                        />
+                <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                    <div style={{ backgroundColor: 'white', padding: '20px', borderRadius: '16px', border: '1px solid #E2DFD3', textAlign: 'center' }}>
+                        <p style={{ margin: '0 0 10px 0', fontSize: '0.85rem', fontWeight: 'bold', color: '#7B8B5B', textTransform: 'uppercase' }}>Tap to Rate</p>
+                        <StarRating rating={rating} isInteractive={true} onRatingChange={setRating} size={40} />
                     </div>
 
-                    {/* Comment Textarea */}
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                            Add a written review (optional)
-                        </label>
+                        <label style={{ display: 'block', marginBottom: '8px', fontWeight: 'bold', color: '#3B422D', fontSize: '0.9rem' }}>Written Review (Optional)</label>
                         <textarea
                             rows="4"
-                            className="w-full rounded-md border border-[#E2DFD3] p-3 text-sm focus:ring-2 focus:ring-[#7B8B5B] focus:border-[#7B8B5B] outline-none"
+                            style={{ width: '100%', padding: '12px', borderRadius: '12px', border: '1px solid #E2DFD3', fontSize: '0.95rem', outlineColor: '#7B8B5B', resize: 'none' }}
                             placeholder="What did you like? What could be better?"
                             value={comment}
                             onChange={(e) => setComment(e.target.value)}
                         />
                     </div>
 
-                    {/* Anonymous Toggle */}
-                    <div className="flex items-center">
-                        <input
-                            type="checkbox"
-                            id="anonymous"
-                            checked={isAnonymous}
-                            onChange={(e) => setIsAnonymous(e.target.checked)}
-                            className="h-4 w-4 text-[#7B8B5B] focus:ring-[#7B8B5B] border-gray-300 rounded"
-                        />
-                        <label htmlFor="anonymous" className="ml-2 block text-sm text-gray-700">
-                            Post this review anonymously
-                        </label>
-                    </div>
+                    <label style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer', fontSize: '0.9rem', color: '#444' }}>
+                        <input type="checkbox" checked={isAnonymous} onChange={(e) => setIsAnonymous(e.target.checked)} style={{ width: '18px', height: '18px', accentColor: '#7B8B5B' }} />
+                        Post this review anonymously
+                    </label>
 
-                    {/* Error Message */}
-                    {error && (
-                        <div className="text-red-600 text-sm font-medium bg-red-50 p-2 rounded">
-                            {error}
-                        </div>
-                    )}
+                    {error && <div style={{ color: '#d32f2f', fontSize: '0.85rem', backgroundColor: '#fee2e2', padding: '10px', borderRadius: '8px' }}>{error}</div>}
 
-                    {/* Submit Button */}
                     <button
                         type="submit"
                         disabled={isSubmitting}
-                        className={`w-full py-3 rounded-lg text-white font-bold transition-colors ${
-                            isSubmitting ? 'bg-gray-400 cursor-not-allowed' : 'bg-[#6D804B] hover:bg-[#5C6E3D]'
-                        }`}
+                        style={{ backgroundColor: '#6D804B', color: 'white', padding: '14px', borderRadius: '12px', border: 'none', fontWeight: 'bold', fontSize: '1rem', cursor: isSubmitting ? 'not-allowed' : 'pointer', transition: 'background 0.2s' }}
                     >
                         {isSubmitting ? 'Submitting...' : 'Submit Review'}
                     </button>
