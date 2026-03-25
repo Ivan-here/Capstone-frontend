@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import PreferencesChips from "./PreferencesChips";
 import RatingsReviews from "./RatingsReviews";
-import { reviewService } from "@/services/reviewService"; // IMPORT API
+import { reviewService } from "@/services/reviewService";
 
-function StatBox({ value, label, privacy }) {
+function StatBox({ value, label, privacy, isVisible = true }) {
+    if (!isVisible) return null;
     return (
         <div className="statBox">
             <div className="statValue">{value}</div>
@@ -13,27 +14,23 @@ function StatBox({ value, label, privacy }) {
     );
 }
 
-export default function UserProfileRight({ profile }) {
-    // 1. New State for Reviews & Ratings
+export default function UserProfileRight({ profile, isOwnProfile }) {
     const [writtenReviews, setWrittenReviews] = useState([]);
     const [buyerRating, setBuyerRating] = useState({ averageRating: 0, totalReviews: 0 });
     const [loading, setLoading] = useState(true);
 
-    // We fallback to localStorage if profile.userId isn't passed directly
     const userId = profile?.userId || profile?.id || localStorage.getItem('userId');
+    const fullName = `${profile?.firstName ?? ""} ${profile?.lastName ?? ""}`.trim() || profile?.username;
 
     useEffect(() => {
         const fetchUserReviews = async () => {
             if (!userId) return;
             try {
                 setLoading(true);
-
-                // Fetch the reviews this user has WRITTEN
-                const history = await reviewService.getReviewsByReviewer(userId);
-
-                // Fetch the rating OF this user (if sellers rated them as a BUYER)
-                const avgData = await reviewService.getAverageRating("BUYER", userId);
-
+                const [history, avgData] = await Promise.all([
+                    reviewService.getReviewsByReviewer(userId),
+                    reviewService.getAverageRating("BUYER", userId)
+                ]);
                 setWrittenReviews(history);
                 setBuyerRating(avgData);
             } catch (err) {
@@ -42,56 +39,59 @@ export default function UserProfileRight({ profile }) {
                 setLoading(false);
             }
         };
-
         fetchUserReviews();
     }, [userId]);
 
     const stats = profile?.stats || {};
-    const fullName = `${profile?.firstName ?? ""} ${profile?.lastName ?? ""}`.trim();
 
-    // 2. Format backend data so your existing <RatingsReviews /> component can read it
     const formattedRatings = writtenReviews.map(r => ({
         id: r.id,
         rating: r.rating,
         text: r.comment,
         reviewedAt: new Date(r.createdAt).toLocaleDateString(),
-        // Label it based on what they reviewed
         itemName: r.targetType === "LISTING" ? "Reviewed a Product" : "Reviewed a Business",
+        reviewerId: userId,
+        reviewerName: "You"
     }));
 
     return (
-        <>
-            <PreferencesChips preferences={profile?.preferences || []} />
-
-            <div className="card statsCard">
-                <div className="statsHeader">Statistics</div>
-
-                <div className="statsRow">
-                    {/* DYNAMIC: How many reviews they've written */}
-                    <StatBox label="reviews written" value={writtenReviews.length} privacy="Public" />
-
-                    <StatBox label="purchases" value={stats.purchases ?? 0} privacy="Public" />
-                    <StatBox label="following" value={stats.following ?? 0} privacy="Public" />
-
-                    {/* DYNAMIC: Their rating as a Buyer/Citizen */}
-                    <StatBox
-                        label="buyer rating"
-                        value={`${buyerRating.averageRating > 0 ? buyerRating.averageRating.toFixed(1) : "0.0"} ★`}
-                        privacy="Public"
-                    />
-
-                    <StatBox label="followers" value={stats.followers ?? 0} privacy="Private" />
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+            {/* INLINE PROFILE HEADER */}
+            <div className="card" style={{ padding: '20px', display: 'flex', alignItems: 'center', gap: '20px' }}>
+                <div style={{ width: '60px', height: '60px', borderRadius: '50%', background: '#4a7c59', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.5rem', fontWeight: 'bold' }}>
+                    {fullName?.charAt(0).toUpperCase()}
+                </div>
+                <div>
+                    <h2 style={{ margin: 0 }}>{fullName}</h2>
+                    <p style={{ margin: 0, color: '#666' }}>{profile?.role || "Shopper"}</p>
                 </div>
             </div>
 
-            {/* 3. Pass the formatted reviews to the display component */}
-            {loading ? (
-                <div className="card reviewsCard">
-                    <div className="p-6 text-center text-gray-500">Loading review history...</div>
+            {/*/!* RESTORED: Preferences *!/*/}
+            {/*<PreferencesChips preferences={profile?.preferences || []} />*/}
+
+            {/* RESTORED: Full Stats Row */}
+            <div className="card statsCard">
+                <div className="statsHeader">Statistics</div>
+                <div className="statsRow">
+                    <StatBox label="reviews written" value={writtenReviews.length} privacy="Public" />
+                    <StatBox label="purchases" value={stats.purchases ?? 0} privacy="Public" />
+                    <StatBox label="following" value={stats.following ?? 0} privacy="Public" />
+                    <StatBox
+                        label="buyer rating"
+                        value={`${buyerRating.averageRating.toFixed(1)} ★`}
+                        privacy="Public"
+                    />
+                    <StatBox
+                        label="followers"
+                        value={stats.followers ?? 0}
+                        privacy="Private"
+                        isVisible={isOwnProfile}
+                    />
                 </div>
-            ) : (
-                <RatingsReviews fullName={fullName} ratings={formattedRatings} />
-            )}
-        </>
+            </div>
+
+            {loading ? <p style={{textAlign: 'center'}}>Loading history...</p> : <RatingsReviews fullName={fullName} ratings={formattedRatings} />}
+        </div>
     );
 }

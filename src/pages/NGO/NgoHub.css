@@ -1,0 +1,104 @@
+/* Container & Header */
+.hub-internal-container {
+    padding: 40px 20px;
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.hub-header {
+    margin-bottom: 32px;
+    border-bottom: 2px solid #f0f2ed;
+    padding-bottom: 20px;
+}
+
+.hub-header h1 {
+    font-family: 'Playfair Display', serif;
+    font-size: 2.5rem;
+    color: #2d3a1a;
+    margin-bottom: 8px;
+}
+
+.hub-header p {
+    color: #6a7a4c;
+    font-size: 1.1rem;
+}
+
+/* Search & Toolbar */
+.hub-toolbar {
+    margin-bottom: 40px;
+    display: flex;
+    justify-content: flex-start;
+}
+
+.hub-search-input {
+    display: flex;
+    align-items: center;
+    background: white;
+    padding: 12px 20px;
+    border-radius: 100px;
+    border: 1.5px solid #e2e8da;
+    width: 100%;
+    max-width: 500px;
+    transition: all 0.3s ease;
+}
+
+.hub-search-input:focus-within {
+    border-color: #7b8b5b;
+    box-shadow: 0 0 0 4px rgba(123, 139, 91, 0.1);
+}
+
+.hub-search-input input {
+    border: none;
+    outline: none;
+    margin-left: 12px;
+    width: 100%;
+    font-size: 1rem;
+    color: #2d3a1a;
+}
+
+/* Grid Layout */
+.hub-listing-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 30px;
+}
+
+/* NGO Priority Card Wrapper */
+.ngo-card-wrapper {
+    position: relative;
+    background: white;
+    border-radius: 20px;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.ngo-card-wrapper:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 12px 30px rgba(45, 58, 26, 0.08);
+}
+
+/* Priority Tag */
+.ngo-priority-tag {
+    position: absolute;
+    top: 15px;
+    left: 15px;
+    z-index: 10;
+    background: #d32f2f; /* Alert red for priority */
+    color: white;
+    padding: 6px 14px;
+    border-radius: 100px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    box-shadow: 0 4px 10px rgba(211, 47, 47, 0.3);
+}
+
+/* Empty State */
+.hub-internal-container h3 {
+    text-align: center;
+    color: #8a9675;
+    margin-top: 60px;
+    font-weight: 400;
+}
