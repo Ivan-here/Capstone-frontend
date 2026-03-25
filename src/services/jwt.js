@@ -28,7 +28,16 @@ export function getRolesFromToken(token) {
         payload.scope ||
         [];
 
-    if (Array.isArray(roles)) return roles.map(String);
+    if (Array.isArray(roles)) {
+        // THE FIX: Handle Spring Security object arrays like [{authority: "ROLE_NGO"}]
+        return roles.map(r => {
+            if (typeof r === 'object' && r !== null && r.authority) {
+                return String(r.authority);
+            }
+            return String(r);
+        });
+    }
+
     if (typeof roles === "string") return roles.split(/[,\s]+/).filter(Boolean);
     return [];
 }

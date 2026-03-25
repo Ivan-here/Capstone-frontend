@@ -1,13 +1,18 @@
 import { apiFetch, BASE_URL, getToken } from "./http";
 
 export const listingService = {
-    async getAllListings(role = "CITIZEN") {
-        try {
-            // Now passes the role as a query param
-            return await apiFetch(`/api/listings?role=${role}`);
-        }
-        catch (error) { throw error; }
-    },
+        // listing.service.js
+
+        // listing.service.js
+        async getAllListings(role = "SHOPPER", userId = null) { // Changed ownerId to userId
+            try {
+                let url = `/api/listings?role=${role}`;
+                if (userId) {
+                    url += `&userId=${userId}`; // Match the @RequestParam in Java
+                }
+                return await apiFetch(url);
+            } catch (error) { throw error; }
+        },
 
     async getListingById(id) {
         try { return await apiFetch(`/api/listings/${id}`); }
