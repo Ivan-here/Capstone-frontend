@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useParams, useNavigate } from "react-router-dom"; // Added useParams
+import { useParams, useNavigate } from "react-router-dom";
 import { profileService } from "@/services/profile.service";
 import { authService } from "@/services/auth.service";
 import "./profile.css";
@@ -11,7 +11,7 @@ import BusinessProfileLeft from "./components/BusinessProfileLeft";
 import BusinessProfileRight from "./components/BusinessProfileRight";
 
 export default function ProfilePage() {
-    // 1. Get the userId from the URL parameter (/profile/:userId)
+    // 1. Extract userId from the URL to determine if we are viewing a seller
     const { userId } = useParams();
     const navigate = useNavigate();
 
@@ -22,7 +22,7 @@ export default function ProfilePage() {
     const [businessProfile, setBusinessProfile] = useState(null);
     const [loading, setLoading] = useState(true);
 
-    // Get your own ID from storage to check if you are viewing yourself
+    // 2. Identify if the current view is for the logged-in user or an external seller
     const myId = localStorage.getItem('userId');
     const isViewingOthers = userId && userId !== myId;
 
@@ -31,8 +31,7 @@ export default function ProfilePage() {
             try {
                 setLoading(true);
 
-                // 2. Fetch logic: If looking at someone else, use getProfileById.
-                // Otherwise, use getMe() for your own private profile view.
+                // 3. Fetch specific seller data if userId exists, otherwise fetch personal data
                 const data = isViewingOthers
                     ? await profileService.getProfileById(userId)
                     : await profileService.getMe();
@@ -48,7 +47,7 @@ export default function ProfilePage() {
                 setUserProfile(data.personalProfile);
                 setBusinessProfile(data.businessProfile ?? null);
 
-                // 3. Auto-switch to Business tab if viewing a seller
+                // 4. Automatically switch to the Business tab when viewing a seller
                 if (isViewingOthers && data.businessProfile) {
                     setActiveTab("BUSINESS");
                 } else {
@@ -57,7 +56,6 @@ export default function ProfilePage() {
 
             } catch (err) {
                 console.error("Error loading profile:", err);
-                // Only boot to login if the error happened while trying to view your own profile
                 if (!isViewingOthers) {
                     authService.logout();
                     navigate("/login", { replace: true });
@@ -96,28 +94,36 @@ export default function ProfilePage() {
                                 profile={userProfile}
                                 aboutExpanded={aboutExpanded}
                                 onToggleAbout={() => setAboutExpanded(v => !v)}
-                                isOwnProfile={!isViewingOthers} // Prop to hide "Edit" on others' profiles
+                                // 5. Pass ownership flag to hide "Edit" and "Order History" buttons
+                                isOwnProfile={!isViewingOthers}
                             />
                         ) : (
                             <BusinessProfileLeft
                                 businessProfile={businessProfile}
-                                isOwnProfile={!isViewingOthers} // Hide edit button if not mine
+                                // 6. Pass ownership flag to hide business edit buttons
+                                isOwnProfile={!isViewingOthers}
                             />
                         )}
                     </section>
 
                     <section className="rightCol">
                         {activeTab === "USER" ? (
-                            <UserProfileRight profile={userProfile} />
+                            <UserProfileRight
+                                profile={userProfile}
+                                // 7. Pass ownership flag to handle private statistics visibility
+                                isOwnProfile={!isViewingOthers}
+                            />
                         ) : (
                             <BusinessProfileRight
                                 businessProfile={businessProfile}
-                                userId={userProfile.userId || userId} // Pass the correct ID for stats fetching
+                                userId={userProfile.userId || userId}
+                                // 8. Pass ownership flag for seller-specific statistics
+                                isOwnProfile={!isViewingOthers}
                             />
                         )}
                     </section>
 
-                    {/* 4. Only show logout on your own profile */}
+                    {/* 9. Logout is only visible to the profile owner */}
                     {!isViewingOthers && (
                         <div className="profileFooter">
                             <button className="logoutBtn logoutBtnBottom" onClick={logout}>

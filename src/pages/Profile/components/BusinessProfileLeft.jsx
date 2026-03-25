@@ -1,7 +1,8 @@
 import Button from "@/components/ui/Button";
 import {useNavigate} from "react-router-dom";
 
-export default function BusinessProfileLeft({ businessProfile }) {
+// Added isOwnProfile prop
+export default function BusinessProfileLeft({ businessProfile, isOwnProfile }) {
     const displayName = businessProfile?.businessName || "Your Business";
     const businessType = businessProfile?.businessType || "Business";
     const address = businessProfile?.address || "No address set";
@@ -19,9 +20,17 @@ export default function BusinessProfileLeft({ businessProfile }) {
                     <div className="role">{businessType}</div>
                     <div className="location">{address}</div>
 
-                    <Button className="primaryBtn" variant="primary" type="button" onClick={() => navigate("/profile/business/edit")}>
-                        Edit business profile
-                    </Button>
+                    {/* Button is now conditional */}
+                    {isOwnProfile && (
+                        <Button
+                            className="primaryBtn"
+                            variant="primary"
+                            type="button"
+                            onClick={() => navigate("/profile/business/edit")}
+                        >
+                            Edit business profile
+                        </Button>
+                    )}
                 </div>
             </div>
 

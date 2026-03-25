@@ -3,13 +3,17 @@ const API_BASE_URL = 'http://localhost:9000/api';
 export const orderService = {
     // For Citizens/Shoppers
     getOrdersByShopper: async (shopperId) => {
+        if (!shopperId) return [];
         try {
             const response = await fetch(`${API_BASE_URL}/orders?shopperId=${shopperId}`);
-            if (!response.ok) throw new Error('Failed to fetch orders');
+            if (!response.ok) {
+                if (response.status === 404) return [];
+                throw new Error('Failed to fetch orders');
+            }
             return await response.json();
         } catch (error) {
             console.error("Error fetching shopper orders:", error);
-            return [];
+            return []; // Return empty array to keep UI from breaking
         }
     },
 

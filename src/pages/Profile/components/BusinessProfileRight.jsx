@@ -1,87 +1,110 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
+import { Star } from 'lucide-react';
 import { verificationService } from "@/services/verification.service";
 import { listingService } from "@/services/listing.service";
-// NEW IMPORTS
 import { reviewService } from "@/services/reviewService";
 import RatingsReviews from "./RatingsReviews";
 
-export default function BusinessProfileRight({ businessProfile, userId }) {
+export default function BusinessProfileRight({ businessProfile, userId, isOwnProfile }) {
     const [verificationDoc, setVerificationDoc] = useState(null);
     const [products, setProducts] = useState([]);
     const [loading, setLoading] = useState(true);
-
-    // NEW STATE FOR REVIEWS
     const [businessReviews, setBusinessReviews] = useState([]);
     const [ratingData, setRatingData] = useState({ averageRating: 0, totalReviews: 0 });
+
+    const [showReviewForm, setShowReviewForm] = useState(false);
+    const [newRating, setNewRating] = useState(5);
+    const [newComment, setNewComment] = useState("");
 
     const isRestaurant = businessProfile?.businessType === "RESTAURANT";
     const verified = businessProfile?.verified;
     const docStatus = verified ? "Verified" : "Pending verification";
 
+    const refreshData = useCallback(async () => {
+        if (!userId) return;
+        try {
+            const [avgData, reviewsList] = await Promise.all([
+                reviewService.getAverageRating("SELLER", userId),
+                reviewService.getTargetReviews("SELLER", userId)
+            ]);
+            setRatingData(avgData);
+            setBusinessReviews(reviewsList);
+        } catch (err) {
+            console.error("Error refreshing data:", err);
+        }
+    }, [userId]);
+
     useEffect(() => {
-        const loadBusinessData = async () => {
+        const loadInitialData = async () => {
             if (!userId) return;
             try {
                 setLoading(true);
-
-                // Fetch verification, products, and reviews concurrently
-                const [vData, avgData, reviewsList] = await Promise.all([
-                    verificationService.getUserVerification(userId).catch(() => null),
-                    reviewService.getAverageRating("SELLER", userId), // TargetType = SELLER
-                    reviewService.getTargetReviews("SELLER", userId)
-                ]);
-
+                const vData = await verificationService.getUserVerification(userId).catch(() => null);
                 setVerificationDoc(vData);
-                setRatingData(avgData);
-                setBusinessReviews(reviewsList);
-
-                if (businessProfile?.businessType === "FARMER") {
-                    const allListings = await listingService.getAllListings();
-                    setProducts(allListings.filter(l => l.ownerId === userId));
-                }
+                await refreshData();
+                const allListings = await listingService.getAllListings();
+                setProducts(allListings.filter(l => l.ownerId === userId));
             } catch (err) {
                 console.error("Error loading business data", err);
             } finally {
                 setLoading(false);
             }
         };
-        loadBusinessData();
-    }, [userId, businessProfile?.businessType]);
+        loadInitialData();
+    }, [userId, refreshData]);
 
-    // Format the backend review data to match your RatingsReviews.jsx props expectations
+    const handleSellerReviewSubmit = async () => {
+        const currentUserId = localStorage.getItem('userId');
+        if (!newComment.trim()) return alert("Please write a comment.");
+        try {
+            await reviewService.createReview({
+                targetId: userId,
+                targetType: "SELLER",
+                rating: newRating,
+                comment: newComment,
+                isAnonymous: false,
+                reviewerId: currentUserId
+            });
+            await refreshData();
+            setShowReviewForm(false);
+            setNewComment("");
+        } catch (err) {
+            console.error("Failed to submit review", err);
+        }
+    };
+
     const formattedRatings = businessReviews.map(r => ({
         id: r.id,
         rating: r.rating,
         text: r.comment,
         reviewedAt: new Date(r.createdAt).toLocaleDateString(),
         itemName: r.targetType === "LISTING" ? "Product Review" : "Business Review",
-        // Pass the reviewer name if available, otherwise Anonymous
-        reviewerName: r.isAnonymous ? "Anonymous" : (r.reviewerName || "Verified Buyer")
+        reviewerName: r.isAnonymous ? "Anonymous" : (r.reviewerName || "Verified Buyer"),
+        reviewerId: r.reviewerId
     }));
 
     return (
-        <>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+            {/* RESTORED: Documents Card */}
             <div className="card businessDocsCard">
                 <div className="sectionTitle">Documents</div>
                 <div className="businessDocRow">
                     <div className="businessDocTitle">Food Safety Certificate:</div>
                     <div className="businessDocMeta">
                         <div>Status: <b style={{color: verified ? '#2e7d32' : 'inherit'}}>{docStatus}</b></div>
-                        {verificationDoc?.documentUrl ? (
-                            <a href={verificationDoc.documentUrl} target="_blank" rel="noreferrer" className="linkBtn" style={{display: 'inline-block', marginTop: '8px'}}>
+                        {verificationDoc?.documentUrl && (
+                            <a href={verificationDoc.documentUrl} target="_blank" rel="noreferrer" className="linkBtn">
                                 View uploaded document
                             </a>
-                        ) : (
-                            <div className="muted">No document uploaded</div>
                         )}
                     </div>
                 </div>
             </div>
 
+            {/* RESTORED: Full Statistics */}
             <div className="card statsCard">
                 <div className="statsHeader">Statistics</div>
                 <div className="statsRow businessStatsRow">
-                    {/* DYNAMIC REVIEWS STATS */}
                     <div className="statBox">
                         <div className="statValue">{ratingData.totalReviews}</div>
                         <div className="statLabel">reviews</div>
@@ -94,58 +117,53 @@ export default function BusinessProfileRight({ businessProfile, userId }) {
                         <div className="statValue">{businessProfile?.totalSales ?? 0}</div>
                         <div className="statLabel">total sales</div>
                     </div>
-                    {/* DYNAMIC AVERAGE RATING */}
                     <div className="statBox">
                         <div className="statValue">{ratingData.averageRating > 0 ? ratingData.averageRating.toFixed(1) : "0.0"} ★</div>
                         <div className="statLabel">average rating</div>
                     </div>
-                    <div className="statBox">
-                        <div className="statValue">230</div>
-                        <div className="statLabel">followers</div>
-                    </div>
                 </div>
             </div>
 
+            {/* PRODUCT GRID SECTION */}
             <div className="card businessProductsCard">
                 <div className="sectionTitle">{isRestaurant ? "Promotions" : "Products"}</div>
-                {/* ... Your existing Product Grid mapping remains exactly the same ... */}
-                {isRestaurant ? (
-                    <div className="productGrid">
-                        <div className="productCard">
-                            <img src="https://images.unsplash.com/photo-1551218808-94e220e084d2?auto=format&fit=crop&w=400" className="productImg" alt="Promo" />
+                <div className="productGrid">
+                    {products.map((p) => (
+                        <div key={p.id} className="productCard">
+                            <img src={p.imageUrls?.[0] || "https://via.placeholder.com/120x90"} className="productImg" alt={p.title} />
                             <div className="productInfo">
-                                <div className="productName">JAPANESE NIGHT IS HERE !!!</div>
-                                <div className="productDesc">We are hosting a Japanese night from 2nd Feb, 2026 - 10th Feb, 2026...</div>
+                                <div className="productName">{p.title}</div>
+                                <div className="productDesc">{p.description}</div>
                             </div>
                         </div>
-                    </div>
-                ) : (
-                    <div className="productGrid">
-                        {products.length === 0 ? (
-                            <div className="muted">No products yet.</div>
-                        ) : (
-                            products.map((p) => (
-                                <div key={p.id} className="productCard">
-                                    <img src={p.imageUrls?.[0] || "https://via.placeholder.com/120x90"} className="productImg" alt={p.title} />
-                                    <div className="productInfo">
-                                        <div className="productName">{p.title}</div>
-                                        <div className="productMeta">
-                                            <span>${p.price}/{p.unit}</span>
-                                        </div>
-                                        <div className="productDesc">{p.description}</div>
-                                    </div>
-                                </div>
-                            ))
-                        )}
-                    </div>
-                )}
+                    ))}
+                </div>
             </div>
 
-            {/* NEW: RENDER THE REVIEWS FEED */}
-            <RatingsReviews
-                fullName={businessProfile?.businessName || "Business"}
-                ratings={formattedRatings}
-            />
-        </>
+            {/* REVIEW FORM */}
+            {!isOwnProfile && (
+                <div className="card" style={{ padding: '20px', background: '#F9FAFB', borderRadius: '12px' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px' }}>
+                        <h3 style={{ margin: 0 }}>Rate this Seller</h3>
+                        <button onClick={() => setShowReviewForm(!showReviewForm)} className="linkBtn">{showReviewForm ? "Cancel" : "Write a Review"}</button>
+                    </div>
+                    {showReviewForm && (
+                        <div style={{ padding: '15px', background: '#fff', borderRadius: '8px', border: '1px solid #ddd' }}>
+                            <div style={{ display: 'flex', gap: '5px', justifyContent: 'center', marginBottom: '15px' }}>
+                                {[1, 2, 3, 4, 5].map((s) => (
+                                    <button key={s} onClick={() => setNewRating(s)} style={{ background: 'none', border: 'none', cursor: 'pointer' }}>
+                                        <Star size={30} fill={s <= newRating ? "#FFB400" : "none"} stroke={s <= newRating ? "#FFB400" : "#999"} />
+                                    </button>
+                                ))}
+                            </div>
+                            <textarea placeholder="Your experience..." value={newComment} onChange={e => setNewComment(e.target.value)} style={{ width: '100%', height: '80px', padding: '10px', marginBottom: '10px' }} />
+                            <button onClick={handleSellerReviewSubmit} style={{ width: '100%', padding: '10px', background: '#ff9800', color: '#fff', border: 'none', borderRadius: '5px', fontWeight: 'bold' }}>Submit Review</button>
+                        </div>
+                    )}
+                </div>
+            )}
+
+            <RatingsReviews fullName={businessProfile?.businessName || "Business"} ratings={formattedRatings} />
+        </div>
     );
 }

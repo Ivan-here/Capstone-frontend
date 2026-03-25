@@ -1,8 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, CheckCircle, Lock } from 'lucide-react';
 import { listingService } from '@/services/listing.service.js';
 import { reviewService } from '@/services/reviewService.js';
+import { profileService } from '@/services/profile.service.js';
 import StarRating from '../myOrders/StarRating.jsx';
 import { useCart } from '../cart/CartContext.jsx';
 import './ProductDetails.css';
@@ -21,19 +22,32 @@ const ProductDetails = () => {
     const [reviews, setReviews] = useState([]);
     const [ratingData, setRatingData] = useState({ averageRating: 0, totalReviews: 0 });
 
-    const userRole = localStorage.getItem('userRole') || 'CITIZEN';
+    const [isVerifiedNgo, setIsVerifiedNgo] = useState(false);
+    const rawRole = localStorage.getItem('userRole');
+    const isNgo = rawRole && rawRole.toUpperCase() === 'NGO';
+
+    const loadReviewsOnly = useCallback(async () => {
+        try {
+            const [avgData, reviewList] = await Promise.all([
+                reviewService.getAverageRating("LISTING", id),
+                reviewService.getTargetReviews("LISTING", id)
+            ]);
+            setRatingData(avgData);
+            setReviews(reviewList);
+        } catch (err) {
+            console.error("Failed to refresh reviews:", err);
+        }
+    }, [id]);
 
     useEffect(() => {
         const loadPageData = async () => {
             try {
                 setLoading(true);
-                const [data, avgData, reviewList] = await Promise.all([
-                    listingService.getListingById(id),
-                    reviewService.getAverageRating("LISTING", id),
-                    reviewService.getTargetReviews("LISTING", id)
-                ]);
 
-                const productImages = data.imageUrls?.length > 0
+                const data = await listingService.getListingById(id);
+                await loadReviewsOnly();
+
+                const productImages = data.imageUrls && data.imageUrls.length > 0
                     ? data.imageUrls
                     : ["https://images.unsplash.com/photo-1550989460-0adf9ea622e2?auto=format&fit=crop&w=800&q=80"];
 
@@ -48,21 +62,52 @@ const ProductDetails = () => {
                 });
 
                 setMainImage(productImages[0]);
-                setRatingData(avgData);
-                setReviews(reviewList);
+
+                if (isNgo) {
+                    try {
+                        const profileData = await profileService.getMe();
+                        const verified = profileData?.businessProfile?.verified === true;
+                        setIsVerifiedNgo(verified);
+                        localStorage.setItem('isVerified', String(verified));
+                    } catch (profileErr) {
+                        setIsVerifiedNgo(localStorage.getItem('isVerified') === 'true');
+                    }
+                }
+
                 setLoading(false);
             } catch (err) {
+                console.error("Fetch error:", err);
                 setError("Product not found.");
                 setLoading(false);
             }
         };
         loadPageData();
-    }, [id]);
+    }, [id, isNgo, loadReviewsOnly]);
 
     if (loading) return <div className="pd-wrapper center-content"><h2>Loading...</h2></div>;
     if (error) return <div className="pd-wrapper center-content"><h2>{error}</h2></div>;
 
-    const isLocked = product.isNgoOnly && userRole !== 'NGO';
+    const isLocked = product.isNgoOnly && (!isNgo || !isVerifiedNgo);
+
+    const handleForceReview = async () => {
+        const currentUserId = localStorage.getItem('userId');
+
+        try {
+            await reviewService.createReview({
+                targetId: id,
+                targetType: "LISTING",
+                rating: 5,
+                comment: "Bypassed checkout! No page refresh needed.",
+                isAnonymous: false,
+                reviewerId: currentUserId
+            });
+
+            await loadReviewsOnly();
+            alert("Review added! The list below has updated.");
+        } catch (err) {
+            console.error("Failed to submit test review:", err);
+        }
+    };
 
     return (
         <div className="pd-wrapper">
@@ -80,7 +125,6 @@ const ProductDetails = () => {
                 </button>
 
                 <div className="pd-content">
-                    {/* Left Column: Gallery */}
                     <div className="pd-left-column">
                         <div className="gallery-wrapper">
                             <div className="thumbnails">
@@ -90,36 +134,56 @@ const ProductDetails = () => {
                                         src={img}
                                         className={`thumb ${mainImage === img ? 'active' : ''}`}
                                         onClick={() => setMainImage(img)}
-                                        alt="thumb"
+                                        alt="thumbnail"
                                     />
                                 ))}
                             </div>
                             <div className="main-image-box">
                                 <img src={mainImage} alt={product.title} />
-                                {product.isNgoOnly && <div className="pd-ngo-badge">NGO Exclusive</div>}
                             </div>
                         </div>
 
                         <div className="pd-buttons">
-                            {!isLocked && (
+                            {!isLocked ? (
                                 <button className="btn-cart" onClick={() => { addToCart(product); setShowToast(true); setTimeout(()=>setShowToast(false), 3000); }}>
                                     {product.price === 0 ? "Claim Donation" : "Add to Basket"}
                                 </button>
+                            ) : (
+                                <div className="pd-locked-message" style={{ marginTop: '0' }}>
+                                    <Lock size={18}/>
+                                    <span>Claiming reserved for verified NGOs.</span>
+                                </div>
                             )}
                         </div>
 
-                        {/* Reviews Section at bottom of left column or full width below */}
                         <div className="reviews-section">
+                            <button
+                                onClick={handleForceReview}
+                                style={{ background: '#ff9800', color: '#fff', padding: '10px', border: 'none', borderRadius: '4px', marginBottom: '15px', cursor: 'pointer', width: '100%', fontWeight: 'bold' }}
+                            >
+                                🧪 Force Test Review (No Refresh)
+                            </button>
+
                             <h3>Ratings and Reviews</h3>
                             {reviews.length === 0 ? (
                                 <p className="review-text-inline">No reviews yet.</p>
                             ) : (
                                 reviews.map(r => (
-                                    <div key={r.id} className="review-user">
-                                        <div className="review-text-inline"><b>{r.isAnonymous ? "Anonymous" : r.reviewerName}</b></div>
-                                        <div className="stars-row">
+                                    <div key={r.id} className="review-user" style={{ marginBottom: '15px', borderBottom: '1px solid #eee', paddingBottom: '10px' }}>
+                                        <div className="review-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                            {/* Link to user profile */}
+                                            <button
+                                                className="link-text"
+                                                onClick={() => navigate(`/profile/${r.reviewerId}`)}
+                                                style={{ fontWeight: 'bold', fontSize: '1rem', background: 'none', border: 'none', padding: 0, cursor: 'pointer', color: '#4a7c59' }}
+                                            >
+                                                {r.isAnonymous ? "Anonymous" : (r.reviewerName || "Verified Buyer")}
+                                            </button>
+                                            <span style={{ fontSize: '0.8rem', color: '#888' }}>{new Date(r.createdAt).toLocaleDateString()}</span>
+                                        </div>
+                                        <div className="stars-row" style={{ marginTop: '5px' }}>
                                             <StarRating rating={r.rating} size={16} />
-                                            <span className="review-text-inline">{r.comment}</span>
+                                            <p className="review-text-inline" style={{ marginTop: '5px' }}>{r.comment}</p>
                                         </div>
                                     </div>
                                 ))
@@ -127,7 +191,6 @@ const ProductDetails = () => {
                         </div>
                     </div>
 
-                    {/* Right Column: Info */}
                     <div className="pd-right-column">
                         <h1 className="pd-title">{product.title}</h1>
 
@@ -163,7 +226,7 @@ const ProductDetails = () => {
                         {isLocked && (
                             <div className="pd-locked-message">
                                 <Lock size={18}/>
-                                <span>Reserved for verified NGOs.</span>
+                                <span>This item is currently reserved for verified NGOs.</span>
                             </div>
                         )}
                     </div>

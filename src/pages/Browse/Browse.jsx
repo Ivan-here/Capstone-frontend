@@ -21,11 +21,12 @@ const Browse = () => {
     const [selectedCategories, setSelectedCategories] = useState([]);
     const navigate = useNavigate();
 
+    // COMBINED CATEGORIES: Includes both Farm and Restaurant categories
     const CATEGORY_GROUPS = {
-        "Vegetables": ["vegetables", "veggies", "food", "farm_product"],
-        "Fruits": ["fruits", "fruit", "food", "farm_product"],
-        "Dairy": ["dairy", "milk", "cheese", "eggs"],
-        "Baked Goods": ["bakery", "bread", "sourdough", "baked goods"]
+        "Produce & Fresh": ["vegetables", "veggies", "fruits", "fruit", "fresh ingredients"],
+        "Dairy & Eggs": ["dairy", "milk", "cheese", "eggs"],
+        "Bakery & Meals": ["bakery", "bread", "baked goods", "prepared meals"],
+        "Pantry": ["canned/packaged", "pantry"]
     };
 
     useEffect(() => {
@@ -33,11 +34,12 @@ const Browse = () => {
             try {
                 setLoading(true);
 
-                // 1. Get role from localStorage (Ensure your Login logic sets this!)
-                const userRole = localStorage.getItem('userRole') || 'CITIZEN';
+                // --- THE FIX ---
+                // We ALWAYS pass "SHOPPER" to force the backend to return the universal public feed.
+                // This guarantees we only get Farm items + half-life crossed Restaurant items.
+                const data = await listingService.getAllListings("SHOPPER");
 
-                // 2. Pass role to backend
-                const data = await listingService.getAllListings(userRole);
+                console.log("RAW BACKEND DATA:", data);
 
                 const mappedData = data.map(item => {
                     const firstImage = item.imageUrls && item.imageUrls.length > 0
@@ -49,8 +51,7 @@ const Browse = () => {
                         id: item.listingId || item.id,
                         imageUrl: firstImage,
                         expiryDate: formatDate(item.expiryDate),
-                        // Badge logic
-                        isNgoOnly: item.visibility === "NGO_ONLY",
+                        // If it's on this page and price is 0, it's a donation that crossed the half-life
                         tag: item.price === 0 ? "Donation !" : ""
                     };
                 });
@@ -76,12 +77,15 @@ const Browse = () => {
     };
 
     const filteredListings = listings.filter(item => {
-        const matchesSearch = item.title.toLowerCase().includes(searchTerm.toLowerCase());
+        const safeTitle = item.title || "";
+        const matchesSearch = safeTitle.toLowerCase().includes(searchTerm.toLowerCase());
+
         let matchesCategory = true;
         if (selectedCategories.length > 0) {
             matchesCategory = selectedCategories.some(filterName => {
-                const allowedValues = CATEGORY_GROUPS[filterName] || [filterName.toLowerCase()];
-                return item.category && allowedValues.includes(item.category.toLowerCase());
+                const allowedValues = CATEGORY_GROUPS[filterName] || [];
+                const itemCat = item.category || "";
+                return allowedValues.includes(itemCat.toLowerCase());
             });
         }
         return matchesSearch && matchesCategory;
@@ -138,27 +142,20 @@ const Browse = () => {
                 <div className="product-grid">
                     {filteredListings.length === 0 ? (
                         <div style={{gridColumn: "1/-1", textAlign: "center", marginTop: "40px", color: "#666"}}>
-                            <h3>No products match your search.</h3>
+                            <h3>No public products available right now.</h3>
                         </div>
                     ) : (
                         filteredListings.map((item) => (
                             <div key={item.id} className="product-tile" onClick={() => navigate(`/product/${item.id}`)} style={{ cursor: 'pointer' }}>
 
-                                {/* DYNAMIC BADGES */}
                                 {item.tag && <div className="tile-tag">{item.tag}</div>}
-
-                                {item.isNgoOnly && (
-                                    <div className="tile-tag" style={{ backgroundColor: '#1e40af', top: item.tag ? '40px' : '10px' }}>
-                                        NGO Exclusive
-                                    </div>
-                                )}
 
                                 <div className="tile-content">
                                     <div className="tile-image">
-                                        <img src={item.imageUrl} alt={item.title} style={{ objectFit: 'cover' }} />
+                                        <img src={item.imageUrl} alt={item.title || "Product Image"} style={{ objectFit: 'cover' }} />
                                     </div>
                                     <div className="tile-info">
-                                        <h3>{item.title}</h3>
+                                        <h3>{item.title || "Unnamed Product"}</h3>
                                         <p>{formatQuantityText(item.quantity, item.unit)}{item.description ? `, ${item.description}` : ''}</p>
 
                                         {item.price === 0 && item.expiryDate && (
