@@ -33,6 +33,7 @@ import SurplusEditor from "@/pages/RestaurantHub/SurplusEditor.jsx";
 import RestaurantHub from "@/pages/RestaurantHub/RestaurantHub.jsx";
 import MyOrders from "@/pages/myOrders/MyOrders.jsx";
 import NgoHub from "@/pages/NGO/NgoHub.jsx";
+import CheckoutPage from "@/pages/Checkout/CheckoutPage.jsx";
 
 function App() {
     // 1. STATE: Is the app loading?
@@ -89,6 +90,7 @@ function App() {
                         <Route path="/admin/notifications" element={<AdminRoute><AdminNotifications /></AdminRoute>} />
                         <Route path="/my-orders" element={<MyOrders />} />
                         <Route path="/ngo-hub" element={<NgoHub />} />
+                        <Route path="/checkout" element={<CheckoutPage />} />
 
                     </Route>
                 </Routes>
