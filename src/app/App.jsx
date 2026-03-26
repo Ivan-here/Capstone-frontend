@@ -11,6 +11,8 @@ import RegistrationVerification from "../pages/Registration/RegistrationVerifica
 import ProfilePage from "../pages/Profile/ProfilePage.jsx";
 import { CartProvider } from '../pages/cart/CartContext';
 import Community from '../pages/community/Community.jsx';
+import CommunityCreatePage from '../pages/community/CommunityCreatePage.jsx';
+import CommunityPostPage from '../pages/community/CommunityPostPage.jsx';
 import EditPersonalProfilePage from "@/pages/Profile/EditPersonalProfilePage";
 import EditBusinessProfilePage from "@/pages/Profile/EditBusinessProfilePage";
 
@@ -71,6 +73,8 @@ function App() {
                         <Route path="/product/:id" element={<ProductDetails />} />
                         <Route path="/cart" element={<Cart />} />
                         <Route path="/community" element={<Community />} />
+                        <Route path="/community/create" element={<CommunityCreatePage />} />
+                        <Route path="/community/posts/:postId" element={<CommunityPostPage />} />
                         <Route path="*" element={<NotFound />} />
                         <Route path="/farmer-hub" element={<FarmersHub />} />
                         <Route path="/add-product" element={<ProductEditor mode="add" />} />
