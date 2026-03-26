@@ -1,0 +1,135 @@
+import React from "react";
+import { useNavigate } from "react-router-dom";
+import {
+  displayTime,
+  getAuthorHandle,
+  getAuthorLabel,
+  getCreatorAccent,
+  getCreatorTypeLabel,
+  getPreviewComments,
+  getReactionForUser,
+} from "./community.utils";
+
+function Avatar({ label }) {
+  const initial = String(label || "?").trim().charAt(0).toUpperCase() || "?";
+  return <div className="community-avatar">{initial}</div>;
+}
+
+export default function CommunityPostCard({
+  post,
+  currentUserId,
+  isFollowing,
+  reactionBusy = false,
+  onReact,
+  compact = false,
+  showOpenPostAction = true,
+  showFollowButton = true,
+}) {
+  const navigate = useNavigate();
+  const currentReaction = getReactionForUser(post, currentUserId);
+  const commentCount = Array.isArray(post?.comments) ? post.comments.length : 0;
+  const previewComments = compact ? getPreviewComments(post, 3) : [];
+  const accent = getCreatorAccent(post);
+  const hasImage = Boolean(post?.imageUrl);
+
+  return (
+    <article
+      className={`community-post-card community-post-card--mockup community-post-card--${accent} ${
+        hasImage ? "community-post-card--with-image" : "community-post-card--no-image"
+      }`}
+    >
+      {hasImage && (
+        <div className="community-post-media-column">
+          <img src={post.imageUrl} alt={post.title || "Community post"} className="community-post-image community-post-image--mockup" />
+        </div>
+      )}
+
+      <div className="community-post-content-column">
+        <div className="community-post-header community-post-header--mockup">
+          <div className="community-post-author">
+            <Avatar label={getAuthorLabel(post)} />
+            <div>
+              <div className="community-post-author-name">{getAuthorLabel(post)}</div>
+              <div className="community-post-meta">
+                {getAuthorHandle(post)}
+                {getAuthorHandle(post) ? " · " : ""}
+                {getCreatorTypeLabel(post)}
+                {" · "}
+                {displayTime(post?.createdAt)}
+              </div>
+            </div>
+          </div>
+
+          {showFollowButton && (
+            <button
+              type="button"
+              className={`community-follow-btn ${isFollowing ? "is-following" : ""}`}
+            >
+              {isFollowing ? "Following" : "Follow"}
+            </button>
+          )}
+        </div>
+
+        <div className="community-post-body community-post-body--mockup">
+          <h3 className="community-post-title">{post?.title}</h3>
+          <p className="community-post-content">
+            {compact && String(post?.content || "").length > 180
+              ? `${String(post.content).slice(0, 180)}...`
+              : post?.content}
+          </p>
+          {!!post?.tags?.length && (
+            <div className="community-tags-row community-tags-row--mockup">
+              {post.tags.map((tag) => (
+                <span key={`${post.id}-${tag}`} className="community-tag">#{tag}</span>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {previewComments.length > 0 && (
+          <div className="community-comment-preview-list community-comment-preview-list--boxed">
+            {previewComments.map((comment) => (
+              <div key={comment.id} className="community-comment-preview-item community-comment-preview-item--stacked">
+                <div className="community-comment-preview-avatar">
+                  {String(comment.displayName || comment.username || "?").charAt(0).toUpperCase()}
+                </div>
+                <div className="community-comment-preview-body">
+                  <div className="community-comment-preview-name">
+                    {comment.displayName || comment.username || "User"}
+                  </div>
+                  <div className="community-comment-preview-text">{comment.text}</div>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+
+        <div className="community-post-footer community-post-footer--mockup">
+          <div className="community-reaction-row community-reaction-row--single">
+            <button
+              type="button"
+              className={`community-heart-btn ${currentReaction === "LIKE" ? "active" : ""}`}
+              onClick={() => onReact?.(post, currentReaction === "LIKE" ? null : "LIKE")}
+              disabled={reactionBusy || !currentUserId}
+              aria-label={currentReaction === "LIKE" ? "Remove like" : "Like post"}
+            >
+              <span className="community-heart-emoji" aria-hidden="true">❤️</span>
+              <span>{post?.likeCount || 0} likes</span>
+            </button>
+            <span className="community-comment-count">{commentCount} comments</span>
+          </div>
+
+          {showOpenPostAction && (
+          <button
+            type="button"
+            className="community-open-post-link"
+            onClick={() => navigate(`/community/posts/${post.id}`)}
+          >
+            Open post
+          </button>
+          )}
+        </div>
+      </div>
+    </article>
+  );
+}
