@@ -58,4 +58,11 @@ export const communityService = {
       method: "DELETE",
     });
   },
+
+  updateReaction(postId, payload) {
+    return apiFetch(`/api/community/posts/${postId}/reactions`, {
+      method: "PATCH",
+      body: JSON.stringify(payload),
+    });
+  },
 };
