@@ -34,6 +34,10 @@ export function titleFromType(type, explicitTitle) {
       return "Update";
     case "COMMUNITY_COMMENT":
       return "New comment on your post";
+    case "COMMUNITY_LIKE_MILESTONE":
+      return "Post likes milestone";
+    case "NEW_FOLLOWER":
+      return "New follower";
     default: {
       const normalized = String(type).toLowerCase().replace(/_/g, " ");
       return normalized.charAt(0).toUpperCase() + normalized.slice(1);
