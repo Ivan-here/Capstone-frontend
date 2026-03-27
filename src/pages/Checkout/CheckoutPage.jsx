@@ -5,7 +5,7 @@ import { getStripe } from "@/lib/stripe";
 import { orderService } from "@/services/order.service";
 import { useCart } from "../cart/CartContext.jsx";
 
-function CheckoutForm({ clientSecret, orderId, sellerId }) {
+function CheckoutForm({ orderId, sellerId }) {
     const stripe = useStripe();
     const elements = useElements();
     const navigate = useNavigate();
@@ -39,7 +39,10 @@ function CheckoutForm({ clientSecret, orderId, sellerId }) {
         }
 
         removeSellerItems(sellerId);
-        navigate(`/orders/${orderId}?payment=success`);
+        const target = orderId
+            ? `/my-orders?payment=success&orderId=${encodeURIComponent(orderId)}`
+            : "/my-orders?payment=success";
+        navigate(target);
     };
 
     return (
@@ -125,7 +128,7 @@ export default function CheckoutPage() {
             </div>
 
             <Elements stripe={stripePromise} options={{ clientSecret }}>
-                <CheckoutForm clientSecret={clientSecret} orderId={orderId} sellerId={sellerId} />
+                <CheckoutForm orderId={orderId} sellerId={sellerId} />
             </Elements>
 
             <button onClick={() => navigate(-1)} style={{ marginTop: 16 }}>
