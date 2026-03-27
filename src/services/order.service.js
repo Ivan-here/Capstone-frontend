@@ -68,6 +68,22 @@ export const orderService = {
         }
     },
 
+    async getOrderHistory(userId) {
+        if (!userId) return { bought: [], sold: [] };
+        try {
+            return await apiFetch(`/api/orders/history?userId=${encodeURIComponent(userId)}`);
+        } catch (error) {
+            console.error("Error fetching combined order history:", error);
+
+            // Fallback for older backend deployments that do not have /orders/history yet.
+            const [bought, sold] = await Promise.all([
+                this.getOrdersByShopper(userId),
+                this.getOrdersBySeller(userId),
+            ]);
+            return { bought, sold };
+        }
+    },
+
     async markReadyForPickup(orderId, sellerUserId) {
         if (!orderId) throw new Error("orderId is required");
         if (!sellerUserId) throw new Error("sellerUserId is required");

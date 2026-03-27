@@ -19,6 +19,8 @@ export default function BusinessProfileRight({ businessProfile, userId, isOwnPro
     const [newComment, setNewComment] = useState("");
 
     const isRestaurant = businessProfile?.businessType === "RESTAURANT";
+    const isStripeEligibleBusiness =
+        businessProfile?.businessType === "FARMER" || businessProfile?.businessType === "RESTAURANT";
     const verified = businessProfile?.verified;
     const docStatus = verified ? "Verified" : "Pending verification";
 
@@ -65,13 +67,16 @@ export default function BusinessProfileRight({ businessProfile, userId, isOwnPro
 
     const handleOnboarding = async () => {
         try {
+            await paymentService.createConnectedAccount(userId);
             const res = await paymentService.createOnboardingLink(userId);
             if (res?.url) {
                 window.location.href = res.url; // redirect to Stripe
+                return;
             }
+            alert("Could not create Stripe onboarding link.");
         } catch (err) {
             console.error("Failed to start onboarding", err);
-            alert("Failed to start Stripe onboarding.");
+            alert(err?.message || "Failed to start Stripe onboarding.");
         }
     };
 
@@ -119,7 +124,7 @@ export default function BusinessProfileRight({ businessProfile, userId, isOwnPro
                                 View uploaded document
                             </a>
                         )}
-                        {isOwnProfile && (
+                        {isOwnProfile && isStripeEligibleBusiness && (
                             <div style={{ marginTop: "8px", fontSize: "12px" }}>
                                 Stripe:{" "}
                                 <b style={{ color: paymentProfile?.onboardingComplete ? "#2e7d32" : "#999" }}>
@@ -129,7 +134,12 @@ export default function BusinessProfileRight({ businessProfile, userId, isOwnPro
                                 </b>
                             </div>
                         )}
-                        {isOwnProfile && !paymentProfile?.onboardingComplete && (
+                        {isOwnProfile && !isStripeEligibleBusiness && (
+                            <div style={{ marginTop: "8px", fontSize: "12px", color: "#666" }}>
+                                Stripe onboarding is available for FARMER and RESTAURANT profiles.
+                            </div>
+                        )}
+                        {isOwnProfile && isStripeEligibleBusiness && !paymentProfile?.onboardingComplete && (
                             <button
                                 onClick={handleOnboarding}
                                 className="linkBtn"
