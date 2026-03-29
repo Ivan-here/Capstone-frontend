@@ -5,6 +5,19 @@ import { getStripe } from "@/lib/stripe";
 import { orderService } from "@/services/order.service";
 import { useCart } from "../cart/CartContext.jsx";
 
+function mapCheckoutError(message) {
+    const normalized = String(message || "").toLowerCase();
+
+    if (
+        normalized.includes("seller is not ready to accept payments") ||
+        normalized.includes("seller payment profile not found")
+    ) {
+        return "Sorry, this farmer did not set up payments yet.";
+    }
+
+    return message || "Failed to initialize checkout.";
+}
+
 function CheckoutForm({ orderId, sellerId }) {
     const stripe = useStripe();
     const elements = useElements();
@@ -99,7 +112,7 @@ export default function CheckoutPage() {
                 const paymentIntent = await orderService.createPaymentIntent(createdOrder.orderId, shopperId);
                 setClientSecret(paymentIntent.clientSecret);
             } catch (err) {
-                setError(err.message || "Failed to initialize checkout.");
+                setError(mapCheckoutError(err.message));
             } finally {
                 setLoading(false);
             }

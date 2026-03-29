@@ -3,16 +3,19 @@ import { Bell, ShoppingCart, User, Settings } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
 import '../../styles/globals.css';
 import Notifications from '../../pages/notification/Notifications.jsx';
+import ContactStaffButton from "@/components/layout/ContactStaffButton";
 
 const NavbarFarmer = () => {
     const location = useLocation();
     const [showNotifications, setShowNotifications] = useState(false);
     const token = localStorage.getItem("accessToken");
     const userLink = token ? "/profile" : "/login";
+    const settingsLink = token ? "/settings" : "/login";
 
     // Helper: Check if we are on the Cart page
     const isCartActive = location.pathname.startsWith('/cart');
     const isProfileActive = location.pathname.indexOf("/profile") === 0;
+    const isSettingsActive = location.pathname.indexOf("/settings") === 0;
 
     return (
         <div className="navbar-wrapper relative">
@@ -29,6 +32,7 @@ const NavbarFarmer = () => {
                     >
                         <Bell size={22} />
                     </button>
+                    <ContactStaffButton />
 
                     {/* --- UPDATED SECTION START --- */}
                     {/* CART ICON: Linked to /cart with Active Style */}
@@ -47,9 +51,11 @@ const NavbarFarmer = () => {
                             <User size={22} />
                         </button>
                     </Link>
-                    <button className="btn-icon">
-                        <Settings size={22} />
-                    </button>
+                    <Link to={settingsLink}>
+                        <button className={`btn-icon ${isSettingsActive ? "is-active" : ""}`}>
+                            <Settings size={22} />
+                        </button>
+                    </Link>
                 </div>
             </div>
 

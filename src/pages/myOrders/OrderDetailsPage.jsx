@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { ArrowLeft, CheckCircle2, Clock3, UserRound } from 'lucide-react';
 import { orderService } from '@/services/order.service';
+import { supportService } from '@/services/support.service';
 import './OrderDetailsPage.css';
 
 function formatMoney(cents) {
@@ -25,6 +26,7 @@ export default function OrderDetailsPage() {
     const [notice, setNotice] = useState('');
     const [pickupCode, setPickupCode] = useState('');
     const [verifyCode, setVerifyCode] = useState('');
+    const [disputeMessage, setDisputeMessage] = useState('');
     const [busyAction, setBusyAction] = useState('');
 
     const currentUserId = localStorage.getItem('userId');
@@ -95,6 +97,29 @@ export default function OrderDetailsPage() {
             await loadOrder();
         } catch (err) {
             setNotice(err?.message || 'Pickup code verification failed.');
+        } finally {
+            setBusyAction('');
+        }
+    };
+
+    const handleDisputeOrder = async (e) => {
+        e.preventDefault();
+        if (!isBuyer || !disputeMessage.trim()) return;
+
+        try {
+            setBusyAction('dispute');
+            await supportService.createStaffRequest({
+                category: 'ORDER_DISPUTE',
+                subject: `Order dispute for #${order.id}`,
+                message: disputeMessage.trim(),
+                referenceType: 'ORDER',
+                referenceId: order.id,
+                contextPath: `/orders/${order.id}`,
+            });
+            setDisputeMessage('');
+            setNotice('Dispute sent to staff. Admin can review the order and refund it while the payment is still held.');
+        } catch (err) {
+            setNotice(err?.message || 'Failed to submit dispute.');
         } finally {
             setBusyAction('');
         }
@@ -201,6 +226,22 @@ export default function OrderDetailsPage() {
                                 <div className="order-details-code-label">Pickup Code</div>
                                 <div className="order-details-code-value">{pickupCode}</div>
                             </div>
+                        )}
+
+                        {order.status !== 'CANCELLED' && (
+                            <form className="order-details-verify" onSubmit={handleDisputeOrder} style={{ marginTop: 20 }}>
+                                <label htmlFor="order-dispute-input">Dispute this order with staff</label>
+                                <textarea
+                                    id="order-dispute-input"
+                                    value={disputeMessage}
+                                    onChange={(e) => setDisputeMessage(e.target.value)}
+                                    placeholder="Describe what went wrong with this order."
+                                    rows={4}
+                                />
+                                <button className="order-details-primary" disabled={busyAction === 'dispute'}>
+                                    {busyAction === 'dispute' ? 'Sending...' : 'Submit Dispute'}
+                                </button>
+                            </form>
                         )}
                     </section>
                 )}
