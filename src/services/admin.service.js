@@ -182,13 +182,14 @@ export const adminService = {
         return apiFetch(`/admin/orders/shopper/${shopperId}`);
     },
 
-    getOrdersByRestaurant(restaurantId) {
-        return apiFetch(`/admin/orders/restaurant/${restaurantId}`);
+    getOrdersBySeller(sellerUserId) {
+        return apiFetch(`/admin/orders/seller/${sellerUserId}`);
     },
 
-    updateOrderStatus(id, status) {
-        return apiFetch(`/admin/orders/${id}/status?status=${encodeURIComponent(status)}`, {
-            method: "PATCH",
+    disputeOrder(id, payload) {
+        return apiFetch(`/admin/orders/${id}/dispute`, {
+            method: "POST",
+            body: JSON.stringify(payload),
         });
     },
 
