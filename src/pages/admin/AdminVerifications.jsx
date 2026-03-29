@@ -155,11 +155,16 @@ export default function AdminVerifications() {
 
     async function submitReview(item) {
         try {
+            if (reviewForm.status === "REJECTED" && !reviewForm.adminNotes.trim()) {
+                alert("Please provide a rejection reason before saving.");
+                return;
+            }
+
             setSavingReview(true);
 
             const payload = {
                 status: reviewForm.status,
-                adminNotes: reviewForm.adminNotes,
+                adminNotes: reviewForm.adminNotes.trim(),
             };
 
             if (reviewForm.status === "APPROVED") {
@@ -417,7 +422,7 @@ export default function AdminVerifications() {
 
                                                         <textarea
                                                             rows="4"
-                                                            placeholder="Admin notes"
+                                                            placeholder={reviewForm.status === "REJECTED" ? "Reason for rejection" : "Admin notes"}
                                                             value={reviewForm.adminNotes}
                                                             onChange={(e) =>
                                                                 setReviewForm((prev) => ({
@@ -426,6 +431,11 @@ export default function AdminVerifications() {
                                                                 }))
                                                             }
                                                         />
+                                                        {reviewForm.status === "REJECTED" ? (
+                                                            <div className="admin-review-role-preview">
+                                                                A rejection reason is required so the user can see why the document was declined.
+                                                            </div>
+                                                        ) : null}
                                                     </div>
                                                 </div>
                                             ) : (

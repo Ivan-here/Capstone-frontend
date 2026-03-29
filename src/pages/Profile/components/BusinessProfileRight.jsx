@@ -4,6 +4,7 @@ import { verificationService } from "@/services/verification.service";
 import { listingService } from "@/services/listing.service";
 import { reviewService } from "@/services/reviewService";
 import { paymentService } from "@/services/payment.service";
+import { settingsService } from "@/services/settings.service";
 import RatingsReviews from "./RatingsReviews";
 
 export default function BusinessProfileRight({ businessProfile, userId, isOwnProfile }) {
@@ -13,6 +14,10 @@ export default function BusinessProfileRight({ businessProfile, userId, isOwnPro
     const [businessReviews, setBusinessReviews] = useState([]);
     const [ratingData, setRatingData] = useState({ averageRating: 0, totalReviews: 0 });
     const [paymentProfile, setPaymentProfile] = useState(null);
+    const [resubmitFile, setResubmitFile] = useState(null);
+    const [resubmittingDocument, setResubmittingDocument] = useState(false);
+    const [documentError, setDocumentError] = useState("");
+    const [documentNotice, setDocumentNotice] = useState("");
 
     const [showReviewForm, setShowReviewForm] = useState(false);
     const [newRating, setNewRating] = useState(5);
@@ -22,7 +27,12 @@ export default function BusinessProfileRight({ businessProfile, userId, isOwnPro
     const isStripeEligibleBusiness =
         businessProfile?.businessType === "FARMER" || businessProfile?.businessType === "RESTAURANT";
     const verified = businessProfile?.verified;
-    const docStatus = verified ? "Verified" : "Pending verification";
+    const verificationStatus = verificationDoc?.status || (verified ? "APPROVED" : "PENDING");
+    const docStatus = verificationStatus === "APPROVED"
+        ? "Verified"
+        : verificationStatus === "REJECTED"
+            ? "Rejected"
+            : "Pending verification";
 
 
     const refreshData = useCallback(async () => {
@@ -48,7 +58,9 @@ export default function BusinessProfileRight({ businessProfile, userId, isOwnPro
                 const vData = await verificationService.getUserVerification(userId).catch(() => null);
                 setVerificationDoc(vData);
 
-                const paymentData = await paymentService.getSellerPaymentProfile(userId).catch(() => null);
+                const paymentData = await (isOwnProfile && isStripeEligibleBusiness
+                    ? paymentService.refreshSellerStatus(userId).catch(() => paymentService.getSellerPaymentProfile(userId).catch(() => null))
+                    : paymentService.getSellerPaymentProfile(userId).catch(() => null));
                 setPaymentProfile(paymentData);
 
                 await refreshData();
@@ -110,6 +122,32 @@ export default function BusinessProfileRight({ businessProfile, userId, isOwnPro
         reviewerId: r.reviewerId
     }));
 
+    const handleDocumentResubmit = async () => {
+        if (!resubmitFile) {
+            setDocumentError("Please choose a document to resubmit.");
+            return;
+        }
+
+        try {
+            setResubmittingDocument(true);
+            setDocumentError("");
+            setDocumentNotice("");
+
+            const updatedVerification = await settingsService.resubmitVerification({
+                type: businessProfile?.businessType,
+                document: resubmitFile,
+            });
+
+            setVerificationDoc(updatedVerification);
+            setResubmitFile(null);
+            setDocumentNotice("Document resubmitted. Staff review has been requested again.");
+        } catch (err) {
+            setDocumentError(err?.message || "Failed to resubmit document.");
+        } finally {
+            setResubmittingDocument(false);
+        }
+    };
+
     return (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
             {/* RESTORED: Documents Card */}
@@ -117,12 +155,46 @@ export default function BusinessProfileRight({ businessProfile, userId, isOwnPro
                 <div className="sectionTitle">Documents</div>
                 <div className="businessDocRow">
                     <div className="businessDocTitle">Food Safety Certificate:</div>
-                    <div className="businessDocMeta">
-                        <div>Status: <b style={{color: verified ? '#2e7d32' : 'inherit'}}>{docStatus}</b></div>
+                        <div className="businessDocMeta">
+                        <div>
+                            Status: <b style={{color: verificationStatus === "APPROVED" ? '#2e7d32' : verificationStatus === "REJECTED" ? '#b43a3a' : 'inherit'}}>{docStatus}</b>
+                        </div>
+                        {verificationDoc?.adminNotes && (
+                            <div className="businessDocNotes">
+                                Reason: {verificationDoc.adminNotes}
+                            </div>
+                        )}
                         {verificationDoc?.documentUrl && (
                             <a href={verificationDoc.documentUrl} target="_blank" rel="noreferrer" className="linkBtn">
                                 View uploaded document
                             </a>
+                        )}
+                        {isOwnProfile && verificationStatus === "REJECTED" && (
+                            <div className="businessDocResubmit">
+                                <label className="businessDocUploadLabel">
+                                    Upload replacement document
+                                    <input
+                                        type="file"
+                                        accept=".pdf,.png,.jpg,.jpeg"
+                                        onChange={(event) => {
+                                            setResubmitFile(event.target.files?.[0] || null);
+                                            setDocumentError("");
+                                            setDocumentNotice("");
+                                        }}
+                                    />
+                                </label>
+                                {resubmitFile ? <div className="businessDocFileName">{resubmitFile.name}</div> : null}
+                                {documentError ? <div className="inputError">{documentError}</div> : null}
+                                {documentNotice ? <div className="businessDocNotice">{documentNotice}</div> : null}
+                                <button
+                                    type="button"
+                                    onClick={handleDocumentResubmit}
+                                    className="linkBtn"
+                                    disabled={resubmittingDocument}
+                                >
+                                    {resubmittingDocument ? "Submitting..." : "Resubmit document"}
+                                </button>
+                            </div>
                         )}
                         {isOwnProfile && isStripeEligibleBusiness && (
                             <div style={{ marginTop: "8px", fontSize: "12px" }}>
