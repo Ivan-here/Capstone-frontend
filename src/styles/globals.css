@@ -148,6 +148,137 @@ html, body {
     gap: 24px;
 }
 
+.support-modal-backdrop {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.45);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1200;
+    padding: 20px;
+}
+
+.support-modal {
+    width: min(560px, 100%);
+    background: #fdfbf4;
+    border-radius: 18px;
+    border: 1px solid rgba(85, 107, 47, 0.22);
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
+    padding: 22px;
+}
+
+.support-modal-header {
+    display: flex;
+    justify-content: space-between;
+    gap: 16px;
+    margin-bottom: 18px;
+}
+
+.support-modal-header h2 {
+    font-size: 1.4rem;
+    color: var(--color-primary-dark);
+    margin-bottom: 6px;
+}
+
+.support-modal-header p {
+    color: rgba(0, 0, 0, 0.65);
+    font-size: 0.95rem;
+}
+
+.support-modal-close {
+    border: none;
+    background: transparent;
+    cursor: pointer;
+    color: var(--color-primary-dark);
+}
+
+.support-modal-form {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+}
+
+.support-modal-form label {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    font-size: 0.9rem;
+    font-weight: 700;
+    color: var(--color-text-main);
+}
+
+.support-modal-form input,
+.support-modal-form select,
+.support-modal-form textarea {
+    width: 100%;
+    border: 1px solid rgba(0, 0, 0, 0.16);
+    border-radius: 12px;
+    padding: 12px 14px;
+    font: inherit;
+    background: #fff;
+}
+
+.support-modal-form textarea {
+    resize: vertical;
+    min-height: 140px;
+}
+
+.support-modal-context {
+    font-size: 0.82rem;
+    color: rgba(0, 0, 0, 0.62);
+}
+
+.support-modal-error,
+.support-modal-notice {
+    border-radius: 12px;
+    padding: 10px 12px;
+    font-size: 0.9rem;
+}
+
+.support-modal-error {
+    background: rgba(180, 58, 58, 0.1);
+    color: #8f2323;
+}
+
+.support-modal-notice {
+    background: rgba(46, 125, 50, 0.12);
+    color: #25652a;
+}
+
+.support-modal-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+}
+
+.support-modal-primary,
+.support-modal-secondary {
+    border: none;
+    border-radius: 12px;
+    padding: 10px 16px;
+    font: inherit;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.support-modal-primary {
+    background: var(--color-primary);
+    color: #fff;
+}
+
+.support-modal-secondary {
+    background: #e8dfcc;
+    color: #3e3b32;
+}
+
+.support-modal-primary:disabled,
+.support-modal-secondary:disabled,
+.support-modal-close:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
 .navbar-bottom {
     background-color: #D8D8C0; /* Darker cream for tabs */
     height: 40px;

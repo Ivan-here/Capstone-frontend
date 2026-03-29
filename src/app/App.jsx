@@ -15,6 +15,7 @@ import CommunityCreatePage from '../pages/community/CommunityCreatePage.jsx';
 import CommunityPostPage from '../pages/community/CommunityPostPage.jsx';
 import EditPersonalProfilePage from "@/pages/Profile/EditPersonalProfilePage";
 import EditBusinessProfilePage from "@/pages/Profile/EditBusinessProfilePage";
+import SettingsPage from "@/pages/Settings/SettingsPage.jsx";
 
 import AdminDashboard from "../pages/admin/AdminDashboard.jsx";
 import AdminUsers from "../pages/admin/AdminUsers.jsx";
@@ -70,6 +71,7 @@ function App() {
                         <Route path="/profile" element={<ProfilePage />} />
                         <Route path="/profile/edit" element={<EditPersonalProfilePage />} />
                         <Route path="/profile/business/edit" element={<EditBusinessProfilePage />} />
+                        <Route path="/settings" element={<SettingsPage />} />
                         <Route path="/browse" element={<Browse />} />
                         <Route path="/product/:id" element={<ProductDetails />} />
                         <Route path="/cart" element={<Cart />} />
