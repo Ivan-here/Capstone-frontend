@@ -89,26 +89,6 @@ const ProductDetails = () => {
 
     const isLocked = product.isNgoOnly && (!isNgo || !isVerifiedNgo);
 
-    const handleForceReview = async () => {
-        const currentUserId = localStorage.getItem('userId');
-
-        try {
-            await reviewService.createReview({
-                targetId: id,
-                targetType: "LISTING",
-                rating: 5,
-                comment: "Bypassed checkout! No page refresh needed.",
-                isAnonymous: false,
-                reviewerId: currentUserId
-            });
-
-            await loadReviewsOnly();
-            alert("Review added! The list below has updated.");
-        } catch (err) {
-            console.error("Failed to submit test review:", err);
-        }
-    };
-
     return (
         <div className="pd-wrapper">
             {showToast && (
@@ -157,13 +137,6 @@ const ProductDetails = () => {
                         </div>
 
                         <div className="reviews-section">
-                            <button
-                                onClick={handleForceReview}
-                                style={{ background: '#ff9800', color: '#fff', padding: '10px', border: 'none', borderRadius: '4px', marginBottom: '15px', cursor: 'pointer', width: '100%', fontWeight: 'bold' }}
-                            >
-                                🧪 Force Test Review (No Refresh)
-                            </button>
-
                             <h3>Ratings and Reviews</h3>
                             {reviews.length === 0 ? (
                                 <p className="review-text-inline">No reviews yet.</p>

@@ -1,45 +1,57 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import PreferencesChips from "./PreferencesChips";
 import RatingsReviews from "./RatingsReviews";
 import { reviewService } from "@/services/reviewService";
+import { followService } from "@/services/follow.service";
 
-function StatBox({ value, label, privacy, isVisible = true }) {
+function StatBox({ value, label, privacy, isVisible = true, onClick }) {
     if (!isVisible) return null;
     return (
-        <div className="statBox">
+        <div
+            className="statBox"
+            onClick={onClick}
+            style={{ cursor: onClick ? 'pointer' : 'default', transition: 'opacity 0.2s' }}
+            onMouseOver={(e) => onClick && (e.currentTarget.style.opacity = '0.7')}
+            onMouseOut={(e) => onClick && (e.currentTarget.style.opacity = '1')}
+        >
             <div className="statValue">{value}</div>
-            <div className="statLabel">{label}</div>
+            <div className="statLabel" style={{ textDecoration: onClick ? 'underline' : 'none' }}>{label}</div>
             <div className="statPrivacy">{privacy}</div>
         </div>
     );
 }
 
 export default function UserProfileRight({ profile, isOwnProfile }) {
+    const navigate = useNavigate();
     const [writtenReviews, setWrittenReviews] = useState([]);
     const [buyerRating, setBuyerRating] = useState({ averageRating: 0, totalReviews: 0 });
+    const [followStats, setFollowStats] = useState({ followers: 0, following: 0 });
     const [loading, setLoading] = useState(true);
 
     const userId = profile?.userId || profile?.id || localStorage.getItem('userId');
     const fullName = `${profile?.firstName ?? ""} ${profile?.lastName ?? ""}`.trim() || profile?.username;
 
     useEffect(() => {
-        const fetchUserReviews = async () => {
+        const fetchUserData = async () => {
             if (!userId) return;
             try {
                 setLoading(true);
-                const [history, avgData] = await Promise.all([
+                const [history, avgData, fStats] = await Promise.all([
                     reviewService.getReviewsByReviewer(userId),
-                    reviewService.getAverageRating("BUYER", userId)
+                    reviewService.getAverageRating("BUYER", userId),
+                    followService.getStats(userId).catch(() => ({ followers: 0, following: 0 }))
                 ]);
                 setWrittenReviews(history);
                 setBuyerRating(avgData);
+                setFollowStats(fStats);
             } catch (err) {
-                console.error("Failed to load user reviews:", err);
+                console.error("Failed to load user data:", err);
             } finally {
                 setLoading(false);
             }
         };
-        fetchUserReviews();
+        fetchUserData();
     }, [userId]);
 
     const stats = profile?.stats || {};
@@ -56,7 +68,6 @@ export default function UserProfileRight({ profile, isOwnProfile }) {
 
     return (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-            {/* INLINE PROFILE HEADER */}
             <div className="card" style={{ padding: '20px', display: 'flex', alignItems: 'center', gap: '20px' }}>
                 <div style={{ width: '60px', height: '60px', borderRadius: '50%', background: '#4a7c59', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.5rem', fontWeight: 'bold', overflow: 'hidden' }}>
                     {profile?.avatarUrl ? (
@@ -75,16 +86,17 @@ export default function UserProfileRight({ profile, isOwnProfile }) {
                 </div>
             </div>
 
-            {/*/!* RESTORED: Preferences *!/*/}
-            {/*<PreferencesChips preferences={profile?.preferences || []} />*/}
-
-            {/* RESTORED: Full Stats Row */}
             <div className="card statsCard">
                 <div className="statsHeader">Statistics</div>
                 <div className="statsRow">
                     <StatBox label="reviews written" value={writtenReviews.length} privacy="Public" />
                     <StatBox label="purchases" value={stats.purchases ?? 0} privacy="Public" />
-                    <StatBox label="following" value={stats.following ?? 0} privacy="Public" />
+                    <StatBox
+                        label="following"
+                        value={followStats.following}
+                        privacy="Public"
+                        onClick={isOwnProfile ? () => navigate('/connections') : undefined}
+                    />
                     <StatBox
                         label="buyer rating"
                         value={`${buyerRating.averageRating.toFixed(1)} ★`}
@@ -92,9 +104,10 @@ export default function UserProfileRight({ profile, isOwnProfile }) {
                     />
                     <StatBox
                         label="followers"
-                        value={stats.followers ?? 0}
+                        value={followStats.followers}
                         privacy="Private"
                         isVisible={isOwnProfile}
+                        onClick={() => navigate('/connections')}
                     />
                 </div>
             </div>
