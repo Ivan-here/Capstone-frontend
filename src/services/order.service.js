@@ -31,6 +31,20 @@ export const orderService = {
         );
     },
 
+    async confirmPayment(orderId, shopperId, paymentIntentId) {
+        if (!orderId) throw new Error("orderId is required");
+        if (!shopperId) throw new Error("shopperId is required");
+        if (!paymentIntentId) throw new Error("paymentIntentId is required");
+
+        return await apiFetch(
+            `/api/orders/${encodeURIComponent(orderId)}/confirm-payment?shopperId=${encodeURIComponent(shopperId)}`,
+            {
+                method: "POST",
+                body: JSON.stringify({ paymentIntentId }),
+            }
+        );
+    },
+
     async getPickupCode(orderId, shopperId) {
         if (!orderId) throw new Error("orderId is required");
         if (!shopperId) throw new Error("shopperId is required");

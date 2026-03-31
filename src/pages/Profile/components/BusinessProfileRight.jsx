@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Star } from 'lucide-react';
+import { useLocation, useNavigate } from "react-router-dom";
 import { verificationService } from "@/services/verification.service";
 import { listingService } from "@/services/listing.service";
 import { reviewService } from "@/services/reviewService";
@@ -8,6 +9,9 @@ import { settingsService } from "@/services/settings.service";
 import RatingsReviews from "./RatingsReviews";
 
 export default function BusinessProfileRight({ businessProfile, userId, isOwnProfile }) {
+    const location = useLocation();
+    const navigate = useNavigate();
+    const effectiveUserId = userId || localStorage.getItem("userId");
     const [verificationDoc, setVerificationDoc] = useState(null);
     const [products, setProducts] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -18,6 +22,7 @@ export default function BusinessProfileRight({ businessProfile, userId, isOwnPro
     const [resubmittingDocument, setResubmittingDocument] = useState(false);
     const [documentError, setDocumentError] = useState("");
     const [documentNotice, setDocumentNotice] = useState("");
+    const [stripeNotice, setStripeNotice] = useState("");
 
     const [showReviewForm, setShowReviewForm] = useState(false);
     const [newRating, setNewRating] = useState(5);
@@ -34,39 +39,75 @@ export default function BusinessProfileRight({ businessProfile, userId, isOwnPro
             ? "Rejected"
             : "Pending verification";
 
+    useEffect(() => {
+        const searchParams = new URLSearchParams(location.search);
+        const stripeStatus = searchParams.get("stripe");
+        const returnedSellerId = searchParams.get("sellerId");
+
+        if (!stripeStatus && !returnedSellerId) {
+            setStripeNotice("");
+            return;
+        }
+
+        if (!isOwnProfile || !returnedSellerId || returnedSellerId !== effectiveUserId) {
+            setStripeNotice("");
+            return;
+        }
+
+        if (paymentProfile?.onboardingComplete) {
+            setStripeNotice("Stripe onboarding completed. Your payment status has been refreshed.");
+            navigate(location.pathname, { replace: true });
+            return;
+        }
+
+        if (stripeStatus === "connected") {
+            setStripeNotice("Stripe onboarding completed. Your payment status has been refreshed.");
+            navigate(location.pathname, { replace: true });
+            return;
+        }
+
+        if (stripeStatus === "pending") {
+            setStripeNotice("Stripe onboarding is still incomplete. You can continue setup from this page.");
+            navigate(location.pathname, { replace: true });
+            return;
+        }
+
+        setStripeNotice("");
+    }, [effectiveUserId, isOwnProfile, location.pathname, location.search, navigate, paymentProfile?.onboardingComplete]);
+
 
     const refreshData = useCallback(async () => {
-        if (!userId) return;
+        if (!effectiveUserId) return;
         try {
             const [avgData, reviewsList] = await Promise.all([
-                reviewService.getAverageRating("SELLER", userId),
-                reviewService.getTargetReviews("SELLER", userId)
+                reviewService.getAverageRating("SELLER", effectiveUserId),
+                reviewService.getTargetReviews("SELLER", effectiveUserId)
             ]);
             setRatingData(avgData);
             setBusinessReviews(reviewsList);
         } catch (err) {
             console.error("Error refreshing data:", err);
         }
-    }, [userId]);
+    }, [effectiveUserId]);
 
     useEffect(() => {
         const loadInitialData = async () => {
-            if (!userId) return;
+            if (!effectiveUserId) return;
             try {
                 setLoading(true);
 
-                const vData = await verificationService.getUserVerification(userId).catch(() => null);
+                const vData = await verificationService.getUserVerification(effectiveUserId).catch(() => null);
                 setVerificationDoc(vData);
 
                 const paymentData = await (isOwnProfile && isStripeEligibleBusiness
-                    ? paymentService.refreshSellerStatus(userId).catch(() => paymentService.getSellerPaymentProfile(userId).catch(() => null))
-                    : paymentService.getSellerPaymentProfile(userId).catch(() => null));
+                    ? paymentService.refreshSellerStatus(effectiveUserId).catch(() => paymentService.getSellerPaymentProfile(effectiveUserId).catch(() => null))
+                    : paymentService.getSellerPaymentProfile(effectiveUserId).catch(() => null));
                 setPaymentProfile(paymentData);
 
                 await refreshData();
 
                 const allListings = await listingService.getAllListings();
-                setProducts(allListings.filter(l => l.ownerId === userId));
+                setProducts(allListings.filter(l => l.ownerId === effectiveUserId));
 
             } catch (err) {
                 console.error("Error loading business data", err);
@@ -75,12 +116,15 @@ export default function BusinessProfileRight({ businessProfile, userId, isOwnPro
             }
         };
         loadInitialData();
-    }, [userId, refreshData]);
+    }, [effectiveUserId, isOwnProfile, isStripeEligibleBusiness, refreshData]);
 
     const handleOnboarding = async () => {
         try {
-            await paymentService.createConnectedAccount(userId);
-            const res = await paymentService.createOnboardingLink(userId);
+            if (!effectiveUserId) {
+                throw new Error("Could not determine the seller user id for Stripe onboarding.");
+            }
+            await paymentService.createConnectedAccount(effectiveUserId);
+            const res = await paymentService.createOnboardingLink(effectiveUserId);
             if (res?.url) {
                 window.location.href = res.url; // redirect to Stripe
                 return;
@@ -97,7 +141,7 @@ export default function BusinessProfileRight({ businessProfile, userId, isOwnPro
         if (!newComment.trim()) return alert("Please write a comment.");
         try {
             await reviewService.createReview({
-                targetId: userId,
+                targetId: effectiveUserId,
                 targetType: "SELLER",
                 rating: newRating,
                 comment: newComment,
@@ -206,6 +250,11 @@ export default function BusinessProfileRight({ businessProfile, userId, isOwnPro
                                 </b>
                             </div>
                         )}
+                        {stripeNotice && (
+                            <div style={{ marginTop: "8px", fontSize: "12px", color: "#2e7d32" }}>
+                                {stripeNotice}
+                            </div>
+                        )}
                         {isOwnProfile && !isStripeEligibleBusiness && (
                             <div style={{ marginTop: "8px", fontSize: "12px", color: "#666" }}>
                                 Stripe onboarding is available for FARMER and RESTAURANT profiles.
@@ -252,11 +301,18 @@ export default function BusinessProfileRight({ businessProfile, userId, isOwnPro
                 <div className="sectionTitle">{isRestaurant ? "Promotions" : "Products"}</div>
                 <div className="productGrid">
                     {products.map((p) => (
-                        <div key={p.id} className="productCard">
+                        <div key={p.listingId || p.id} className="productCard">
                             <img src={p.imageUrls?.[0] || "https://via.placeholder.com/120x90"} className="productImg" alt={p.title} />
                             <div className="productInfo">
                                 <div className="productName">{p.title}</div>
                                 <div className="productDesc">{p.description}</div>
+                                <button
+                                    type="button"
+                                    className="linkBtn productCardLink"
+                                    onClick={() => navigate(`/product/${p.listingId || p.id}`)}
+                                >
+                                    View listing
+                                </button>
                             </div>
                         </div>
                     ))}

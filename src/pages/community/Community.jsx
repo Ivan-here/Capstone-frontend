@@ -4,12 +4,20 @@ import { communityService } from "../../services/community.service";
 import { profileService } from "../../services/profile.service";
 import { authService } from "../../services/auth.service";
 import CommunityPostCard from "./CommunityPostCard";
-import { buildSidebarProfiles, matchesCommunityFilters } from "./community.utils";
+import { buildSidebarProfiles, getAvatarFallback, getProfileAvatarUrl, matchesCommunityFilters } from "./community.utils";
 import "./Community.css";
 
-function SidebarAvatar({ name }) {
-  const initial = String(name || "?").trim().charAt(0).toUpperCase() || "?";
-  return <div className="community-sidebar-avatar">{initial}</div>;
+function SidebarAvatar({ name, avatarUrl }) {
+  const initial = getAvatarFallback(name);
+  return (
+    <div className="community-sidebar-avatar">
+      {avatarUrl ? (
+        <img src={avatarUrl} alt={name || "User"} className="community-avatar-image" />
+      ) : (
+        initial
+      )}
+    </div>
+  );
 }
 
 export default function Community() {
@@ -21,6 +29,7 @@ export default function Community() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [reactionBusyId, setReactionBusyId] = useState("");
+  const [avatarUrls, setAvatarUrls] = useState({});
   const [filters, setFilters] = useState({
     query: "",
     creator: "",
@@ -66,6 +75,55 @@ export default function Community() {
       cancelled = true;
     };
   }, [isLoggedIn]);
+
+  useEffect(() => {
+    const userIds = new Set();
+
+    (posts || []).forEach((post) => {
+      if (post?.userId) userIds.add(post.userId);
+      (post?.comments || []).forEach((comment) => {
+        if (comment?.userId) userIds.add(comment.userId);
+      });
+    });
+
+    if (!userIds.size) return;
+
+    let cancelled = false;
+    const known = {};
+    if (currentUserId && me) {
+      known[currentUserId] = getProfileAvatarUrl(me);
+    }
+
+    setAvatarUrls((prev) => ({ ...prev, ...known }));
+
+    const missingUserIds = Array.from(userIds).filter((userId) => !(userId in avatarUrls) && !(userId in known));
+    if (missingUserIds.length === 0) return;
+
+    (async () => {
+      const results = await Promise.allSettled(
+        missingUserIds.map(async (userId) => {
+          const profile = await profileService.getProfileById(userId);
+          return [userId, getProfileAvatarUrl(profile)];
+        }),
+      );
+
+      if (cancelled) return;
+
+      const next = {};
+      results.forEach((result) => {
+        if (result.status === "fulfilled") {
+          const [userId, avatarUrl] = result.value;
+          next[userId] = avatarUrl;
+        }
+      });
+
+      setAvatarUrls((prev) => ({ ...prev, ...next }));
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [posts, me, currentUserId]);
 
   const creatorSuggestions = useMemo(() => {
     const seen = new Map();
@@ -153,7 +211,7 @@ export default function Community() {
               {sidebarProfiles.map((profile) => (
                 <div key={profile.id} className="community-sidebar-item">
                   <div className="community-sidebar-person">
-                    <SidebarAvatar name={profile.name} />
+                    <SidebarAvatar name={profile.name} avatarUrl={avatarUrls[profile.id]} />
                     <div>
                       <div className="community-sidebar-name">{profile.name}</div>
                       <div className="community-sidebar-meta">
@@ -227,6 +285,7 @@ export default function Community() {
                 <CommunityPostCard
                   key={post.id}
                   post={post}
+                  avatarUrls={avatarUrls}
                   currentUserId={currentUserId}
                   isFollowing={followingIds.has(post.userId)}
                   reactionBusy={reactionBusyId === post.id}
