@@ -44,6 +44,16 @@ function resolveProfileRole(profile, fallbackRole) {
     return fallbackRole;
 }
 
+function mapOrderItemsToCheckoutItems(items) {
+    return (items || []).map((item) => ({
+        id: item.listingId,
+        title: item.title,
+        unit: item.unit,
+        price: Number(item.unitPriceCents || 0) / 100,
+        quantity: item.quantity || 1,
+    }));
+}
+
 export default function OrderDetailsPage() {
     const { orderId } = useParams();
     const navigate = useNavigate();
@@ -127,7 +137,7 @@ export default function OrderDetailsPage() {
     }, [order?.shopperId, order?.sellerUserId]);
 
     const canCancelPending = isBuyer && order?.status === 'PENDING_PAYMENT' && ['REQUIRES_PAYMENT', 'PAYMENT_PROCESSING'].includes(order?.paymentStatus);
-    const canDisputeHeld = isBuyer && order?.paymentStatus === 'HELD' && !['CANCELLED', 'COMPLETED'].includes(order?.status);
+    const canDisputeHeld = (isBuyer || isSeller) && order?.paymentStatus === 'HELD' && !['CANCELLED', 'COMPLETED'].includes(order?.status);
     const canShowPickupCode = isBuyer && order?.paymentStatus === 'HELD';
     const canRepairPayment = isBuyer && order?.status === 'PENDING_PAYMENT' && !!order?.stripeClientSecret && !!order?.stripePaymentIntentId;
 
@@ -166,7 +176,7 @@ export default function OrderDetailsPage() {
             }
 
             if (paymentIntent.status !== 'succeeded') {
-                throw new Error(`Payment is currently ${paymentIntent.status}. Complete payment before requesting the pickup code.`);
+                throw new Error(`Payment is currently ${paymentIntent.status}. Go to checkout and complete payment for this order.`);
             }
 
             await orderService.confirmPayment(order.id, currentUserId, paymentIntent.id);
@@ -177,6 +187,19 @@ export default function OrderDetailsPage() {
         } finally {
             setBusyAction('');
         }
+    };
+
+    const handleContinueCheckout = () => {
+        if (!order || !isBuyer) return;
+
+        navigate('/checkout', {
+            state: {
+                sellerId: order.sellerUserId,
+                sellerName: participants.seller.label || order.sellerUserId,
+                items: mapOrderItemsToCheckoutItems(order.items),
+                subtotal: Number(order.grossAmountCents || 0) / 100,
+            },
+        });
     };
 
     const handleCancelOrder = async () => {
@@ -341,7 +364,9 @@ export default function OrderDetailsPage() {
                             <p className="order-details-copy">
                                 {canShowPickupCode
                                     ? 'Use this pickup code when collecting the order from the seller.'
-                                    : 'Payment must be confirmed before a pickup code becomes available.'}
+                                    : canRepairPayment
+                                        ? 'Payment is still pending. Check the payment status or go to checkout to finish paying for this order.'
+                                        : 'Payment must be confirmed before a pickup code becomes available.'}
                             </p>
 
                             <div className="order-details-actions">
@@ -362,6 +387,15 @@ export default function OrderDetailsPage() {
                                         onClick={handleRepairPayment}
                                     >
                                         {busyAction === 'repair-payment' ? 'Checking...' : 'Check Payment Status'}
+                                    </button>
+                                )}
+
+                                {canRepairPayment && (
+                                    <button
+                                        className="order-details-primary"
+                                        onClick={handleContinueCheckout}
+                                    >
+                                        Continue to Checkout
                                     </button>
                                 )}
 
@@ -444,6 +478,22 @@ export default function OrderDetailsPage() {
                                     <CheckCircle2 size={16} />
                                     Order completed and payout released.
                                 </div>
+                            )}
+
+                            {canDisputeHeld && (
+                                <form className="order-details-verify" onSubmit={handleDisputeOrder}>
+                                    <label htmlFor="seller-order-dispute-input">Dispute this order with staff</label>
+                                    <textarea
+                                        id="seller-order-dispute-input"
+                                        value={disputeMessage}
+                                        onChange={(e) => setDisputeMessage(e.target.value)}
+                                        placeholder="Describe what went wrong with this order."
+                                        rows={4}
+                                    />
+                                    <button className="order-details-primary" disabled={busyAction === 'dispute'}>
+                                        {busyAction === 'dispute' ? 'Sending...' : 'Submit Dispute'}
+                                    </button>
+                                </form>
                             )}
                         </div>
                     </section>
