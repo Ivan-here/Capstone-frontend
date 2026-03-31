@@ -38,6 +38,7 @@ import MyOrders from "@/pages/myOrders/MyOrders.jsx";
 import OrderDetailsPage from "@/pages/myOrders/OrderDetailsPage.jsx";
 import NgoHub from "@/pages/NGO/NgoHub.jsx";
 import CheckoutPage from "@/pages/Checkout/CheckoutPage.jsx";
+import Connections from "@/pages/Connections/Connections.jsx";
 
 function App() {
     // 1. STATE: Is the app loading?
@@ -99,6 +100,7 @@ function App() {
                         <Route path="/orders/:orderId" element={<OrderDetailsPage />} />
                         <Route path="/ngo-hub" element={<NgoHub />} />
                         <Route path="/checkout" element={<CheckoutPage />} />
+                        <Route path="/connections" element={<Connections />} />
 
                     </Route>
                 </Routes>

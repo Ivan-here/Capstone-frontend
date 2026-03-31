@@ -6,6 +6,7 @@ import { listingService } from "@/services/listing.service";
 import { reviewService } from "@/services/reviewService";
 import { paymentService } from "@/services/payment.service";
 import { settingsService } from "@/services/settings.service";
+import { followService } from "@/services/follow.service";
 import RatingsReviews from "./RatingsReviews";
 
 export default function BusinessProfileRight({ businessProfile, userId, isOwnProfile }) {
@@ -17,6 +18,7 @@ export default function BusinessProfileRight({ businessProfile, userId, isOwnPro
     const [loading, setLoading] = useState(true);
     const [businessReviews, setBusinessReviews] = useState([]);
     const [ratingData, setRatingData] = useState({ averageRating: 0, totalReviews: 0 });
+    const [followStats, setFollowStats] = useState({ followers: 0, following: 0 });
     const [paymentProfile, setPaymentProfile] = useState(null);
     const [resubmitFile, setResubmitFile] = useState(null);
     const [resubmittingDocument, setResubmittingDocument] = useState(false);
@@ -79,12 +81,14 @@ export default function BusinessProfileRight({ businessProfile, userId, isOwnPro
     const refreshData = useCallback(async () => {
         if (!effectiveUserId) return;
         try {
-            const [avgData, reviewsList] = await Promise.all([
+            const [avgData, reviewsList, fStats] = await Promise.all([
                 reviewService.getAverageRating("SELLER", effectiveUserId),
-                reviewService.getTargetReviews("SELLER", effectiveUserId)
+                reviewService.getTargetReviews("SELLER", effectiveUserId),
+                followService.getStats(effectiveUserId).catch(() => ({ followers: 0, following: 0 }))
             ]);
             setRatingData(avgData);
             setBusinessReviews(reviewsList);
+            setFollowStats(fStats);
         } catch (err) {
             console.error("Error refreshing data:", err);
         }
@@ -194,12 +198,11 @@ export default function BusinessProfileRight({ businessProfile, userId, isOwnPro
 
     return (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-            {/* RESTORED: Documents Card */}
             <div className="card businessDocsCard">
                 <div className="sectionTitle">Documents</div>
                 <div className="businessDocRow">
                     <div className="businessDocTitle">Food Safety Certificate:</div>
-                        <div className="businessDocMeta">
+                    <div className="businessDocMeta">
                         <div>
                             Status: <b style={{color: verificationStatus === "APPROVED" ? '#2e7d32' : verificationStatus === "REJECTED" ? '#b43a3a' : 'inherit'}}>{docStatus}</b>
                         </div>
@@ -273,7 +276,6 @@ export default function BusinessProfileRight({ businessProfile, userId, isOwnPro
                 </div>
             </div>
 
-            {/* RESTORED: Full Statistics */}
             <div className="card statsCard">
                 <div className="statsHeader">Statistics</div>
                 <div className="statsRow businessStatsRow">
@@ -293,10 +295,31 @@ export default function BusinessProfileRight({ businessProfile, userId, isOwnPro
                         <div className="statValue">{ratingData.averageRating > 0 ? ratingData.averageRating.toFixed(1) : "0.0"} ★</div>
                         <div className="statLabel">average rating</div>
                     </div>
+
+                    <div
+                        className="statBox"
+                        onClick={isOwnProfile ? () => navigate('/connections') : undefined}
+                        style={{ cursor: isOwnProfile ? 'pointer' : 'default', transition: 'opacity 0.2s' }}
+                        onMouseOver={(e) => isOwnProfile && (e.currentTarget.style.opacity = '0.7')}
+                        onMouseOut={(e) => isOwnProfile && (e.currentTarget.style.opacity = '1')}
+                    >
+                        <div className="statValue">{followStats.followers}</div>
+                        <div className="statLabel" style={{ textDecoration: isOwnProfile ? 'underline' : 'none' }}>followers</div>
+                    </div>
+
+                    <div
+                        className="statBox"
+                        onClick={isOwnProfile ? () => navigate('/connections') : undefined}
+                        style={{ cursor: isOwnProfile ? 'pointer' : 'default', transition: 'opacity 0.2s' }}
+                        onMouseOver={(e) => isOwnProfile && (e.currentTarget.style.opacity = '0.7')}
+                        onMouseOut={(e) => isOwnProfile && (e.currentTarget.style.opacity = '1')}
+                    >
+                        <div className="statValue">{followStats.following}</div>
+                        <div className="statLabel" style={{ textDecoration: isOwnProfile ? 'underline' : 'none' }}>following</div>
+                    </div>
                 </div>
             </div>
 
-            {/* PRODUCT GRID SECTION */}
             <div className="card businessProductsCard">
                 <div className="sectionTitle">{isRestaurant ? "Promotions" : "Products"}</div>
                 <div className="productGrid">
@@ -319,7 +342,6 @@ export default function BusinessProfileRight({ businessProfile, userId, isOwnPro
                 </div>
             </div>
 
-            {/* REVIEW FORM */}
             {!isOwnProfile && (
                 <div className="card" style={{ padding: '20px', background: '#F9FAFB', borderRadius: '12px' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px' }}>
