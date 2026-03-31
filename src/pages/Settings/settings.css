@@ -112,6 +112,37 @@
     font: inherit;
 }
 
+.premium-select {
+    width: 100%;
+    min-height: 48px;
+    padding: 12px 42px 12px 14px;
+    border-radius: 12px;
+    border: 1.5px solid #e2e8da;
+    background-color: #f9fbf7;
+    background-image:
+        linear-gradient(45deg, transparent 50%, #556b2f 50%),
+        linear-gradient(135deg, #556b2f 50%, transparent 50%);
+    background-position:
+        calc(100% - 19px) calc(50% - 3px),
+        calc(100% - 13px) calc(50% - 3px);
+    background-size: 6px 6px, 6px 6px;
+    background-repeat: no-repeat;
+    color: #2d2d2d;
+    font: inherit;
+    line-height: 1.2;
+    appearance: none;
+    -webkit-appearance: none;
+    transition: all 0.2s ease;
+    cursor: pointer;
+}
+
+.premium-select:focus {
+    outline: none;
+    background-color: #ffffff;
+    border-color: #7b8b5b;
+    box-shadow: 0 0 0 4px rgba(123, 139, 91, 0.1);
+}
+
 .settings-form-actions {
     justify-content: flex-start;
 }
@@ -183,3 +214,4 @@
         padding: 18px;
     }
 }
+

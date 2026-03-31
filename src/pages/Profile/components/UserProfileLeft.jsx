@@ -1,7 +1,6 @@
 import Button from "@/components/ui/Button";
 import { useNavigate } from "react-router-dom";
 
-// Added isOwnProfile prop
 export default function UserProfileLeft({ profile, aboutExpanded, onToggleAbout, isOwnProfile }) {
     const aboutShort =
         profile?.about?.length > 140 ? profile.about.slice(0, 140) + "..." : profile?.about;
@@ -9,13 +8,18 @@ export default function UserProfileLeft({ profile, aboutExpanded, onToggleAbout,
     const fullName = `${profile?.firstName ?? ""} ${profile?.lastName ?? ""}`.trim();
     const hasDisplayName = profile?.displayName?.trim();
     const displayName = hasDisplayName ? profile.displayName.trim() : fullName;
+    const avatarFallback = (displayName || "U").charAt(0).toUpperCase();
     const navigate = useNavigate();
 
     return (
         <>
             <div className="card profileCard">
-                <div className="avatar" aria-hidden="true">
-                    <div className="avatarInner">🙂</div>
+                <div className="avatar">
+                    {profile?.avatarUrl ? (
+                        <img src={profile.avatarUrl} alt={displayName} className="avatarImg" />
+                    ) : (
+                        <div className="avatarInner">{avatarFallback}</div>
+                    )}
                 </div>
 
                 <div className="profileMeta">
@@ -28,9 +32,8 @@ export default function UserProfileLeft({ profile, aboutExpanded, onToggleAbout,
                     <div className="role">{profile.role}</div>
                     <div className="location">{profile.location}</div>
 
-                    {/* Both buttons are now wrapped in the ownership check */}
                     {isOwnProfile && (
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginTop: '16px' }}>
+                        <div style={{ display: "flex", flexDirection: "column", gap: "8px", marginTop: "16px" }}>
                             <Button
                                 className="primaryBtn"
                                 variant="primary"
@@ -44,7 +47,7 @@ export default function UserProfileLeft({ profile, aboutExpanded, onToggleAbout,
                                 variant="secondary"
                                 type="button"
                                 onClick={() => navigate("/my-orders")}
-                                style={{ background: 'transparent', border: '1px solid #7B8B5B', color: '#7B8B5B' }}
+                                style={{ background: "transparent", border: "1px solid #7B8B5B", color: "#7B8B5B" }}
                             >
                                 View Order History
                             </Button>
@@ -68,7 +71,6 @@ export default function UserProfileLeft({ profile, aboutExpanded, onToggleAbout,
                 </p>
             </div>
 
-            {/* Private section - only show for owner */}
             {isOwnProfile && (
                 <div className="card followCard">
                     <div className="cardHeader">
@@ -78,7 +80,7 @@ export default function UserProfileLeft({ profile, aboutExpanded, onToggleAbout,
                     <div className="followGrid">
                         {(profile.followingPeople || []).slice(0, 7).map((p) => (
                             <div key={p.id} className="followAvatar" title={p.name} aria-label={p.name}>
-                                <span>👤</span>
+                                <span>@</span>
                             </div>
                         ))}
                     </div>

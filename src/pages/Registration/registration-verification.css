@@ -76,6 +76,20 @@
 .fileList { display: flex; flex-direction: column; gap: 4px; }
 .fileItem { font-size: 12px; color: #3e3b32; padding-left: 2px; }
 
+.avatarUploadPreviewRow {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.avatarUploadPreview {
+    width: 64px;
+    height: 64px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 1px solid rgba(0, 0, 0, 0.18);
+}
+
 .submitRow {
     display: flex;
     justify-content: center;

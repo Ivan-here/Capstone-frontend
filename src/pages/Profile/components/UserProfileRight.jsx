@@ -58,8 +58,16 @@ export default function UserProfileRight({ profile, isOwnProfile }) {
         <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
             {/* INLINE PROFILE HEADER */}
             <div className="card" style={{ padding: '20px', display: 'flex', alignItems: 'center', gap: '20px' }}>
-                <div style={{ width: '60px', height: '60px', borderRadius: '50%', background: '#4a7c59', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.5rem', fontWeight: 'bold' }}>
-                    {fullName?.charAt(0).toUpperCase()}
+                <div style={{ width: '60px', height: '60px', borderRadius: '50%', background: '#4a7c59', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.5rem', fontWeight: 'bold', overflow: 'hidden' }}>
+                    {profile?.avatarUrl ? (
+                        <img
+                            src={profile.avatarUrl}
+                            alt={fullName}
+                            style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
+                        />
+                    ) : (
+                        fullName?.charAt(0).toUpperCase()
+                    )}
                 </div>
                 <div>
                     <h2 style={{ margin: 0 }}>{fullName}</h2>

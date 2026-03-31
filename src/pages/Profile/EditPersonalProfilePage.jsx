@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { User, MapPin, Phone, Mail, Heart, Info, ArrowLeft, AlignLeft } from "lucide-react";
 import Button from "@/components/ui/Button";
 import Input from "@/components/ui/Input";
+import { cloudinaryService } from "@/services/cloudinary.service";
 import { profileService } from "@/services/profile.service";
 
 // --- Helper Functions ---
@@ -22,6 +23,8 @@ export default function EditPersonalProfilePage() {
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
     const [errors, setErrors] = useState({});
+    const [avatarFile, setAvatarFile] = useState(null);
+    const [avatarPreviewUrl, setAvatarPreviewUrl] = useState("");
 
     // --- State Management ---
     const [form, setForm] = useState({
@@ -36,7 +39,9 @@ export default function EditPersonalProfilePage() {
         about: "",
         addressesText: "",
         preferencesText: "",
+        avatarUrl: "",
     });
+    const avatarFallback = ((form.displayName || form.firstName || "P").trim().charAt(0) || "P").toUpperCase();
 
     useEffect(() => {
         (async () => {
@@ -57,7 +62,9 @@ export default function EditPersonalProfilePage() {
                     about: p?.about ?? "",
                     addressesText: joinLines(p?.addresses),
                     preferencesText: joinLines(p?.preferences),
+                    avatarUrl: p?.avatarUrl ?? "",
                 });
+                setAvatarPreviewUrl(p?.avatarUrl ?? "");
             } catch (err) {
                 console.error("Failed to load profile:", err);
             } finally {
@@ -69,6 +76,16 @@ export default function EditPersonalProfilePage() {
     function setField(name, value) {
         setForm((p) => ({ ...p, [name]: value }));
         setErrors((e) => ({ ...e, [name]: null, form: null }));
+    }
+
+    function handleAvatarChange(ev) {
+        const file = ev.target.files?.[0] || null;
+        setAvatarFile(file);
+        setErrors((e) => ({ ...e, avatar: null, form: null }));
+        setAvatarPreviewUrl((prev) => {
+            if (prev?.startsWith("blob:")) URL.revokeObjectURL(prev);
+            return file ? URL.createObjectURL(file) : (form.avatarUrl || "");
+        });
     }
 
     // --- Validation Logic ---
@@ -90,11 +107,13 @@ export default function EditPersonalProfilePage() {
 
         try {
             setSaving(true);
+            const avatarUrl = avatarFile ? await cloudinaryService.uploadImage(avatarFile) : (form.avatarUrl || null);
             await profileService.upsertPersonal({
                 firstName: form.firstName.trim(),
                 lastName: form.lastName.trim(),
                 email: form.email.trim(),
                 displayName: form.displayName.trim() || null,
+                avatarUrl,
                 location: form.location.trim() || null,
                 phone: form.phone.trim() || null,
                 about: form.about.trim() || null,
@@ -115,11 +134,13 @@ export default function EditPersonalProfilePage() {
         <div className="profilePage edit-page-bg">
             <main className="profileMain">
                 <div className="edit-header">
+                    <div className="edit-header-copy">
+                        <h1>Personal Profile Editing</h1>
+                        <p className="muted">Manage how you appear to the community</p>
+                    </div>
                     <button onClick={() => navigate("/profile")} className="back-link">
                         <ArrowLeft size={18} /> Back to Profile
                     </button>
-                    <h1>Personal Settings</h1>
-                    <p className="muted">Manage how you appear to the community</p>
                 </div>
 
                 <div className="profileContainer edit-grid">
@@ -129,6 +150,27 @@ export default function EditPersonalProfilePage() {
                         {/* Section 1: Public Identity */}
                         <div className="form-section">
                             <div className="section-title"><User size={18} /> Public Identity</div>
+                            <div className="input-group avatar-editor-group">
+                                <label className="input-label">Profile Picture</label>
+                                <div className="profileAvatarEditor">
+                                    <div className="profileAvatarEditorPreview">
+                                        {avatarPreviewUrl ? (
+                                            <img src={avatarPreviewUrl} alt="Personal avatar preview" className="profileAvatarEditorImage" />
+                                        ) : (
+                                            <span className="avatarInner">{avatarFallback}</span>
+                                        )}
+                                    </div>
+                                    <label className="avatarUploadBtn">
+                                        <span>{avatarFile ? "Change picture" : "Upload picture"}</span>
+                                        <input
+                                            type="file"
+                                            accept="image/*"
+                                            className="avatarUploadInput"
+                                            onChange={handleAvatarChange}
+                                        />
+                                    </label>
+                                </div>
+                            </div>
                             <div className="input-row">
                                 <Input label="First Name" value={form.firstName} onChange={(e) => setField("firstName", e.target.value)} error={errors.firstName} />
                                 <Input label="Last Name" value={form.lastName} onChange={(e) => setField("lastName", e.target.value)} error={errors.lastName} />
