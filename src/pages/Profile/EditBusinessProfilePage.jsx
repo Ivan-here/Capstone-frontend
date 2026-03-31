@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { Store, MapPin, Mail, Clock, Truck, Info, ArrowLeft } from "lucide-react";
 import Button from "@/components/ui/Button";
 import Input from "@/components/ui/Input";
+import { cloudinaryService } from "@/services/cloudinary.service";
 import { profileService } from "@/services/profile.service";
 
 const BUSINESS_TYPES = ["FARMER", "RESTAURANT", "NGO"];
@@ -13,6 +14,8 @@ export default function EditBusinessProfilePage() {
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
     const [errors, setErrors] = useState({});
+    const [avatarFile, setAvatarFile] = useState(null);
+    const [avatarPreviewUrl, setAvatarPreviewUrl] = useState("");
 
     const [form, setForm] = useState({
         businessType: "FARMER",
@@ -23,7 +26,9 @@ export default function EditBusinessProfilePage() {
         hours: "",
         serviceArea: "",
         eligibilityNotes: "",
+        avatarUrl: "",
     });
+    const avatarFallback = ((form.businessName || "B").trim().charAt(0) || "B").toUpperCase();
 
     useEffect(() => {
         (async () => {
@@ -42,7 +47,9 @@ export default function EditBusinessProfilePage() {
                         hours: b.hours || "",
                         serviceArea: b.serviceArea || "",
                         eligibilityNotes: b.eligibilityNotes || "",
+                        avatarUrl: b.avatarUrl || "",
                     });
+                    setAvatarPreviewUrl(b.avatarUrl || "");
                 }
             } finally {
                 setLoading(false);
@@ -53,6 +60,16 @@ export default function EditBusinessProfilePage() {
     function setField(name, value) {
         setForm((p) => ({ ...p, [name]: value }));
         setErrors((e) => ({ ...e, [name]: null, form: null }));
+    }
+
+    function handleAvatarChange(ev) {
+        const file = ev.target.files?.[0] || null;
+        setAvatarFile(file);
+        setErrors((e) => ({ ...e, avatar: null, form: null }));
+        setAvatarPreviewUrl((prev) => {
+            if (prev?.startsWith("blob:")) URL.revokeObjectURL(prev);
+            return file ? URL.createObjectURL(file) : (form.avatarUrl || "");
+        });
     }
 
     // FIXED: Validation logic included to prevent ReferenceErrors
@@ -75,11 +92,13 @@ export default function EditBusinessProfilePage() {
 
         try {
             setSaving(true);
+            const avatarUrl = avatarFile ? await cloudinaryService.uploadImage(avatarFile) : (form.avatarUrl || null);
             await profileService.upsertBusiness({
                 businessType: form.businessType,
                 businessName: form.businessName.trim(),
                 address: form.address.trim(),
                 email: form.email.trim(),
+                avatarUrl,
                 description: form.description.trim() || null,
                 hours: form.hours.trim() || null,
                 serviceArea: form.serviceArea.trim() || null,
@@ -99,11 +118,13 @@ export default function EditBusinessProfilePage() {
         <div className="profilePage edit-page-bg">
             <main className="profileMain">
                 <div className="edit-header">
+                    <div className="edit-header-copy">
+                        <h1>Business Profile Editing</h1>
+                        <p className="muted">Configure your marketplace presence and logistics</p>
+                    </div>
                     <button onClick={() => navigate("/profile")} className="back-link">
                         <ArrowLeft size={18} /> Back to Profile
                     </button>
-                    <h1>Business Settings</h1>
-                    <p className="muted">Configure your marketplace presence and logistics</p>
                 </div>
 
                 <div className="profileContainer edit-grid">
@@ -113,6 +134,27 @@ export default function EditBusinessProfilePage() {
                         {/* Section 1: Marketplace Identity */}
                         <div className="form-section">
                             <div className="section-title"><Store size={18} /> Marketplace Identity</div>
+                            <div className="input-group avatar-editor-group">
+                                <label>Business Picture</label>
+                                <div className="profileAvatarEditor">
+                                    <div className="profileAvatarEditorPreview">
+                                        {avatarPreviewUrl ? (
+                                            <img src={avatarPreviewUrl} alt="Business avatar preview" className="profileAvatarEditorImage" />
+                                        ) : (
+                                            <span className="avatarInner">{avatarFallback}</span>
+                                        )}
+                                    </div>
+                                    <label className="avatarUploadBtn">
+                                        <span>{avatarFile ? "Change picture" : "Upload picture"}</span>
+                                        <input
+                                            type="file"
+                                            accept="image/*"
+                                            className="avatarUploadInput"
+                                            onChange={handleAvatarChange}
+                                        />
+                                    </label>
+                                </div>
+                            </div>
                             <div className="input-row">
                                 <Input
                                     label="Business Name"

@@ -4,6 +4,7 @@ import { authService } from "../../services/auth.service";
 import { communityService } from "../../services/community.service";
 import { profileService } from "../../services/profile.service";
 import CommunityPostCard from "./CommunityPostCard";
+import { getAvatarFallback, getProfileAvatarUrl } from "./community.utils";
 import "./Community.css";
 
 export default function CommunityPostPage() {
@@ -18,6 +19,7 @@ export default function CommunityPostPage() {
   const [commentText, setCommentText] = useState("");
   const [commentBusy, setCommentBusy] = useState(false);
   const [reactionBusy, setReactionBusy] = useState(false);
+  const [avatarUrls, setAvatarUrls] = useState({});
 
 
   const loadPost = async () => {
@@ -56,6 +58,52 @@ export default function CommunityPostPage() {
       cancelled = true;
     };
   }, [isLoggedIn]);
+
+  useEffect(() => {
+    if (!post) return;
+
+    const userIds = new Set();
+    if (post.userId) userIds.add(post.userId);
+    (post.comments || []).forEach((comment) => {
+      if (comment?.userId) userIds.add(comment.userId);
+    });
+
+    let cancelled = false;
+    const known = {};
+    if (currentUserId && me) {
+      known[currentUserId] = getProfileAvatarUrl(me);
+    }
+
+    setAvatarUrls((prev) => ({ ...prev, ...known }));
+
+    const missingUserIds = Array.from(userIds).filter((userId) => !(userId in avatarUrls) && !(userId in known));
+    if (missingUserIds.length === 0) return;
+
+    (async () => {
+      const results = await Promise.allSettled(
+        missingUserIds.map(async (userId) => {
+          const profile = await profileService.getProfileById(userId);
+          return [userId, getProfileAvatarUrl(profile)];
+        }),
+      );
+
+      if (cancelled) return;
+
+      const next = {};
+      results.forEach((result) => {
+        if (result.status === "fulfilled") {
+          const [userId, avatarUrl] = result.value;
+          next[userId] = avatarUrl;
+        }
+      });
+
+      setAvatarUrls((prev) => ({ ...prev, ...next }));
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [post, me, currentUserId]);
 
   const followingIds = useMemo(() => {
     const ids = new Set();
@@ -118,6 +166,7 @@ export default function CommunityPostPage() {
           <>
             <CommunityPostCard
               post={post}
+              avatarUrls={avatarUrls}
               currentUserId={currentUserId}
               isFollowing={followingIds.has(post.userId)}
               reactionBusy={reactionBusy}
@@ -149,9 +198,24 @@ export default function CommunityPostPage() {
 
                 {(post.comments || []).map((comment) => (
                   <div key={comment.id} className="community-comment-card">
-                    <div className="community-comment-author">{comment.displayName || comment.username || "User"}</div>
-                    <div className="community-comment-meta">@{comment.username || "user"}</div>
-                    <p className="community-comment-text">{comment.text}</p>
+                    <div className="community-comment-preview-item community-comment-preview-item--stacked">
+                      <div className="community-comment-preview-avatar">
+                        {avatarUrls[comment.userId] ? (
+                          <img
+                            src={avatarUrls[comment.userId]}
+                            alt={comment.displayName || comment.username || "User"}
+                            className="community-avatar-image"
+                          />
+                        ) : (
+                          getAvatarFallback(comment.displayName || comment.username || "User")
+                        )}
+                      </div>
+                      <div className="community-comment-preview-body">
+                        <div className="community-comment-author">{comment.displayName || comment.username || "User"}</div>
+                        <div className="community-comment-meta">@{comment.username || "user"}</div>
+                        <p className="community-comment-text">{comment.text}</p>
+                      </div>
+                    </div>
                   </div>
                 ))}
               </div>

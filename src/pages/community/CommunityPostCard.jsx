@@ -2,6 +2,7 @@ import React from "react";
 import { useNavigate } from "react-router-dom";
 import {
   displayTime,
+  getAvatarFallback,
   getAuthorHandle,
   getAuthorLabel,
   getCreatorAccent,
@@ -10,13 +11,22 @@ import {
   getReactionForUser,
 } from "./community.utils";
 
-function Avatar({ label }) {
-  const initial = String(label || "?").trim().charAt(0).toUpperCase() || "?";
-  return <div className="community-avatar">{initial}</div>;
+function Avatar({ label, avatarUrl, className = "community-avatar" }) {
+  const initial = getAvatarFallback(label);
+  return (
+    <div className={className}>
+      {avatarUrl ? (
+        <img src={avatarUrl} alt={label || "User"} className="community-avatar-image" />
+      ) : (
+        initial
+      )}
+    </div>
+  );
 }
 
 export default function CommunityPostCard({
   post,
+  avatarUrls = {},
   currentUserId,
   isFollowing,
   reactionBusy = false,
@@ -47,7 +57,7 @@ export default function CommunityPostCard({
       <div className="community-post-content-column">
         <div className="community-post-header community-post-header--mockup">
           <div className="community-post-author">
-            <Avatar label={getAuthorLabel(post)} />
+            <Avatar label={getAuthorLabel(post)} avatarUrl={avatarUrls[post.userId]} />
             <div>
               <div className="community-post-author-name">{getAuthorLabel(post)}</div>
               <div className="community-post-meta">
@@ -90,9 +100,11 @@ export default function CommunityPostCard({
           <div className="community-comment-preview-list community-comment-preview-list--boxed">
             {previewComments.map((comment) => (
               <div key={comment.id} className="community-comment-preview-item community-comment-preview-item--stacked">
-                <div className="community-comment-preview-avatar">
-                  {String(comment.displayName || comment.username || "?").charAt(0).toUpperCase()}
-                </div>
+                <Avatar
+                  label={comment.displayName || comment.username || "User"}
+                  avatarUrl={avatarUrls[comment.userId]}
+                  className="community-comment-preview-avatar"
+                />
                 <div className="community-comment-preview-body">
                   <div className="community-comment-preview-name">
                     {comment.displayName || comment.username || "User"}

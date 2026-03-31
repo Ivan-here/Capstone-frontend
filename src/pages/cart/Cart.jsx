@@ -60,15 +60,6 @@ const Cart = () => {
                     <div
                         key={sellerGroup.sellerId}
                         className="cart-seller-section"
-                        style={{
-                            width: '100%',
-                            maxWidth: '900px',
-                            marginBottom: '30px',
-                            background: '#fff',
-                            borderRadius: '16px',
-                            padding: '20px',
-                            boxShadow: '0 4px 16px rgba(0,0,0,0.06)'
-                        }}
                     >
                         <div
                             style={{
