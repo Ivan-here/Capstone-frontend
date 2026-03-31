@@ -1,15 +1,34 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-<<<<<<< HEAD
-import { Package, ChevronLeft, Star, Clock, CheckCircle } from 'lucide-react';
-import { orderService } from '@/services/order.service.js';
-=======
 import { Package, ChevronLeft, Star, Clock, CheckCircle, RefreshCcw } from 'lucide-react';
 import { useCart } from '../cart/CartContext.jsx';
 import { orderService } from '@/services/order.service';
 import { profileService } from '@/services/profile.service';
->>>>>>> 18d3b54845f34f6df099b81f8ef72788643c5864
 import ReviewModal from './ReviewModal.jsx';
+import './MyOrders.css';
+
+const statusStyles = {
+    COMPLETED: { color: '#2e7d32', bg: '#e8f5e9', icon: <CheckCircle size={14} /> },
+    PICKUP_CODE_VERIFIED: { color: '#2e7d32', bg: '#e8f5e9', icon: <CheckCircle size={14} /> },
+    CANCELLED: { color: '#9b1c1c', bg: '#fde8e8', icon: <Clock size={14} /> },
+};
+
+function getStatusStyle(status) {
+    return statusStyles[status] || { color: '#b45309', bg: '#fef3c7', icon: <Clock size={14} /> };
+}
+
+function formatAmount(order) {
+    const amount = Number(order?.grossAmountCents || 0) / 100;
+    return `$${amount.toFixed(2)}`;
+}
+
+function formatDate(order) {
+    const raw = order?.orderDate || order?.createdAt || null;
+    if (!raw) return 'N/A';
+    const parsed = new Date(raw);
+    if (Number.isNaN(parsed.getTime())) return 'N/A';
+    return parsed.toLocaleDateString();
+}
 
 function resolveProfileLabel(profile, fallbackId) {
     const businessName = profile?.businessProfile?.businessName?.trim();
@@ -29,34 +48,38 @@ function resolveProfileLabel(profile, fallbackId) {
 
 const MyOrders = () => {
     const navigate = useNavigate();
-    const [orders, setOrders] = useState([]);
+    const { addToCart } = useCart();
+    const [history, setHistory] = useState({ bought: [], sold: [] });
+    const [activeTab, setActiveTab] = useState('bought');
     const [loading, setLoading] = useState(true);
-<<<<<<< HEAD
-    const [modalConfig, setModalConfig] = useState({ isOpen: false, targetId: null, targetType: null, orderId: null });
-
-    const currentUserId = localStorage.getItem('userId');
-=======
     const [error, setError] = useState('');
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [selectedOrder, setSelectedOrder] = useState(null);
     const [profileLabels, setProfileLabels] = useState({});
->>>>>>> 18d3b54845f34f6df099b81f8ef72788643c5864
 
     useEffect(() => {
-        const fetchRealOrders = async () => {
-            if (!currentUserId) return;
-            setLoading(true);
-            const data = await orderService.getOrdersByShopper(currentUserId);
-            setOrders(data);
+        const userId = localStorage.getItem('userId');
+        if (!userId) {
+            setError('You need to log in to view order history.');
             setLoading(false);
-        };
-        fetchRealOrders();
-    }, [currentUserId]);
+            return;
+        }
 
-<<<<<<< HEAD
-    const openReview = (orderId, targetId, type) => {
-        setModalConfig({ isOpen: true, targetId, targetType: type, orderId });
-=======
+        const loadHistory = async () => {
+            try {
+                setLoading(true);
+                const data = await orderService.getOrderHistory(userId);
+                setHistory({
+                    bought: Array.isArray(data?.bought) ? data.bought : [],
+                    sold: Array.isArray(data?.sold) ? data.sold : [],
+                });
+            } catch (err) {
+                setError(err?.message || 'Failed to load order history.');
+            } finally {
+                setLoading(false);
+            }
+        };
+
         loadHistory();
     }, []);
 
@@ -116,58 +139,46 @@ const MyOrders = () => {
             });
         });
         navigate('/cart');
->>>>>>> 18d3b54845f34f6df099b81f8ef72788643c5864
     };
 
-    if (loading) return <div style={{ textAlign: 'center', padding: '50px', backgroundColor: '#F5F2E8' }}>Loading verified orders...</div>;
-
     return (
-        <div style={{ minHeight: '100vh', backgroundColor: '#F5F2E8', padding: '40px 20px' }}>
-            <div style={{ maxWidth: '850px', margin: '0 auto' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '30px' }}>
-                    <h1 style={{ fontFamily: 'serif', color: '#3B422D' }}>Order History</h1>
-                    <button onClick={() => navigate(-1)} style={{ background: 'none', border: 'none', color: '#6D804B', cursor: 'pointer' }}>
-                        <ChevronLeft size={20} /> Back to Profile
+        <div className="my-orders-page">
+            <div className="my-orders-shell">
+                <div className="my-orders-hero">
+                    <div className="my-orders-hero-main">
+                        <div className="my-orders-hero-icon">
+                            <Package color="white" size={24} />
+                        </div>
+                        <h1>Order History</h1>
+                    </div>
+                    <button onClick={() => navigate(-1)} className="my-orders-back">
+                        <ChevronLeft size={20} /> Back
                     </button>
                 </div>
 
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-                    {orders.map(order => (
-                        <div key={order.id} style={{ backgroundColor: 'white', padding: '25px', borderRadius: '16px', border: '1px solid #E2DFD3' }}>
-                            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '15px' }}>
-                                <div>
-                                    <span style={{ fontWeight: 'bold' }}>Order #{order.id.substring(0, 8)}</span>
-                                    <p style={{ margin: '5px 0', color: '#666' }}>{new Date(order.createdAt).toLocaleDateString()}</p>
-                                </div>
-                                <div style={{ textAlign: 'right' }}>
-                                    <span style={{ color: '#2e7d32', fontWeight: 'bold' }}>${order.totalPrice.toFixed(2)}</span>
-                                    <div style={{ fontSize: '0.8rem', color: '#4CAF50' }}>Verified Payment ✓</div>
-                                </div>
-                            </div>
+                <div className="my-orders-card">
+                    <div className="my-orders-tabs">
+                        <button
+                            onClick={() => setActiveTab('bought')}
+                            className={`my-orders-tab ${activeTab === 'bought' ? 'is-active' : ''}`}
+                        >
+                            Bought ({history.bought.length})
+                        </button>
+                        <button
+                            onClick={() => setActiveTab('sold')}
+                            className={`my-orders-tab ${activeTab === 'sold' ? 'is-active' : ''}`}
+                        >
+                            Sold ({history.sold.length})
+                        </button>
+                    </div>
 
-                            {order.status === 'COMPLETED' && (
-                                <div style={{ display: 'flex', gap: '10px', borderTop: '1px solid #eee', paddingTop: '15px' }}>
-                                    {/* Review the specific product */}
-                                    <button
-                                        onClick={() => openReview(order.id, order.items[0]?.listingId, "LISTING")}
-                                        style={{ backgroundColor: '#7B8B5B', color: 'white', border: 'none', padding: '10px 15px', borderRadius: '8px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '5px' }}
-                                    >
-                                        <Star size={14} fill="white" /> Review Product
-                                    </button>
+                    {loading && <div className="my-orders-state">Loading order history...</div>}
+                    {!loading && error && <div className="my-orders-state is-error">{error}</div>}
 
-                                    {/* Review the seller */}
-                                    <button
-                                        onClick={() => openReview(order.id, order.sellerId, "SELLER")}
-                                        style={{ backgroundColor: 'white', color: '#7B8B5B', border: '1px solid #7B8B5B', padding: '10px 15px', borderRadius: '8px', cursor: 'pointer' }}
-                                    >
-                                        Review Seller
-                                    </button>
-                                </div>
-                            )}
+                    {!loading && !error && orders.length === 0 && (
+                        <div className="my-orders-state is-empty">
+                            No {activeTab} orders yet.
                         </div>
-<<<<<<< HEAD
-                    ))}
-=======
                     )}
 
                     {!loading && !error && orders.length > 0 && (
@@ -244,18 +255,20 @@ const MyOrders = () => {
                             })}
                         </div>
                     )}
->>>>>>> 18d3b54845f34f6df099b81f8ef72788643c5864
                 </div>
             </div>
 
-            <ReviewModal
-                isOpen={modalConfig.isOpen}
-                onClose={() => setModalConfig({ ...modalConfig, isOpen: false })}
-                orderId={modalConfig.orderId}
-                targetId={modalConfig.targetId}
-                targetType={modalConfig.targetType}
-                reviewerId={currentUserId}
-            />
+            {selectedOrder && (
+                <ReviewModal
+                    isOpen={isModalOpen}
+                    onClose={() => setIsModalOpen(false)}
+                    orderId={selectedOrder.id}
+                    targetId={selectedOrder.items?.[0]?.listingId}
+                    targetType="LISTING"
+                    reviewerId={localStorage.getItem('userId')}
+                    onSuccess={() => {}}
+                />
+            )}
         </div>
     );
 };
