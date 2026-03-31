@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Package, ChevronLeft, Star, Clock, CheckCircle, RefreshCcw } from 'lucide-react';
 import { useCart } from '../cart/CartContext.jsx';
 import { orderService } from '@/services/order.service';
+import { profileService } from '@/services/profile.service';
 import ReviewModal from './ReviewModal.jsx';
 import './MyOrders.css';
 
@@ -29,6 +30,22 @@ function formatDate(order) {
     return parsed.toLocaleDateString();
 }
 
+function resolveProfileLabel(profile, fallbackId) {
+    const businessName = profile?.businessProfile?.businessName?.trim();
+    if (businessName) return businessName;
+
+    const displayName = profile?.personalProfile?.displayName?.trim();
+    if (displayName) return displayName;
+
+    const fullName = `${profile?.personalProfile?.firstName ?? ''} ${profile?.personalProfile?.lastName ?? ''}`.trim();
+    if (fullName) return fullName;
+
+    const username = profile?.personalProfile?.username?.trim();
+    if (username) return username;
+
+    return fallbackId;
+}
+
 const MyOrders = () => {
     const navigate = useNavigate();
     const { addToCart } = useCart();
@@ -38,6 +55,7 @@ const MyOrders = () => {
     const [error, setError] = useState('');
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [selectedOrder, setSelectedOrder] = useState(null);
+    const [profileLabels, setProfileLabels] = useState({});
 
     useEffect(() => {
         const userId = localStorage.getItem('userId');
@@ -64,6 +82,39 @@ const MyOrders = () => {
 
         loadHistory();
     }, []);
+
+    useEffect(() => {
+        const ids = new Set();
+        history.bought.forEach((order) => {
+            if (order?.sellerUserId) ids.add(order.sellerUserId);
+        });
+        history.sold.forEach((order) => {
+            if (order?.shopperId) ids.add(order.shopperId);
+        });
+
+        if (ids.size === 0) {
+            setProfileLabels({});
+            return;
+        }
+
+        let cancelled = false;
+        (async () => {
+            const entries = await Promise.all(
+                [...ids].map(async (id) => {
+                    const profile = await profileService.getProfileById(id).catch(() => null);
+                    return [id, resolveProfileLabel(profile, id)];
+                })
+            );
+
+            if (!cancelled) {
+                setProfileLabels(Object.fromEntries(entries));
+            }
+        })();
+
+        return () => {
+            cancelled = true;
+        };
+    }, [history]);
 
     const orders = useMemo(() => {
         const list = activeTab === 'sold' ? history.sold : history.bought;
@@ -160,7 +211,9 @@ const MyOrders = () => {
                                             </div>
 
                                             <div className="my-orders-party">
-                                                {activeTab === 'sold' ? `Buyer: ${order.shopperId}` : `Seller: ${order.sellerUserId}`}
+                                                {activeTab === 'sold'
+                                                    ? `Buyer: ${profileLabels[order.shopperId] || order.shopperId}`
+                                                    : `Seller: ${profileLabels[order.sellerUserId] || order.sellerUserId}`}
                                             </div>
 
                                             <div className="my-orders-amount">
