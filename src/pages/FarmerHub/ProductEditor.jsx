@@ -3,6 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { ImagePlus, PencilLine, X } from 'lucide-react';
 import { listingService } from '@/services/listing.service.js';
 import { authService } from '@/services/auth.service.js';
+import { paymentService } from '@/services/payment.service.js';
 import './ProductEditor.css';
 
 const ProductEditor = ({ mode = 'add' }) => {
@@ -102,6 +103,21 @@ const ProductEditor = ({ mode = 'add' }) => {
                 return;
             }
 
+            if (mode === 'add') {
+                const paymentProfile = await paymentService.refreshSellerStatus(currentUserId).catch(() => null);
+                const isReadyForPayments = Boolean(
+                    paymentProfile?.onboardingComplete &&
+                    paymentProfile?.chargesEnabled &&
+                    paymentProfile?.payoutsEnabled
+                );
+
+                if (!isReadyForPayments) {
+                    setSubmitError("Complete payment onboarding before posting farm listings.");
+                    setIsSaving(false);
+                    return;
+                }
+            }
+
             const retainedImages = [];
             const newFiles = [];
 
@@ -152,6 +168,8 @@ const ProductEditor = ({ mode = 'add' }) => {
                 errorMessage = "Please ensure all required fields are filled out correctly.";
             } else if (errorMessage.includes("VERIFIED business")) {
                 errorMessage = "Your business profile is pending verification. You can post products once an admin approves your account.";
+            } else if (errorMessage.includes("complete payment onboarding")) {
+                errorMessage = "Complete payment onboarding before posting farm listings.";
             }
 
             setSubmitError(errorMessage || "An unexpected error occurred. Please try again.");
