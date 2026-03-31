@@ -12,9 +12,10 @@ function mapCheckoutError(message) {
 
     if (
         normalized.includes("seller is not ready to accept payments") ||
-        normalized.includes("seller payment profile not found")
+        normalized.includes("seller payment profile not found") ||
+        normalized.includes("processing error occurred")
     ) {
-        return "Sorry, this farmer did not set up payments yet.";
+        return "Sorry, this farmer hasn't setup payments yet.";
     }
 
     return message || "Failed to initialize checkout.";
@@ -35,7 +36,7 @@ function CheckoutForm({ orderId, paymentIntentId, sellerId, shopperId, onPayment
 
         const { error: submitError } = await elements.submit();
         if (submitError) {
-            setError(submitError.message || "Failed to submit payment form.");
+            setError(mapCheckoutError(submitError.message) || "Failed to submit payment form.");
             setSubmitting(false);
             return;
         }
@@ -46,7 +47,7 @@ function CheckoutForm({ orderId, paymentIntentId, sellerId, shopperId, onPayment
         });
 
         if (result.error) {
-            setError(result.error.message || "Payment failed.");
+            setError(mapCheckoutError(result.error.message) || "Payment failed.");
             setSubmitting(false);
             return;
         }
@@ -57,7 +58,7 @@ function CheckoutForm({ orderId, paymentIntentId, sellerId, shopperId, onPayment
             await orderService.confirmPayment(orderId, shopperId, confirmedPaymentIntentId);
             await onPaymentSuccess?.(sellerId);
         } catch (confirmError) {
-            setError(confirmError?.message || "Payment went through, but the order could not be finalized.");
+            setError(mapCheckoutError(confirmError?.message) || "Payment went through, but the order could not be finalized.");
             setSubmitting(false);
         }
     };
@@ -105,7 +106,23 @@ export default function CheckoutPage() {
 
     useEffect(() => {
         const initCheckout = async () => {
-            if (!shopperId || !items.length) {
+            if (!shopperId) {
+                navigate("/login", {
+                    state: {
+                        redirectTo: "/checkout",
+                        checkoutData: {
+                            sellerId,
+                            sellerName,
+                            items,
+                            subtotal,
+                        },
+                    },
+                    replace: true,
+                });
+                return;
+            }
+
+            if (!items.length) {
                 setError("Missing checkout data.");
                 setLoading(false);
                 return;
@@ -129,7 +146,7 @@ export default function CheckoutPage() {
         };
 
         initCheckout();
-    }, [shopperId, items, orderPayload]);
+    }, [shopperId, items, orderPayload, navigate, sellerId, sellerName, subtotal]);
 
     const handlePaymentSuccess = async (resolvedSellerId) => {
         setPaymentCompleted(true);
