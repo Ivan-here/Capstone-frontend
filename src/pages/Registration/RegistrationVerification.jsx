@@ -6,6 +6,7 @@ import { verificationService } from "@/services/verification.service";
 import Button from "@/components/ui/Button";
 import Input from "@/components/ui/Input";
 import { authService } from "@/services/auth.service.js";
+import { cloudinaryService } from "@/services/cloudinary.service";
 
 export default function RegistrationVerification() {
     const { role } = useParams();
@@ -26,10 +27,22 @@ export default function RegistrationVerification() {
 
     const [errors, setErrors] = useState({});
     const [loading, setLoading] = useState(false);
+    const [avatarFile, setAvatarFile] = useState(null);
+    const [avatarPreviewUrl, setAvatarPreviewUrl] = useState("");
 
     function setField(key, value) {
         setForm((p) => ({ ...p, [key]: value }));
         setErrors((p) => ({ ...p, [key]: null, form: null }));
+    }
+
+    function handleAvatarChange(ev) {
+        const file = ev.target.files?.[0] || null;
+        setAvatarFile(file);
+        setErrors((p) => ({ ...p, avatar: null, form: null }));
+        setAvatarPreviewUrl((prev) => {
+            if (prev?.startsWith("blob:")) URL.revokeObjectURL(prev);
+            return file ? URL.createObjectURL(file) : "";
+        });
     }
 
     function validate() {
@@ -58,12 +71,14 @@ export default function RegistrationVerification() {
 
         try {
             setLoading(true);
+            const avatarUrl = avatarFile ? await cloudinaryService.uploadImage(avatarFile) : null;
 
             await profileService.upsertBusiness({
                 address: form.address,
                 businessName: form.name,
                 businessType: String(role || "").toUpperCase(),
                 email: form.email,
+                avatarUrl,
                 description: form.description,
             });
 
@@ -184,6 +199,31 @@ export default function RegistrationVerification() {
                             onChange={(e) => setField("email", e.target.value)}
                             error={errors.email}
                         />
+                    </div>
+
+                    <div className="fieldRow">
+                        <label className="fieldLabel">Profile picture:</label>
+                        <div className="uploadWrap">
+                            <label className="uploadBtn">
+                                <span className="uploadIcon">◴</span>
+                                <span className="uploadText">{avatarFile ? "Change business photo" : "Upload business photo"}</span>
+                                <input
+                                    type="file"
+                                    accept="image/*"
+                                    className="uploadInput"
+                                    onChange={handleAvatarChange}
+                                />
+                            </label>
+
+                            {(avatarPreviewUrl || avatarFile?.name) && (
+                                <div className="avatarUploadPreviewRow">
+                                    {avatarPreviewUrl ? (
+                                        <img src={avatarPreviewUrl} alt="Business profile preview" className="avatarUploadPreview" />
+                                    ) : null}
+                                    {avatarFile?.name ? <div className="fileItem">{avatarFile.name}</div> : null}
+                                </div>
+                            )}
+                        </div>
                     </div>
 
                     <div className="fieldRow">

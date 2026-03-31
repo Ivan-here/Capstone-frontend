@@ -1,9 +1,11 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { Elements, PaymentElement, useElements, useStripe } from "@stripe/react-stripe-js";
+import { ArrowLeft, CreditCard } from "lucide-react";
 import { getStripe } from "@/lib/stripe";
 import { orderService } from "@/services/order.service";
 import { useCart } from "../cart/CartContext.jsx";
+import "./CheckoutPage.css";
 
 function mapCheckoutError(message) {
     const normalized = String(message || "").toLowerCase();
@@ -18,11 +20,9 @@ function mapCheckoutError(message) {
     return message || "Failed to initialize checkout.";
 }
 
-function CheckoutForm({ orderId, sellerId }) {
+function CheckoutForm({ orderId, paymentIntentId, sellerId, shopperId, onPaymentSuccess }) {
     const stripe = useStripe();
     const elements = useElements();
-    const navigate = useNavigate();
-    const { removeSellerItems } = useCart();
     const [submitting, setSubmitting] = useState(false);
     const [error, setError] = useState("");
 
@@ -40,29 +40,34 @@ function CheckoutForm({ orderId, sellerId }) {
             return;
         }
 
-        const { error } = await stripe.confirmPayment({
+        const result = await stripe.confirmPayment({
             elements,
             redirect: "if_required",
         });
 
-        if (error) {
-            setError(error.message || "Payment failed.");
+        if (result.error) {
+            setError(result.error.message || "Payment failed.");
             setSubmitting(false);
             return;
         }
 
-        removeSellerItems(sellerId);
-        const target = orderId
-            ? `/my-orders?payment=success&orderId=${encodeURIComponent(orderId)}`
-            : "/my-orders?payment=success";
-        navigate(target);
+        const confirmedPaymentIntentId = result.paymentIntent?.id || paymentIntentId;
+
+        try {
+            await orderService.confirmPayment(orderId, shopperId, confirmedPaymentIntentId);
+            await onPaymentSuccess?.(sellerId);
+        } catch (confirmError) {
+            setError(confirmError?.message || "Payment went through, but the order could not be finalized.");
+            setSubmitting(false);
+        }
     };
 
     return (
-        <form onSubmit={handleSubmit} style={{ display: "grid", gap: "16px" }}>
+        <form onSubmit={handleSubmit} className="checkout-form">
             <PaymentElement />
-            {error && <div style={{ color: "crimson" }}>{error}</div>}
-            <button type="submit" disabled={!stripe || !elements || submitting}>
+            {error && <div className="checkout-error">{error}</div>}
+            <button type="submit" className="checkout-btn checkout-btn--primary" disabled={!stripe || !elements || submitting}>
+                <CreditCard size={18} />
                 {submitting ? "Processing..." : "Pay now"}
             </button>
         </form>
@@ -72,6 +77,7 @@ function CheckoutForm({ orderId, sellerId }) {
 export default function CheckoutPage() {
     const location = useLocation();
     const navigate = useNavigate();
+    const { removeSellerItems } = useCart();
 
     const sellerId = location.state?.sellerId;
     const sellerName = location.state?.sellerName;
@@ -80,9 +86,12 @@ export default function CheckoutPage() {
 
     const [stripePromise, setStripePromise] = useState(null);
     const [clientSecret, setClientSecret] = useState("");
+    const [paymentIntentId, setPaymentIntentId] = useState("");
     const [orderId, setOrderId] = useState("");
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState("");
+    const [cancellingDraft, setCancellingDraft] = useState(false);
+    const [paymentCompleted, setPaymentCompleted] = useState(false);
 
     const shopperId = localStorage.getItem("userId");
 
@@ -110,6 +119,7 @@ export default function CheckoutPage() {
                 setOrderId(createdOrder.orderId);
 
                 const paymentIntent = await orderService.createPaymentIntent(createdOrder.orderId, shopperId);
+                setPaymentIntentId(paymentIntent.paymentIntentId);
                 setClientSecret(paymentIntent.clientSecret);
             } catch (err) {
                 setError(mapCheckoutError(err.message));
@@ -121,32 +131,81 @@ export default function CheckoutPage() {
         initCheckout();
     }, [shopperId, items, orderPayload]);
 
-    if (loading) return <div style={{ padding: 24 }}>Preparing checkout...</div>;
-    if (error) return <div style={{ padding: 24, color: "crimson" }}>{error}</div>;
-    if (!clientSecret || !stripePromise) return <div style={{ padding: 24 }}>Unable to start payment.</div>;
+    const handlePaymentSuccess = async (resolvedSellerId) => {
+        setPaymentCompleted(true);
+        removeSellerItems(resolvedSellerId);
+        const target = orderId
+            ? `/my-orders?payment=success&orderId=${encodeURIComponent(orderId)}`
+            : "/my-orders?payment=success";
+        navigate(target);
+    };
+
+    const handleBack = async () => {
+        if (orderId && shopperId && !paymentCompleted) {
+            try {
+                setCancellingDraft(true);
+                await orderService.cancelOrder(orderId, shopperId, "Checkout closed before payment.");
+            } catch (err) {
+                console.error("Failed to cancel draft order:", err);
+            } finally {
+                setCancellingDraft(false);
+            }
+        }
+
+        navigate(-1);
+    };
+
+    if (loading) return <div className="checkout-shell"><div className="checkout-card">Preparing checkout...</div></div>;
+    if (error) return <div className="checkout-shell"><div className="checkout-card checkout-error">{error}</div></div>;
+    if (!clientSecret || !stripePromise || !paymentIntentId) return <div className="checkout-shell"><div className="checkout-card">Unable to start payment.</div></div>;
 
     return (
-        <div style={{ maxWidth: 700, margin: "40px auto", padding: 24, background: "#fff", borderRadius: 16 }}>
-            <h1>Checkout</h1>
-            <p><b>Seller:</b> {sellerName}</p>
-            <p><b>Total:</b> ${Number(subtotal).toFixed(2)}</p>
-
-            <div style={{ marginBottom: 20 }}>
-                {items.map((item) => (
-                    <div key={item.id} style={{ display: "flex", justifyContent: "space-between", marginBottom: 8 }}>
-                        <span>{item.title} × {item.quantity}</span>
-                        <span>${(Number(item.price) * item.quantity).toFixed(2)}</span>
+        <div className="checkout-shell">
+            <div className="checkout-card">
+                <div className="checkout-header">
+                    <div>
+                        <h1>Checkout</h1>
+                        <p>Review this order and complete payment securely.</p>
                     </div>
-                ))}
+                    <button onClick={handleBack} className="checkout-btn checkout-btn--secondary" disabled={cancellingDraft}>
+                        <ArrowLeft size={18} />
+                        {cancellingDraft ? "Closing..." : "Back"}
+                    </button>
+                </div>
+
+                <div className="checkout-summary-card">
+                    <div className="checkout-summary-row">
+                        <span>Seller</span>
+                        <strong>{sellerName}</strong>
+                    </div>
+                    <div className="checkout-summary-row">
+                        <span>Total</span>
+                        <strong>${Number(subtotal).toFixed(2)}</strong>
+                    </div>
+                </div>
+
+                <div className="checkout-items">
+                    {items.map((item) => (
+                        <div key={item.id} className="checkout-item">
+                            <div>
+                                <div className="checkout-item-title">{item.title}</div>
+                                <div className="checkout-item-subtitle">Quantity: {item.quantity}</div>
+                            </div>
+                            <div className="checkout-item-price">${(Number(item.price) * item.quantity).toFixed(2)}</div>
+                        </div>
+                    ))}
+                </div>
+
+                <Elements stripe={stripePromise} options={{ clientSecret }}>
+                    <CheckoutForm
+                        orderId={orderId}
+                        paymentIntentId={paymentIntentId}
+                        sellerId={sellerId}
+                        shopperId={shopperId}
+                        onPaymentSuccess={handlePaymentSuccess}
+                    />
+                </Elements>
             </div>
-
-            <Elements stripe={stripePromise} options={{ clientSecret }}>
-                <CheckoutForm orderId={orderId} sellerId={sellerId} />
-            </Elements>
-
-            <button onClick={() => navigate(-1)} style={{ marginTop: 16 }}>
-                Back
-            </button>
         </div>
     );
 }

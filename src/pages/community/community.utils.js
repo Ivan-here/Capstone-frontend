@@ -48,6 +48,20 @@ export function getPreviewComments(post, limit = 3) {
   return post.comments.slice(0, limit);
 }
 
+export function getAvatarFallback(value, fallback = "?") {
+  return String(value || fallback).trim().charAt(0).toUpperCase() || fallback;
+}
+
+export function getProfileAvatarUrl(profileResponse) {
+  const businessAvatar = profileResponse?.businessProfile?.avatarUrl?.trim();
+  if (businessAvatar) return businessAvatar;
+
+  const personalAvatar = profileResponse?.personalProfile?.avatarUrl?.trim();
+  if (personalAvatar) return personalAvatar;
+
+  return "";
+}
+
 export function buildSidebarProfiles(me, posts) {
   const following = me?.personalProfile?.followingPeople || [];
   const typeByUserId = new Map(

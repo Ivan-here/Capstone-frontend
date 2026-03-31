@@ -5,6 +5,7 @@ import { useNavigate } from "react-router-dom";
 import Button from "@/components/ui/Button";
 import Input from "@/components/ui/Input";
 import { authService } from "@/services/auth.service";
+import { cloudinaryService } from "@/services/cloudinary.service";
 import { profileService } from "@/services/profile.service";
 
 export default function RegistrationPage() {
@@ -22,10 +23,22 @@ export default function RegistrationPage() {
 
     const [errors, setErrors] = useState({});
     const [loading, setLoading] = useState(false);
+    const [avatarFile, setAvatarFile] = useState(null);
+    const [avatarPreviewUrl, setAvatarPreviewUrl] = useState("");
 
     function setField(name, value) {
         setForm((prev) => ({ ...prev, [name]: value }));
         setErrors((prev) => ({ ...prev, [name]: null, form: null }));
+    }
+
+    function handleAvatarChange(ev) {
+        const file = ev.target.files?.[0] || null;
+        setAvatarFile(file);
+        setErrors((prev) => ({ ...prev, avatar: null, form: null }));
+        setAvatarPreviewUrl((prev) => {
+            if (prev?.startsWith("blob:")) URL.revokeObjectURL(prev);
+            return file ? URL.createObjectURL(file) : "";
+        });
     }
 
     function validate() {
@@ -57,6 +70,7 @@ export default function RegistrationPage() {
 
         try {
             setLoading(true);
+            const avatarUrl = avatarFile ? await cloudinaryService.uploadImage(avatarFile) : null;
 
             // 1) Register in identity-service (token is stored by authService)
             const auth = await authService.register(form);
@@ -69,6 +83,7 @@ export default function RegistrationPage() {
                 displayName: form.displayName,
                 contactNumber: form.contactNumber,
                 email: form.email,
+                avatarUrl,
             });
 
             // 3) If shopper -> done
@@ -134,6 +149,29 @@ export default function RegistrationPage() {
                                 <option value="RESTAURANT">Restaurant</option>
                             </select>
                             {errors.role ? <div className="inputError">{errors.role}</div> : null}
+                        </div>
+                    </div>
+
+                    <div className="fieldRow">
+                        <label className="fieldLabel">Profile Picture:</label>
+                        <div className="avatarUploadField">
+                            <label className="avatarUploadBtn">
+                                <span>{avatarFile ? "Change picture" : "Upload picture"}</span>
+                                <input
+                                    type="file"
+                                    accept="image/*"
+                                    className="avatarUploadInput"
+                                    onChange={handleAvatarChange}
+                                />
+                            </label>
+                            {(avatarPreviewUrl || avatarFile?.name) && (
+                                <div className="avatarUploadPreviewRow">
+                                    {avatarPreviewUrl ? (
+                                        <img src={avatarPreviewUrl} alt="Profile preview" className="avatarUploadPreview" />
+                                    ) : null}
+                                    {avatarFile?.name ? <div className="avatarUploadFileName">{avatarFile.name}</div> : null}
+                                </div>
+                            )}
                         </div>
                     </div>
 

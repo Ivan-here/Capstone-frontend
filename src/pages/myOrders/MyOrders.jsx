@@ -4,9 +4,7 @@ import { Package, ChevronLeft, Star, Clock, CheckCircle, RefreshCcw } from 'luci
 import { useCart } from '../cart/CartContext.jsx';
 import { orderService } from '@/services/order.service';
 import ReviewModal from './ReviewModal.jsx';
-
-const PAGE_BG = '#F5F2E8';
-const TITLE_COLOR = '#3B422D';
+import './MyOrders.css';
 
 const statusStyles = {
     COMPLETED: { color: '#2e7d32', bg: '#e8f5e9', icon: <CheckCircle size={14} /> },
@@ -93,188 +91,118 @@ const MyOrders = () => {
     };
 
     return (
-        <div style={{ minHeight: '100vh', backgroundColor: PAGE_BG, padding: '40px 20px', fontFamily: 'sans-serif' }}>
-            <div style={{ maxWidth: '900px', margin: '0 auto' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
-                        <div style={{ backgroundColor: TITLE_COLOR, padding: '10px', borderRadius: '12px' }}>
+        <div className="my-orders-page">
+            <div className="my-orders-shell">
+                <div className="my-orders-hero">
+                    <div className="my-orders-hero-main">
+                        <div className="my-orders-hero-icon">
                             <Package color="white" size={24} />
                         </div>
-                        <h1 style={{ margin: 0, fontSize: '2rem', fontWeight: 'bold', color: TITLE_COLOR, fontFamily: 'serif' }}>
-                            Order History
-                        </h1>
+                        <h1>Order History</h1>
                     </div>
-                    <button
-                        onClick={() => navigate(-1)}
-                        style={{ background: 'none', border: 'none', color: '#6D804B', fontWeight: 'bold', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '5px' }}
-                    >
+                    <button onClick={() => navigate(-1)} className="my-orders-back">
                         <ChevronLeft size={20} /> Back
                     </button>
                 </div>
 
-                <div style={{ display: 'flex', gap: '10px', marginBottom: '18px' }}>
-                    <button
-                        onClick={() => setActiveTab('bought')}
-                        style={{
-                            padding: '10px 16px',
-                            borderRadius: '999px',
-                            border: activeTab === 'bought' ? '1px solid #7B8B5B' : '1px solid #ddd',
-                            background: activeTab === 'bought' ? '#7B8B5B' : '#fff',
-                            color: activeTab === 'bought' ? '#fff' : '#333',
-                            cursor: 'pointer',
-                            fontWeight: 'bold',
-                        }}
-                    >
-                        Bought ({history.bought.length})
-                    </button>
-                    <button
-                        onClick={() => setActiveTab('sold')}
-                        style={{
-                            padding: '10px 16px',
-                            borderRadius: '999px',
-                            border: activeTab === 'sold' ? '1px solid #7B8B5B' : '1px solid #ddd',
-                            background: activeTab === 'sold' ? '#7B8B5B' : '#fff',
-                            color: activeTab === 'sold' ? '#fff' : '#333',
-                            cursor: 'pointer',
-                            fontWeight: 'bold',
-                        }}
-                    >
-                        Sold ({history.sold.length})
-                    </button>
+                <div className="my-orders-card">
+                    <div className="my-orders-tabs">
+                        <button
+                            onClick={() => setActiveTab('bought')}
+                            className={`my-orders-tab ${activeTab === 'bought' ? 'is-active' : ''}`}
+                        >
+                            Bought ({history.bought.length})
+                        </button>
+                        <button
+                            onClick={() => setActiveTab('sold')}
+                            className={`my-orders-tab ${activeTab === 'sold' ? 'is-active' : ''}`}
+                        >
+                            Sold ({history.sold.length})
+                        </button>
+                    </div>
+
+                    {loading && <div className="my-orders-state">Loading order history...</div>}
+                    {!loading && error && <div className="my-orders-state is-error">{error}</div>}
+
+                    {!loading && !error && orders.length === 0 && (
+                        <div className="my-orders-state is-empty">
+                            No {activeTab} orders yet.
+                        </div>
+                    )}
+
+                    {!loading && !error && orders.length > 0 && (
+                        <div className="my-orders-list">
+                            {orders.map((order) => {
+                                const style = getStatusStyle(order.status);
+                                const itemSummary = (order.items || []).map((i) => `${i.title} x${i.quantity}`).join(', ');
+                                const canRate = activeTab === 'bought' && order.status === 'COMPLETED' && order.items?.length > 0;
+
+                                return (
+                                    <div key={order.id} className="my-orders-item">
+                                        <div className="my-orders-item-main">
+                                            <div className="my-orders-item-top">
+                                                <span
+                                                    className="my-orders-status"
+                                                    style={{ backgroundColor: style.bg, color: style.color }}
+                                                >
+                                                    {style.icon} {order.status || 'UNKNOWN'}
+                                                </span>
+                                                <span className="my-orders-meta">
+                                                    {formatDate(order)} | #{order.id}
+                                                </span>
+                                                <span className="my-orders-meta">
+                                                    Payment: {order.paymentStatus || 'N/A'}
+                                                </span>
+                                            </div>
+
+                                            <div className="my-orders-summary">
+                                                {itemSummary || 'No items'}
+                                            </div>
+
+                                            <div className="my-orders-party">
+                                                {activeTab === 'sold' ? `Buyer: ${order.shopperId}` : `Seller: ${order.sellerUserId}`}
+                                            </div>
+
+                                            <div className="my-orders-amount">
+                                                {formatAmount(order)}
+                                            </div>
+                                        </div>
+
+                                        <div className="my-orders-actions">
+                                            <button
+                                                onClick={() => navigate(`/orders/${order.id}`)}
+                                                className="my-orders-btn is-secondary"
+                                            >
+                                                View Details
+                                            </button>
+
+                                            {activeTab === 'bought' && order.items?.length > 0 && (
+                                                <button
+                                                    onClick={() => handleReorder(order)}
+                                                    className="my-orders-btn is-muted"
+                                                >
+                                                    <RefreshCcw size={16} /> Re-order
+                                                </button>
+                                            )}
+
+                                            {canRate && (
+                                                <button
+                                                    onClick={() => {
+                                                        setSelectedOrder(order);
+                                                        setIsModalOpen(true);
+                                                    }}
+                                                    className="my-orders-btn is-primary"
+                                                >
+                                                    <Star size={16} fill="white" /> Rate
+                                                </button>
+                                            )}
+                                        </div>
+                                    </div>
+                                );
+                            })}
+                        </div>
+                    )}
                 </div>
-
-                {loading && <div>Loading order history...</div>}
-                {!loading && error && <div style={{ color: '#9b1c1c' }}>{error}</div>}
-
-                {!loading && !error && orders.length === 0 && (
-                    <div style={{ background: '#fff', borderRadius: '12px', border: '1px solid #E2DFD3', padding: '24px' }}>
-                        No {activeTab} orders yet.
-                    </div>
-                )}
-
-                {!loading && !error && orders.length > 0 && (
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-                        {orders.map((order) => {
-                            const style = getStatusStyle(order.status);
-                            const itemSummary = (order.items || []).map((i) => `${i.title} x${i.quantity}`).join(', ');
-                            const canRate = activeTab === 'bought' && order.status === 'COMPLETED' && order.items?.length > 0;
-
-                            return (
-                                <div
-                                    key={order.id}
-                                    style={{
-                                        backgroundColor: 'white',
-                                        padding: '24px',
-                                        borderRadius: '16px',
-                                        border: '1px solid #E2DFD3',
-                                        display: 'flex',
-                                        justifyContent: 'space-between',
-                                        alignItems: 'center',
-                                        gap: '16px',
-                                    }}
-                                >
-                                    <div style={{ flex: 1 }}>
-                                        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '10px', flexWrap: 'wrap' }}>
-                                            <span
-                                                style={{
-                                                    backgroundColor: style.bg,
-                                                    color: style.color,
-                                                    padding: '4px 12px',
-                                                    borderRadius: '20px',
-                                                    fontSize: '0.75rem',
-                                                    fontWeight: 'bold',
-                                                    display: 'flex',
-                                                    alignItems: 'center',
-                                                    gap: '5px',
-                                                }}
-                                            >
-                                                {style.icon} {order.status || 'UNKNOWN'}
-                                            </span>
-                                            <span style={{ color: '#999', fontSize: '0.85rem' }}>
-                                                {formatDate(order)} | #{order.id}
-                                            </span>
-                                            <span style={{ color: '#999', fontSize: '0.85rem' }}>
-                                                Payment: {order.paymentStatus || 'N/A'}
-                                            </span>
-                                        </div>
-
-                                        <div style={{ fontSize: '1.05rem', fontWeight: 'bold', color: '#333' }}>
-                                            {itemSummary || 'No items'}
-                                        </div>
-
-                                        <div style={{ color: '#555', marginTop: '4px' }}>
-                                            {activeTab === 'sold' ? `Buyer: ${order.shopperId}` : `Seller: ${order.sellerUserId}`}
-                                        </div>
-
-                                        <div style={{ fontWeight: 'bold', color: TITLE_COLOR, marginTop: '6px' }}>
-                                            {formatAmount(order)}
-                                        </div>
-                                    </div>
-
-                                    <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', justifyContent: 'flex-end' }}>
-                                        <button
-                                            onClick={() => navigate(`/orders/${order.id}`)}
-                                            style={{
-                                                backgroundColor: '#fff',
-                                                color: '#374151',
-                                                padding: '10px 18px',
-                                                borderRadius: '8px',
-                                                border: '1px solid #d1d5db',
-                                                fontWeight: 'bold',
-                                                cursor: 'pointer',
-                                            }}
-                                        >
-                                            View Details
-                                        </button>
-
-                                        {activeTab === 'bought' && order.items?.length > 0 && (
-                                            <button
-                                                onClick={() => handleReorder(order)}
-                                                style={{
-                                                    backgroundColor: '#F3F4F6',
-                                                    color: '#374151',
-                                                    padding: '10px 18px',
-                                                    borderRadius: '8px',
-                                                    border: 'none',
-                                                    fontWeight: 'bold',
-                                                    cursor: 'pointer',
-                                                    display: 'flex',
-                                                    alignItems: 'center',
-                                                    gap: '8px',
-                                                }}
-                                            >
-                                                <RefreshCcw size={16} /> Re-order
-                                            </button>
-                                        )}
-
-                                        {canRate && (
-                                            <button
-                                                onClick={() => {
-                                                    setSelectedOrder(order);
-                                                    setIsModalOpen(true);
-                                                }}
-                                                style={{
-                                                    backgroundColor: '#7B8B5B',
-                                                    color: 'white',
-                                                    padding: '10px 18px',
-                                                    borderRadius: '8px',
-                                                    border: 'none',
-                                                    fontWeight: 'bold',
-                                                    cursor: 'pointer',
-                                                    display: 'flex',
-                                                    alignItems: 'center',
-                                                    gap: '8px',
-                                                }}
-                                            >
-                                                <Star size={16} fill="white" /> Rate
-                                            </button>
-                                        )}
-                                    </div>
-                                </div>
-                            );
-                        })}
-                    </div>
-                )}
             </div>
 
             {selectedOrder && (
