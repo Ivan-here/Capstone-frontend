@@ -2,6 +2,18 @@ import React, { createContext, useContext, useEffect, useMemo, useState } from '
 
 const CartContext = createContext();
 
+const getSellerDisplayName = (businessName, ownerId) => {
+    if (!businessName) return "Unknown Seller";
+
+    const trimmedName = businessName.trim();
+    if (!ownerId) return trimmedName;
+
+    const escapedOwnerId = ownerId.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const trailingOwnerIdPattern = new RegExp(`\\s*[(-]?\\s*${escapedOwnerId}\\s*[)]?\\s*$`);
+
+    return trimmedName.replace(trailingOwnerIdPattern, '').trim() || "Unknown Seller";
+};
+
 export const CartProvider = ({ children }) => {
     const [cartItems, setCartItems] = useState(() => {
         const savedCart = localStorage.getItem('shopping-cart');
@@ -78,7 +90,7 @@ export const CartProvider = ({ children }) => {
             if (!groups[sellerId]) {
                 groups[sellerId] = {
                     sellerId,
-                    sellerName: item.businessName || "Unknown Seller",
+                    sellerName: getSellerDisplayName(item.businessName, item.ownerId),
                     items: [],
                     subtotal: 0,
                     totalQuantity: 0,
