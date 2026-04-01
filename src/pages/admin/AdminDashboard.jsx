@@ -80,7 +80,7 @@ const quickLinks = [
     },
     {
         title: "Orders Overview",
-        text: "Monitor orders and update their statuses.",
+        text: "Monitor orders, inspect payment state, and resolve disputes.",
         route: "/admin/orders",
         icon: ShoppingCart,
     },
@@ -91,8 +91,8 @@ const quickLinks = [
         icon: CalendarClock,
     },
     {
-        title: "Notifications",
-        text: "Send and manage user-facing notifications.",
+        title: "Admin Inbox",
+        text: "Review staff contact requests, disputes, and admin alerts.",
         route: "/admin/notifications",
         icon: Bell,
     },
@@ -138,7 +138,7 @@ export default function AdminDashboard() {
                     <div className="admin-topbar">
                         <div>
                             <h1>Admin Dashboard</h1>
-                            <p>Overview of marketplace activity and platform operations.</p>
+                            <p>Overview of marketplace activity, escalation queues, and platform operations.</p>
                         </div>
                     </div>
 
@@ -160,7 +160,7 @@ export default function AdminDashboard() {
                 <div className="admin-topbar">
                     <div>
                         <h1>Admin Dashboard</h1>
-                        <p>Overview of marketplace activity and platform operations.</p>
+                        <p>Overview of marketplace activity, escalation queues, and platform operations.</p>
                     </div>
 
                     <button className="admin-refresh-btn" onClick={loadStats}>
