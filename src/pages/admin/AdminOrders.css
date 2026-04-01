@@ -1,3 +1,47 @@
 @import "./AdminDashboard.css";
 @import "./AdminUsers.css";
 @import "./AdminShared.css";
+
+.admin-order-alerts {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.admin-order-alert {
+    border: 1px solid rgba(0, 0, 0, 0.08);
+    border-radius: 14px;
+    padding: 14px;
+    background: #fff;
+}
+
+.admin-order-alert.is-unread {
+    border-color: rgba(85, 107, 47, 0.28);
+    box-shadow: inset 3px 0 0 #768f48;
+}
+
+.admin-order-alert-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 8px;
+}
+
+.admin-order-alert-title {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    color: #2d2d2d;
+}
+
+.admin-order-alert p {
+    margin: 0 0 8px 0;
+    color: #555;
+    white-space: pre-line;
+}
+
+.admin-order-alert span {
+    color: #888;
+    font-size: 0.85rem;
+}

@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { Search, RefreshCw, ShoppingCart } from "lucide-react";
+import { Search, RefreshCw, ShoppingCart, BellRing } from "lucide-react";
+import { useSearchParams } from "react-router-dom";
 import { adminService } from "@/services/admin.service";
 import "./AdminOrders.css";
 
@@ -25,7 +26,9 @@ function formatPrice(cents) {
 }
 
 export default function AdminOrders() {
+    const [searchParams] = useSearchParams();
     const [orders, setOrders] = useState([]);
+    const [notifications, setNotifications] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState("");
     const [searchTerm, setSearchTerm] = useState("");
@@ -37,7 +40,13 @@ export default function AdminOrders() {
 
     useEffect(() => {
         loadOrders();
+        loadNotifications();
     }, []);
+
+    function refreshData() {
+        loadOrders();
+        loadNotifications();
+    }
 
     async function loadOrders() {
         try {
@@ -51,6 +60,25 @@ export default function AdminOrders() {
             setLoading(false);
         }
     }
+
+    async function loadNotifications() {
+        try {
+            const data = await adminService.getMyNotifications();
+            setNotifications(data || []);
+        } catch {
+            setNotifications([]);
+        }
+    }
+
+    useEffect(() => {
+        const orderId = searchParams.get("orderId");
+        if (!orderId || orders.length === 0) return;
+
+        const match = orders.find((item) => item.id === orderId);
+        if (match) {
+            setSelectedOrder(match);
+        }
+    }, [orders, searchParams]);
 
     const filteredOrders = useMemo(() => (
         orders.filter((item) => {
@@ -67,6 +95,13 @@ export default function AdminOrders() {
             return matchesSearch && matchesStatus;
         })
     ), [orders, searchTerm, statusFilter]);
+
+    const selectedOrderAlerts = useMemo(() => {
+        if (!selectedOrder?.id) return [];
+        return notifications.filter(
+            (item) => item.referenceType === "ORDER" && item.referenceId === selectedOrder.id
+        );
+    }, [notifications, selectedOrder]);
 
     async function disputeOrder(orderId) {
         if (!disputeReason.trim()) {
@@ -137,7 +172,7 @@ export default function AdminOrders() {
                         <p>Inspect checkout, payment, pickup, and dispute state for marketplace orders.</p>
                     </div>
 
-                    <button className="admin-refresh-btn" onClick={loadOrders}>
+                    <button className="admin-refresh-btn" onClick={refreshData}>
                         <RefreshCw size={16} />
                         Refresh
                     </button>
@@ -313,6 +348,33 @@ export default function AdminOrders() {
                                             {disputeBusy ? "Processing..." : "Open Dispute"}
                                         </button>
                                     </div>
+                                </div>
+
+                                <div className="admin-detail-group">
+                                    <label>Related Alerts</label>
+                                    {selectedOrderAlerts.length > 0 ? (
+                                        <div className="admin-order-alerts">
+                                            {selectedOrderAlerts.map((item) => (
+                                                <div key={item.id} className={`admin-order-alert ${item.read ? "" : "is-unread"}`}>
+                                                    <div className="admin-order-alert-head">
+                                                        <div className="admin-order-alert-title">
+                                                            <BellRing size={15} />
+                                                            <strong>{item.title || item.type || "Order alert"}</strong>
+                                                        </div>
+                                                        <span className={`admin-badge ${item.read ? "admin-badge-approved" : "admin-badge-pending"}`}>
+                                                            {item.read ? "READ" : "UNREAD"}
+                                                        </span>
+                                                    </div>
+                                                    <p>{item.message || "-"}</p>
+                                                    <span>
+                                                        From {item.actorDisplayName || item.actorUsername || item.actorUserId || "-"} at {formatDate(item.createdAt)}
+                                                    </span>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    ) : (
+                                        <p>No admin alerts are linked to this order yet.</p>
+                                    )}
                                 </div>
 
                                 <div className="admin-detail-group">
