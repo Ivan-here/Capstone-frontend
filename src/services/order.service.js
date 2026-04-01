@@ -45,6 +45,18 @@ export const orderService = {
         );
     },
 
+    async confirmDonationOrder(orderId, shopperId) {
+        if (!orderId) throw new Error("orderId is required");
+        if (!shopperId) throw new Error("shopperId is required");
+
+        return await apiFetch(
+            `/api/orders/${encodeURIComponent(orderId)}/confirm-donation?shopperId=${encodeURIComponent(shopperId)}`,
+            {
+                method: "POST",
+            }
+        );
+    },
+
     async getPickupCode(orderId, shopperId) {
         if (!orderId) throw new Error("orderId is required");
         if (!shopperId) throw new Error("shopperId is required");

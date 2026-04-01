@@ -75,6 +75,35 @@ function CheckoutForm({ orderId, paymentIntentId, sellerId, shopperId, onPayment
     );
 }
 
+function DonationCheckoutForm({ orderId, sellerId, shopperId, onClaimSuccess }) {
+    const [submitting, setSubmitting] = useState(false);
+    const [error, setError] = useState("");
+
+    const handleSubmit = async (e) => {
+        e.preventDefault();
+        setSubmitting(true);
+        setError("");
+
+        try {
+            await orderService.confirmDonationOrder(orderId, shopperId);
+            await onClaimSuccess?.(sellerId);
+        } catch (claimError) {
+            setError(mapCheckoutError(claimError?.message) || "Could not confirm this donation claim.");
+            setSubmitting(false);
+        }
+    };
+
+    return (
+        <form onSubmit={handleSubmit} className="checkout-form">
+            {error && <div className="checkout-error">{error}</div>}
+            <button type="submit" className="checkout-btn checkout-btn--primary" disabled={submitting}>
+                <CreditCard size={18} />
+                {submitting ? "Confirming..." : "Confirm donation claim"}
+            </button>
+        </form>
+    );
+}
+
 export default function CheckoutPage() {
     const location = useLocation();
     const navigate = useNavigate();
@@ -95,6 +124,10 @@ export default function CheckoutPage() {
     const [paymentCompleted, setPaymentCompleted] = useState(false);
 
     const shopperId = localStorage.getItem("userId");
+    const isDonationCheckout = useMemo(
+        () => items.length > 0 && items.every((item) => Number(item.price) === 0),
+        [items]
+    );
 
     const orderPayload = useMemo(() => ({
         shopperId,
@@ -135,9 +168,15 @@ export default function CheckoutPage() {
                 const createdOrder = await orderService.createOrder(orderPayload);
                 setOrderId(createdOrder.orderId);
 
-                const paymentIntent = await orderService.createPaymentIntent(createdOrder.orderId, shopperId);
-                setPaymentIntentId(paymentIntent.paymentIntentId);
-                setClientSecret(paymentIntent.clientSecret);
+                const requiresPayment = createdOrder.requiresPayment ?? Number(createdOrder.grossAmountCents || 0) > 0;
+                if (requiresPayment) {
+                    const paymentIntent = await orderService.createPaymentIntent(createdOrder.orderId, shopperId);
+                    setPaymentIntentId(paymentIntent.paymentIntentId);
+                    setClientSecret(paymentIntent.clientSecret);
+                } else {
+                    setPaymentIntentId("");
+                    setClientSecret("");
+                }
             } catch (err) {
                 setError(mapCheckoutError(err.message));
             } finally {
@@ -174,7 +213,9 @@ export default function CheckoutPage() {
 
     if (loading) return <div className="checkout-shell"><div className="checkout-card">Preparing checkout...</div></div>;
     if (error) return <div className="checkout-shell"><div className="checkout-card checkout-error">{error}</div></div>;
-    if (!clientSecret || !stripePromise || !paymentIntentId) return <div className="checkout-shell"><div className="checkout-card">Unable to start payment.</div></div>;
+    if (!isDonationCheckout && (!clientSecret || !stripePromise || !paymentIntentId)) {
+        return <div className="checkout-shell"><div className="checkout-card">Unable to start payment.</div></div>;
+    }
 
     return (
         <div className="checkout-shell">
@@ -182,7 +223,7 @@ export default function CheckoutPage() {
                 <div className="checkout-header">
                     <div>
                         <h1>Checkout</h1>
-                        <p>Review this order and complete payment securely.</p>
+                        <p>{isDonationCheckout ? "Review this donation claim and confirm pickup details." : "Review this order and complete payment securely."}</p>
                     </div>
                     <button onClick={handleBack} className="checkout-btn checkout-btn--secondary" disabled={cancellingDraft}>
                         <ArrowLeft size={18} />
@@ -213,15 +254,24 @@ export default function CheckoutPage() {
                     ))}
                 </div>
 
-                <Elements stripe={stripePromise} options={{ clientSecret }}>
-                    <CheckoutForm
+                {isDonationCheckout ? (
+                    <DonationCheckoutForm
                         orderId={orderId}
-                        paymentIntentId={paymentIntentId}
                         sellerId={sellerId}
                         shopperId={shopperId}
-                        onPaymentSuccess={handlePaymentSuccess}
+                        onClaimSuccess={handlePaymentSuccess}
                     />
-                </Elements>
+                ) : (
+                    <Elements stripe={stripePromise} options={{ clientSecret }}>
+                        <CheckoutForm
+                            orderId={orderId}
+                            paymentIntentId={paymentIntentId}
+                            sellerId={sellerId}
+                            shopperId={shopperId}
+                            onPaymentSuccess={handlePaymentSuccess}
+                        />
+                    </Elements>
+                )}
             </div>
         </div>
     );
