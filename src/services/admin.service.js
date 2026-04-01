@@ -1,5 +1,11 @@
 import { apiFetch } from "./http";
 
+function withOptionalRead(path, read) {
+    if (read == null) return path;
+    const separator = path.includes("?") ? "&" : "?";
+    return `${path}${separator}read=${read}`;
+}
+
 export const adminService = {
     // Dashboard
     getDashboardStats() {
@@ -232,8 +238,12 @@ export const adminService = {
         });
     },
 
-    getNotificationsByUser(userId) {
-        return apiFetch(`/admin/notifications/user/${userId}`);
+    getNotificationsByUser(userId, read = null) {
+        return apiFetch(withOptionalRead(`/admin/notifications/user/${userId}`, read));
+    },
+
+    getMyNotifications(read = null) {
+        return apiFetch(withOptionalRead("/admin/notifications/me", read));
     },
 
     getNotificationById(id) {
