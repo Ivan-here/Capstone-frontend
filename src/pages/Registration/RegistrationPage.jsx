@@ -1,12 +1,13 @@
 import { useState } from "react";
 import "./registration.css";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 
 import Button from "@/components/ui/Button";
 import Input from "@/components/ui/Input";
 import { authService } from "@/services/auth.service";
 import { cloudinaryService } from "@/services/cloudinary.service";
 import { profileService } from "@/services/profile.service";
+import { ArrowLeft, BadgeCheck, CircleUserRound, ShieldCheck } from "lucide-react";
 
 export default function RegistrationPage() {
     const [form, setForm] = useState({
@@ -15,6 +16,7 @@ export default function RegistrationPage() {
         displayName: "",
         role: "",
         email: "",
+        phone: "",
         username: "",
         password: "",
     });
@@ -52,7 +54,7 @@ export default function RegistrationPage() {
         }
         if (!form.email.trim()) e.email = "Email is required.";
         else if (!/^\S+@\S+\.\S+$/.test(form.email.trim())) e.email = "Invalid email.";
-
+        if (!form.phone.trim()) e.phone = "Phone number is required.";
         if (!form.username.trim()) e.username = "Username is required.";
         else if (form.username.trim().length < 3) e.username = "Min 3 characters.";
 
@@ -72,27 +74,25 @@ export default function RegistrationPage() {
             setLoading(true);
             const avatarUrl = avatarFile ? await cloudinaryService.uploadImage(avatarFile) : null;
 
-            // 1) Register in identity-service (token is stored by authService)
             const auth = await authService.register(form);
 
-            // 2) ALWAYS create/upsert personal profile
             await profileService.upsertPersonal({
                 username: form.username,
                 lastName: form.lastName,
                 firstName: form.firstName,
                 displayName: form.displayName,
-                contactNumber: form.contactNumber,
+                phone: form.phone.trim(),
                 email: form.email,
+                emailVisibility: "PRIVATE",
+                phoneVisibility: "PRIVATE",
                 avatarUrl,
             });
 
-            // 3) If shopper -> done
             if (form.role === "SHOPPER") {
-                navigate("/"); // or "/profile"
+                navigate("/");
                 return;
             }
 
-            // 4) Otherwise go to Phase 2 (business profile)
             navigate(`/register/verify/${form.role.toLowerCase()}`, {
                 state: {
                     userId: auth?.userId,
@@ -109,122 +109,152 @@ export default function RegistrationPage() {
     }
 
     return (
-        <div className="registerPage">
-            <div className="registerCard">
-                <h1 className="registerTitle">REGISTER</h1>
+        <div className="authShell authShell--register">
+            <main className="authMain">
+                <div className="authHeader">
+                    <div className="authHeaderCopy">
+                        <h1>Create Your Account</h1>
+                        <p className="authMuted">
+                            Start with your core account details. Businesses and organizations will complete verification in the next step.
+                        </p>
+                    </div>
+                    <button onClick={() => navigate(-1)} className="authBackLink">
+                        <ArrowLeft size={18} /> Back
+                    </button>
+                </div>
 
-                <form className="registerForm" onSubmit={onSubmit}>
+                <form className="authCard" onSubmit={onSubmit}>
                     {errors.form && <div className="formError">{errors.form}</div>}
 
-                    <div className="fieldRow">
-                        <label className="fieldLabel">First Name:</label>
-                        <Input
-                            value={form.firstName}
-                            onChange={(ev) => setField("firstName", ev.target.value)}
-                            error={errors.firstName}
-                        />
-                    </div>
+                    <div className="authSection">
+                        <div className="authSectionTitle"><CircleUserRound size={18} /> Personal Identity</div>
+                        <div className="authInputRow">
+                            <Input
+                                label="First name"
+                                value={form.firstName}
+                                onChange={(ev) => setField("firstName", ev.target.value)}
+                                error={errors.firstName}
+                            />
+                            <Input
+                                label="Last name"
+                                value={form.lastName}
+                                onChange={(ev) => setField("lastName", ev.target.value)}
+                                error={errors.lastName}
+                            />
+                        </div>
 
-                    <div className="fieldRow">
-                        <label className="fieldLabel">Last Name:</label>
-                        <Input
-                            value={form.lastName}
-                            onChange={(ev) => setField("lastName", ev.target.value)}
-                            error={errors.lastName}
-                        />
-                    </div>
+                        <div className="authInputRow">
+                            <div className="authSelectWrap">
+                                <label className="authSelectLabel">Role</label>
+                                <select
+                                    className={`authSelect ${errors.role ? "authSelectError" : ""}`}
+                                    value={form.role}
+                                    onChange={(ev) => setField("role", ev.target.value)}
+                                >
+                                    <option value="">Please select a role</option>
+                                    <option value="SHOPPER">Shopper</option>
+                                    <option value="FARMER">Farmer</option>
+                                    <option value="NGO">NGO</option>
+                                    <option value="RESTAURANT">Restaurant</option>
+                                </select>
+                                {errors.role ? <div className="inputError">{errors.role}</div> : null}
+                            </div>
+                            <Input
+                                label="Display name"
+                                value={form.displayName}
+                                onChange={(ev) => setField("displayName", ev.target.value)}
+                                error={errors.displayName}
+                                placeholder="Optional public name"
+                            />
+                        </div>
 
-                    <div className="fieldRow">
-                        <label className="fieldLabel">Role:</label>
-                        <div className="selectWrap">
-                            <select
-                                className={`select ${errors.role ? "selectError" : ""}`}
-                                value={form.role}
-                                onChange={(ev) => setField("role", ev.target.value)}
-                            >
-                                <option value="">Please select a role</option>
-                                <option value="SHOPPER">Shopper</option>
-                                <option value="FARMER">Farmer</option>
-                                <option value="NGO">NGO</option>
-                                <option value="RESTAURANT">Restaurant</option>
-                            </select>
-                            {errors.role ? <div className="inputError">{errors.role}</div> : null}
+                        <div className="authUploadGroup">
+                            <label className="authUploadLabel">Profile picture</label>
+                            <div className="authUploadWrap">
+                                <label className="authUploadBtn">
+                                    <span>{avatarFile ? "Change picture" : "Upload picture"}</span>
+                                    <input
+                                        type="file"
+                                        accept="image/*"
+                                        className="authUploadInput"
+                                        onChange={handleAvatarChange}
+                                    />
+                                </label>
+                                {(avatarPreviewUrl || avatarFile?.name) && (
+                                    <div className="authUploadPreviewRow">
+                                        {avatarPreviewUrl ? (
+                                            <img src={avatarPreviewUrl} alt="Profile preview" className="authUploadPreview" />
+                                        ) : null}
+                                        {avatarFile?.name ? <div className="authUploadFileName">{avatarFile.name}</div> : null}
+                                    </div>
+                                )}
+                            </div>
                         </div>
                     </div>
 
-                    <div className="fieldRow">
-                        <label className="fieldLabel">Profile Picture:</label>
-                        <div className="avatarUploadField">
-                            <label className="avatarUploadBtn">
-                                <span>{avatarFile ? "Change picture" : "Upload picture"}</span>
-                                <input
-                                    type="file"
-                                    accept="image/*"
-                                    className="avatarUploadInput"
-                                    onChange={handleAvatarChange}
-                                />
-                            </label>
-                            {(avatarPreviewUrl || avatarFile?.name) && (
-                                <div className="avatarUploadPreviewRow">
-                                    {avatarPreviewUrl ? (
-                                        <img src={avatarPreviewUrl} alt="Profile preview" className="avatarUploadPreview" />
-                                    ) : null}
-                                    {avatarFile?.name ? <div className="avatarUploadFileName">{avatarFile.name}</div> : null}
-                                </div>
-                            )}
+                    <div className="authSection">
+                        <div className="authSectionTitle"><BadgeCheck size={18} /> Account Credentials</div>
+                        <div className="authInputRow">
+                            <Input
+                                label="Email"
+                                value={form.email}
+                                onChange={(ev) => setField("email", ev.target.value)}
+                                error={errors.email}
+                            />
+                            <Input
+                                label="Phone number"
+                                value={form.phone}
+                                onChange={(ev) => setField("phone", ev.target.value)}
+                                error={errors.phone}
+                            />
+                        </div>
+
+                        <div className="authInputRow">
+                            <Input
+                                label="Username"
+                                value={form.username}
+                                onChange={(ev) => setField("username", ev.target.value)}
+                                error={errors.username}
+                            />
+                            <div className="authInputGroup">
+                                <label className="authInputLabel">Contact visibility</label>
+                                <p className="authHelperText">
+                                    Your email and phone start private. You can change visibility later in profile settings.
+                                </p>
+                            </div>
+                        </div>
+
+                        <div className="authInputRow authInputRow--single">
+                            <Input
+                                label="Password"
+                                type="password"
+                                value={form.password}
+                                onChange={(ev) => setField("password", ev.target.value)}
+                                error={errors.password}
+                            />
                         </div>
                     </div>
 
-                    <div className="fieldRow">
-                        <label className="fieldLabel">Email:</label>
-                        <Input
-                            value={form.email}
-                            onChange={(ev) => setField("email", ev.target.value)}
-                            error={errors.email}
-                        />
+                    <div className="authSection authSection--compact">
+                        <div className="authSectionTitle"><ShieldCheck size={18} /> What Happens Next</div>
+                        <p className="authHelperText">
+                            Shoppers can start immediately after registration. Farmers, restaurants, and NGOs continue to a second step to add business details and upload verification documents.
+                        </p>
                     </div>
 
-                    <div className="fieldRow">
-                        <label className="fieldLabel">Username:</label>
-                        <Input
-                            value={form.username}
-                            onChange={(ev) => setField("username", ev.target.value)}
-                            error={errors.username}
-                        />
-                    </div>
-
-                    <div className="fieldRow">
-                        <label className="fieldLabel">Display Name (optional):</label>
-                        <Input
-                            value={form.displayName}
-                            onChange={(ev) => setField("displayName", ev.target.value)}
-                            error={errors.displayName}
-                        />
-                    </div>
-
-                    <div className="fieldRow">
-                        <label className="fieldLabel">Password:</label>
-                        <Input
-                            type="password"
-                            value={form.password}
-                            onChange={(ev) => setField("password", ev.target.value)}
-                            error={errors.password}
-                        />
-                    </div>
-                    <div className="submitRow">
-                        <Button type="submit" variant="primary" className="registerBtn" disabled={loading}>
-                            {loading ? "Registering..." : "Register"}
+                    <div className="authActions">
+                        <Button type="submit" variant="primary" className="authPrimaryBtn" disabled={loading}>
+                            {loading ? "Creating Account..." : "Continue"}
                         </Button>
+                        <div className="authFooter">
+                            <span>Already have an account?</span>
+                            <Link className="authInlineLink" to="/login">
+                                Log in
+                            </Link>
+                        </div>
                     </div>
                 </form>
-
-                <div className="registerFooter">
-                    <span>Already have an account?</span>
-                    <a className="loginLink" href="/login">
-                        Login →
-                    </a>
-                </div>
-            </div>
+            </main>
         </div>
     );
 }

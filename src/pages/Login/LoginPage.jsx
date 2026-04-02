@@ -4,7 +4,8 @@ import "./login.css";
 import Button from "@/components/ui/Button";
 import Input from "@/components/ui/Input";
 import { authService } from "@/services/auth.service";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
+import { ArrowLeft, Mail } from "lucide-react";
 
 export default function LoginPage() {
     const [form, setForm] = useState({
@@ -37,7 +38,7 @@ export default function LoginPage() {
         try {
             setLoading(true);
             await authService.login(form);
-            navigate("/"); // or wherever your app goes after login
+            navigate("/");
         } catch (err) {
             setErrors((prev) => ({
                 ...prev,
@@ -49,46 +50,59 @@ export default function LoginPage() {
     }
 
     return (
-        <div className="loginPage">
-            <div className="loginCard">
-                <h1 className="loginTitle">LOGIN</h1>
+        <div className="authShell authShell--login">
+            <main className="authMain">
+                <div className="authHeader">
+                    <div className="authHeaderCopy">
+                        <h1>Welcome Back</h1>
+                        <p className="authMuted">
+                            Sign in to continue browsing listings, managing orders, and handling pickups.
+                        </p>
+                    </div>
+                    <button onClick={() => navigate(-1)} className="authBackLink">
+                        <ArrowLeft size={18} /> Back
+                    </button>
+                </div>
 
-                <form className="loginForm" onSubmit={onSubmit}>
+                <form className="authCard" onSubmit={onSubmit}>
                     {errors.form && <div className="formError">{errors.form}</div>}
 
-                    <div className="fieldRow">
-                        <label className="fieldLabel">Email / Username:</label>
-                        <Input
-                            value={form.login}
-                            onChange={(e) => setField("login", e.target.value)}
-                            error={errors.login}
-                        />
+                    <div className="authSection">
+                        <div className="authSectionTitle"><Mail size={18} /> Account Access</div>
+                        <div className="authInputRow authInputRow--single">
+                            <Input
+                                label="Email or username"
+                                value={form.login}
+                                onChange={(e) => setField("login", e.target.value)}
+                                error={errors.login}
+                                placeholder="Enter your email or username"
+                            />
+                        </div>
+                        <div className="authInputRow authInputRow--single">
+                            <Input
+                                label="Password"
+                                type="password"
+                                value={form.password}
+                                onChange={(e) => setField("password", e.target.value)}
+                                error={errors.password}
+                                placeholder="Enter your password"
+                            />
+                        </div>
                     </div>
 
-                    <div className="fieldRow">
-                        <label className="fieldLabel">Password:</label>
-                        <Input
-                            type="password"
-                            value={form.password}
-                            onChange={(e) => setField("password", e.target.value)}
-                            error={errors.password}
-                        />
-                    </div>
-
-                    <div className="submitRow">
-                        <Button type="submit" variant="primary" className="loginBtn" disabled={loading}>
-                            {loading ? "Logging in..." : "Login"}
+                    <div className="authActions">
+                        <Button type="submit" variant="primary" className="authPrimaryBtn" disabled={loading}>
+                            {loading ? "Logging in..." : "Log In"}
                         </Button>
+                        <div className="authFooter">
+                            <span>Don&apos;t have an account?</span>
+                            <Link className="authInlineLink" to="/register">
+                                Register now
+                            </Link>
+                        </div>
                     </div>
                 </form>
-
-                <div className="loginFooter">
-                    <span>Don’t have an account?</span>
-                    <a className="registerLink" href="/register">
-                        Register →
-                    </a>
-                </div>
-            </div>
+            </main>
         </div>
     );
 }

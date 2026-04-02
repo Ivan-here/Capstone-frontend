@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import "./registration.css";
 import "./registration-verification.css";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
 import { profileService } from "@/services/profile.service";
@@ -7,6 +8,7 @@ import Button from "@/components/ui/Button";
 import Input from "@/components/ui/Input";
 import { authService } from "@/services/auth.service.js";
 import { cloudinaryService } from "@/services/cloudinary.service";
+import { ArrowLeft, Building2, Clock3, Mail, MapPin, Phone, ShieldCheck } from "lucide-react";
 
 export default function RegistrationVerification() {
     const { role } = useParams();
@@ -15,13 +17,16 @@ export default function RegistrationVerification() {
     const location = useLocation();
     const navigate = useNavigate();
 
-    const userId = location.state?.userId || authService.getUserIdFromToken();
+    const userId = location.state?.userId || authService.getUserId();
 
     const [form, setForm] = useState({
         name: "",
         description: "",
         address: "",
         email: "",
+        phone: "",
+        hours: "",
+        pickupAvailability: "",
         documents: null,
     });
 
@@ -55,7 +60,7 @@ export default function RegistrationVerification() {
 
         if (!form.email.trim()) e.email = `${ui.emailLabel} is required.`;
         else if (!/^\S+@\S+\.\S+$/.test(form.email.trim())) e.email = "Invalid email.";
-
+        if (!form.phone.trim()) e.phone = "Business phone is required.";
         if (!form.documents || form.documents.length === 0) {
             e.documents = "Please upload verification documents to prove your business is legitimate.";
         }
@@ -78,8 +83,13 @@ export default function RegistrationVerification() {
                 businessName: form.name,
                 businessType: String(role || "").toUpperCase(),
                 email: form.email,
+                phone: form.phone.trim(),
+                emailVisibility: "PUBLIC",
+                phoneVisibility: "PUBLIC",
                 avatarUrl,
                 description: form.description,
+                hours: form.hours.trim() || null,
+                pickupAvailability: form.pickupAvailability.trim() || null,
             });
 
             const formData = new FormData();
@@ -99,7 +109,7 @@ export default function RegistrationVerification() {
             try {
                 await verificationService.submitVerification(formData);
                 navigate("/");
-            } catch (verificationError) {
+            } catch {
                 setErrors((p) => ({
                     ...p,
                     form: "Business profile saved, but document upload failed. Please retry verification.",
@@ -115,12 +125,12 @@ export default function RegistrationVerification() {
         }
     }
 
-    function getRoleUI(role) {
-        const r = String(role || "").toUpperCase();
+    function getRoleUI(roleValue) {
+        const r = String(roleValue || "").toUpperCase();
 
         if (r === "FARMER") {
             return {
-                title: "REGISTER AS A FARMER",
+                title: "Farmer Verification",
                 nameLabel: "Farm Name",
                 addressLabel: "Farm Address",
                 emailLabel: "Business email",
@@ -130,7 +140,7 @@ export default function RegistrationVerification() {
 
         if (r === "RESTAURANT") {
             return {
-                title: "REGISTER AS A RESTAURANT",
+                title: "Restaurant Verification",
                 nameLabel: "Business Name",
                 addressLabel: "Business Address",
                 emailLabel: "Business email",
@@ -140,7 +150,7 @@ export default function RegistrationVerification() {
 
         if (r === "NGO") {
             return {
-                title: "REGISTER AS AN NGO",
+                title: "NGO Verification",
                 nameLabel: "Organization Name",
                 addressLabel: "Organization Address",
                 emailLabel: "Organization email",
@@ -149,7 +159,7 @@ export default function RegistrationVerification() {
         }
 
         return {
-            title: "REGISTER",
+            title: "Business Verification",
             nameLabel: "Name",
             addressLabel: "Address",
             emailLabel: "Email",
@@ -158,111 +168,154 @@ export default function RegistrationVerification() {
     }
 
     return (
-        <div className="rvPage">
-            <div className="rvCard">
-                <h1 className="rvTitle">{ui.title}</h1>
+        <div className="authShell authShell--verification rvPage">
+            <main className="authMain rvMain">
+                <div className="authHeader rvHeader">
+                    <div className="authHeaderCopy">
+                        <h1>{ui.title}</h1>
+                        <p className="authMuted">Finish your business setup, add pickup details, and submit verification.</p>
+                    </div>
+                    <button onClick={() => navigate(-1)} className="authBackLink">
+                        <ArrowLeft size={18} /> Back
+                    </button>
+                </div>
 
-                <form className="rvForm" onSubmit={onSubmit}>
+                <form className="authCard rvFormCard" onSubmit={onSubmit}>
                     {errors.form && <div className="formError">{errors.form}</div>}
 
-                    <div className="fieldRow">
-                        <label className="fieldLabel">{ui.nameLabel}:</label>
-                        <Input
-                            value={form.name}
-                            onChange={(e) => setField("name", e.target.value)}
-                            error={errors.name}
-                        />
-                    </div>
+                    <div className="authSection">
+                        <div className="authSectionTitle"><Building2 size={18} /> Business Identity</div>
 
-                    <div className="fieldRow">
-                        <label className="fieldLabel">Profile description:</label>
-                        <Input
-                            value={form.description}
-                            onChange={(e) => setField("description", e.target.value)}
-                            error={errors.description}
-                        />
-                    </div>
+                        <div className="authInputRow">
+                            <Input
+                                label={ui.nameLabel}
+                                value={form.name}
+                                onChange={(e) => setField("name", e.target.value)}
+                                error={errors.name}
+                            />
+                            <Input
+                                label={ui.addressLabel}
+                                icon={<MapPin size={16} />}
+                                value={form.address}
+                                onChange={(e) => setField("address", e.target.value)}
+                                error={errors.address}
+                            />
+                        </div>
 
-                    <div className="fieldRow">
-                        <label className="fieldLabel">{ui.addressLabel}:</label>
-                        <Input
-                            value={form.address}
-                            onChange={(e) => setField("address", e.target.value)}
-                            error={errors.address}
-                        />
-                    </div>
+                        <div className="authInputRow">
+                            <Input
+                                label={ui.emailLabel}
+                                icon={<Mail size={16} />}
+                                value={form.email}
+                                onChange={(e) => setField("email", e.target.value)}
+                                error={errors.email}
+                            />
+                            <Input
+                                label="Business phone"
+                                icon={<Phone size={16} />}
+                                value={form.phone}
+                                onChange={(e) => setField("phone", e.target.value)}
+                                error={errors.phone}
+                            />
+                        </div>
 
-                    <div className="fieldRow">
-                        <label className="fieldLabel">{ui.emailLabel}:</label>
-                        <Input
-                            value={form.email}
-                            onChange={(e) => setField("email", e.target.value)}
-                            error={errors.email}
-                        />
-                    </div>
+                        <p className="authHelperText">
+                            Business email and phone start public so customers can coordinate pickups. You can change visibility later in profile settings.
+                        </p>
 
-                    <div className="fieldRow">
-                        <label className="fieldLabel">Profile picture:</label>
-                        <div className="uploadWrap">
-                            <label className="uploadBtn">
-                                <span className="uploadIcon">◴</span>
-                                <span className="uploadText">{avatarFile ? "Change business photo" : "Upload business photo"}</span>
-                                <input
-                                    type="file"
-                                    accept="image/*"
-                                    className="uploadInput"
-                                    onChange={handleAvatarChange}
-                                />
-                            </label>
-
-                            {(avatarPreviewUrl || avatarFile?.name) && (
-                                <div className="avatarUploadPreviewRow">
-                                    {avatarPreviewUrl ? (
-                                        <img src={avatarPreviewUrl} alt="Business profile preview" className="avatarUploadPreview" />
-                                    ) : null}
-                                    {avatarFile?.name ? <div className="fileItem">{avatarFile.name}</div> : null}
-                                </div>
-                            )}
+                        <div className="authInputGroup">
+                            <label className="authInputLabel">Profile description</label>
+                            <textarea
+                                className="authTextarea"
+                                rows={4}
+                                value={form.description}
+                                onChange={(e) => setField("description", e.target.value)}
+                                placeholder="Describe your business, what you sell, and how pickups usually work."
+                            />
+                            {errors.description ? <div className="inputError">{errors.description}</div> : null}
                         </div>
                     </div>
 
-                    <div className="fieldRow">
-                        <label className="fieldLabel">Verification Documents:</label>
-                        <div className="uploadWrap">
-                            <label className={`uploadBtn ${errors.documents ? "uploadBtnError" : ""}`}>
-                                <span className="uploadIcon">⤴</span>
-                                <span className="uploadText">{ui.uploadHint}</span>
-                                <input
-                                    type="file"
-                                    className="uploadInput"
-                                    onChange={(e) => setField("documents", e.target.files)}
-                                />
-                            </label>
-
-                            {form.documents && form.documents.length > 0 && (
-                                <div className="fileList">
-                                    <div className="fileItem">{form.documents[0].name}</div>
-                                </div>
-                            )}
-
-                            {errors.documents && <div className="inputError">{errors.documents}</div>}
+                    <div className="authSection">
+                        <div className="authSectionTitle"><Clock3 size={18} /> Pickup Planning</div>
+                        <div className="authInputRow">
+                            <Input
+                                label="Business hours"
+                                icon={<Clock3 size={16} />}
+                                value={form.hours}
+                                onChange={(e) => setField("hours", e.target.value)}
+                                placeholder="Mon-Fri 9am-5pm"
+                            />
+                            <Input
+                                label="Pickup availability"
+                                icon={<Clock3 size={16} />}
+                                value={form.pickupAvailability}
+                                onChange={(e) => setField("pickupAvailability", e.target.value)}
+                                placeholder="Tue-Thu 2pm-6pm, Sat 10am-1pm"
+                            />
                         </div>
                     </div>
 
-                    <div className="submitRow">
-                        <Button type="submit" variant="primary" className="registerBtn" disabled={loading}>
+                    <div className="authSection">
+                        <div className="authSectionTitle"><ShieldCheck size={18} /> Verification Assets</div>
+
+                        <div className="authInputGroup rvUploadGroup">
+                            <label className="authInputLabel">Profile picture</label>
+                            <div className="uploadWrap">
+                                <label className="uploadBtn">
+                                    <span className="uploadText">{avatarFile ? "Change business photo" : "Upload business photo"}</span>
+                                    <input
+                                        type="file"
+                                        accept="image/*"
+                                        className="uploadInput"
+                                        onChange={handleAvatarChange}
+                                    />
+                                </label>
+
+                                {(avatarPreviewUrl || avatarFile?.name) && (
+                                    <div className="avatarUploadPreviewRow">
+                                        {avatarPreviewUrl ? (
+                                            <img src={avatarPreviewUrl} alt="Business profile preview" className="avatarUploadPreview" />
+                                        ) : null}
+                                        {avatarFile?.name ? <div className="fileItem">{avatarFile.name}</div> : null}
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+
+                        <div className="authInputGroup rvUploadGroup">
+                            <label className="authInputLabel">Verification documents</label>
+                            <div className="uploadWrap">
+                                <label className={`uploadBtn ${errors.documents ? "uploadBtnError" : ""}`}>
+                                    <span className="uploadText">{ui.uploadHint}</span>
+                                    <input
+                                        type="file"
+                                        className="uploadInput"
+                                        onChange={(e) => setField("documents", e.target.files)}
+                                    />
+                                </label>
+
+                                {form.documents && form.documents.length > 0 ? (
+                                    <div className="fileList">
+                                        <div className="fileItem">{form.documents[0].name}</div>
+                                    </div>
+                                ) : null}
+
+                                {errors.documents ? <div className="inputError">{errors.documents}</div> : null}
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="authActions authActions--split">
+                        <Button type="button" variant="ghost" onClick={() => navigate(-1)} className="authSecondaryBtn">
+                            Cancel
+                        </Button>
+                        <Button type="submit" variant="primary" className="authPrimaryBtn" disabled={loading}>
                             {loading ? "Submitting..." : "Submit for Verification"}
                         </Button>
                     </div>
                 </form>
-
-                <div className="rvFooter">
-                    <span>Already have an account?</span>
-                    <a className="loginLink" href="/login">
-                        Login →
-                    </a>
-                </div>
-            </div>
+            </main>
         </div>
     );
 }
