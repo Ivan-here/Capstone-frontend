@@ -133,7 +133,10 @@ export default function PickupPlannerPage() {
                     </section>
 
                     <section className="pickup-planner-card">
-                        <h2><Mail size={18} /> Contact the Seller</h2>
+                        <h2><Mail size={18} /> Contact Details</h2>
+                        <div className="pickup-planner-contact-row">
+                            <strong>Seller</strong>
+                        </div>
                         <div className="pickup-planner-contact-row">
                             <Mail size={16} />
                             {sellerBusiness?.email ? <a href={`mailto:${sellerBusiness.email}`}>{sellerBusiness.email}</a> : <span>No seller email provided</span>}
@@ -142,18 +145,20 @@ export default function PickupPlannerPage() {
                             <Phone size={16} />
                             {sellerBusiness?.phone ? <a href={`tel:${sellerBusiness.phone}`}>{sellerBusiness.phone}</a> : <span>No seller phone provided</span>}
                         </div>
-                    </section>
-
-                    <section className="pickup-planner-card">
-                        <h2><Clock3 size={18} /> Coordination Reminder</h2>
-                        <p className="pickup-planner-copy">
-                            There is no in-app chat here. Reach out using the contact details above to confirm a time, arrival instructions, and any pickup changes before travelling.
-                        </p>
-                        {buyerPersonal?.phone || buyerPersonal?.email ? (
-                            <div className="pickup-planner-reminder-box">
-                                The seller can contact you at {buyerPersonal?.phone || buyerPersonal?.email}.
-                            </div>
-                        ) : null}
+                        <div className="pickup-planner-contact-row" style={{ marginTop: "16px" }}>
+                            <strong>Buyer</strong>
+                        </div>
+                        <div className="pickup-planner-contact-row">
+                            <Mail size={16} />
+                            {buyerPersonal?.email ? <a href={`mailto:${buyerPersonal.email}`}>{buyerPersonal.email}</a> : <span>No buyer email provided</span>}
+                        </div>
+                        <div className="pickup-planner-contact-row">
+                            <Phone size={16} />
+                            {buyerPersonal?.phone ? <a href={`tel:${buyerPersonal.phone}`}>{buyerPersonal.phone}</a> : <span>No buyer phone provided</span>}
+                        </div>
+                        <div className="pickup-planner-reminder-box">
+                            There is no in-app chat here. Reach out directly using the contact details above to lock in pickup timing.
+                        </div>
                     </section>
                 </div>
             </main>

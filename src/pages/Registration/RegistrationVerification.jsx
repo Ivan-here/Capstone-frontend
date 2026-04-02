@@ -17,7 +17,7 @@ export default function RegistrationVerification() {
     const location = useLocation();
     const navigate = useNavigate();
 
-    const userId = location.state?.userId || authService.getUserIdFromToken();
+    const userId = location.state?.userId || authService.getUserId();
 
     const [form, setForm] = useState({
         name: "",
@@ -60,7 +60,7 @@ export default function RegistrationVerification() {
 
         if (!form.email.trim()) e.email = `${ui.emailLabel} is required.`;
         else if (!/^\S+@\S+\.\S+$/.test(form.email.trim())) e.email = "Invalid email.";
-
+        if (!form.phone.trim()) e.phone = "Business phone is required.";
         if (!form.documents || form.documents.length === 0) {
             e.documents = "Please upload verification documents to prove your business is legitimate.";
         }
@@ -83,7 +83,9 @@ export default function RegistrationVerification() {
                 businessName: form.name,
                 businessType: String(role || "").toUpperCase(),
                 email: form.email,
-                phone: form.phone.trim() || null,
+                phone: form.phone.trim(),
+                emailVisibility: "PUBLIC",
+                phoneVisibility: "PUBLIC",
                 avatarUrl,
                 description: form.description,
                 hours: form.hours.trim() || null,
@@ -213,8 +215,13 @@ export default function RegistrationVerification() {
                                 icon={<Phone size={16} />}
                                 value={form.phone}
                                 onChange={(e) => setField("phone", e.target.value)}
+                                error={errors.phone}
                             />
                         </div>
+
+                        <p className="authHelperText">
+                            Business email and phone start public so customers can coordinate pickups. You can change visibility later in profile settings.
+                        </p>
 
                         <div className="authInputGroup">
                             <label className="authInputLabel">Profile description</label>

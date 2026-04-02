@@ -10,11 +10,13 @@ export default function BusinessProfileLeft({ businessProfile, isOwnProfile }) {
     const navigate = useNavigate();
     const publicEmail = businessProfile?.email?.trim();
     const publicPhone = businessProfile?.phone?.trim();
+    const showEmail = isOwnProfile || businessProfile?.emailVisibility === "PUBLIC";
+    const showPhone = isOwnProfile || businessProfile?.phoneVisibility === "PUBLIC";
     const operatingHours = businessProfile?.hours?.trim();
     const pickupAvailability = businessProfile?.pickupAvailability?.trim();
     const serviceArea = businessProfile?.serviceArea?.trim();
     const pickupInstructions = businessProfile?.eligibilityNotes?.trim();
-    const hasBusinessDetails = !!(publicEmail || publicPhone || operatingHours || pickupAvailability || serviceArea || pickupInstructions);
+    const hasBusinessDetails = !!((showEmail && publicEmail) || (showPhone && publicPhone) || operatingHours || pickupAvailability || serviceArea || pickupInstructions);
 
     return (
         <>
@@ -61,15 +63,15 @@ export default function BusinessProfileLeft({ businessProfile, isOwnProfile }) {
                 <div className="card businessDetailsCard">
                     <div className="cardHeader">
                         <span>Business Details</span>
-                        <span className="muted">Public</span>
+                        <span className="muted">{isOwnProfile ? "Your settings" : "Profile details"}</span>
                     </div>
 
                     <div className="businessDetailsList">
-                        {publicEmail && (
+                        {showEmail && publicEmail && (
                             <div className="businessDetailRow">
                                 <div className="businessDetailLabel">
                                     <Mail size={16} />
-                                    <span>Public email</span>
+                                    <span>Email</span>
                                 </div>
                                 <div className="businessDetailValue">
                                     <a href={`mailto:${publicEmail}`} className="linkBtn businessDetailLink">
@@ -79,11 +81,11 @@ export default function BusinessProfileLeft({ businessProfile, isOwnProfile }) {
                             </div>
                         )}
 
-                        {publicPhone && (
+                        {showPhone && publicPhone && (
                             <div className="businessDetailRow">
                                 <div className="businessDetailLabel">
                                     <Phone size={16} />
-                                    <span>Business phone</span>
+                                    <span>Phone</span>
                                 </div>
                                 <div className="businessDetailValue">
                                     <a href={`tel:${publicPhone}`} className="linkBtn businessDetailLink">
