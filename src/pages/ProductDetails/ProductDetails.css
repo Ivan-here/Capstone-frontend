@@ -108,6 +108,29 @@
 
 .pd-price { font-size: 1.5rem; font-weight: bold; color: #333; margin-bottom: 24px; }
 
+.pd-meta-row {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 24px;
+    padding: 10px 14px;
+    border-radius: 999px;
+    background: rgba(118, 143, 72, 0.12);
+    color: #304118;
+}
+
+.pd-meta-label {
+    font-size: 0.8rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+
+.pd-meta-value {
+    font-size: 0.95rem;
+    font-weight: 600;
+}
+
 .info-block { margin-bottom: 30px; }
 .info-block h2 { font-size: 1.2rem; margin-bottom: 12px; color: #2D2D2D; }
 .info-block p { font-size: 0.95rem; line-height: 1.5; color: #4A4A4A; margin-bottom: 8px; }

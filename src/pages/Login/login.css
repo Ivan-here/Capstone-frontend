@@ -1,97 +1,191 @@
-.loginPage {
+.authShell {
     min-height: 100vh;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background-color: #5b6f2d;
+    background: #556b2f;
+    padding: 40px 20px;
 }
 
-.loginCard {
-    width: min(680px, 92vw);
-    background: var(--color-background);
-    border-radius: 14px;
-    border: 1px solid var(--color-border);
-    box-shadow: 0 12px 28px rgba(0, 0, 0, 0.25);
-    padding: 30px 36px 22px;
-}
-
-.loginTitle {
-    text-align: center;
-    font-family: serif;
-    letter-spacing: 0.12em;
-    color: #3e3b32;
-    margin-bottom: 22px;
-    font-size: 38px;
-}
-
-.loginForm {
+.authMain {
+    width: min(900px, 100%);
+    margin: 0 auto;
     display: flex;
     flex-direction: column;
-    align-items: center;
-    gap: 18px;
-    width: 100%;
-}
-.loginForm input {
-    width: 280px;
-    padding: 8px 12px;
-    border-radius: 6px;
-    border: 1px solid #ccc;
+    gap: 20px;
 }
 
-.fieldRow {
+.authHeader {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 20px;
+}
+
+.authHeaderCopy {
     display: flex;
     flex-direction: column;
-    align-items: center;
-    width: 100%;
-}
-
-.fieldLabel {
-    margin-bottom: 6px;
-    font-weight: 500;
-    text-align: center;
-}
-.submitRow {
-    display: flex;
-    justify-content: center;
-    margin-top: 8px;
-}
-
-.loginBtn {
-    font-size: 15px;
-    padding: 8px 28px;
-    border-radius: 8px;
-    background-color: #4f6125;
-    color: white;
-    border: none;
-    cursor: pointer;
-    transition: 0.2s ease;
-}
-
-.loginFooter {
-    margin-top: 22px;
-    display: flex;
-    justify-content: center;
     gap: 8px;
+}
+
+.authHeaderCopy h1 {
+    margin: 0;
+    font-size: clamp(2.2rem, 5vw, 3.2rem);
+    line-height: 1.05;
+    color: #f8f5ea;
+}
+
+.authMuted {
+    margin: 0;
+    max-width: 620px;
+    color: rgba(248, 245, 234, 0.82);
+    font-size: 1rem;
+    line-height: 1.55;
+}
+
+.authBackLink {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    border: none;
+    background: transparent;
+    color: #f8f5ea;
+    font-weight: 700;
+    cursor: pointer;
+    padding: 0;
+}
+
+.authCard {
+    background: #efe9d6;
+    border: 1px solid rgba(0, 0, 0, 0.12);
+    box-shadow: 0 14px 40px rgba(0, 0, 0, 0.22);
+    border-radius: 18px;
+    padding: 28px;
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+}
+
+.authSection {
+    background: #f8f5ea;
+    border: 1px solid rgba(0, 0, 0, 0.1);
+    border-radius: 16px;
+    padding: 22px;
+}
+
+.authSection--compact {
+    padding-bottom: 18px;
+}
+
+.authSectionTitle {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 18px;
+    font-weight: 800;
+    color: #3e3b32;
+    font-size: 1rem;
+}
+
+.authInputRow {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 16px;
+}
+
+.authInputRow + .authInputRow {
+    margin-top: 16px;
+}
+
+.authInputRow--single {
+    grid-template-columns: 1fr;
+}
+
+.authCard .inputGroup {
+    width: 100%;
+}
+
+.authCard .inputLabel {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: 700;
     color: #3e3b32;
 }
 
-.registerLink {
-    color: var(--color-primary);
+.authCard .input,
+.authCard select,
+.authCard textarea {
+    width: 100%;
+    min-height: 48px;
+    border-radius: 12px;
+    border: 1px solid rgba(0, 0, 0, 0.15);
+    padding: 12px 14px;
+    background: #fff;
+    font: inherit;
+}
+
+.authCard .input:focus,
+.authCard select:focus,
+.authCard textarea:focus {
+    outline: none;
+    border-color: #556b2f;
+    box-shadow: 0 0 0 3px rgba(85, 107, 47, 0.12);
+}
+
+.authHelperText {
+    margin: 0;
+    color: rgba(62, 59, 50, 0.82);
+    line-height: 1.6;
+}
+
+.authActions {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 14px;
+}
+
+.authPrimaryBtn {
+    min-width: 220px;
+    border-radius: 12px;
+    padding: 12px 22px;
+    background: #556b2f;
+    color: #fff;
+}
+
+.authFooter {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    justify-content: center;
+    color: #3e3b32;
+}
+
+.authInlineLink {
+    color: #556b2f;
     font-weight: 700;
     text-decoration: none;
 }
 
-.registerLink:hover {
+.authInlineLink:hover {
     text-decoration: underline;
 }
 
-/* Responsive */
-@media (max-width: 720px) {
-    .fieldRow {
+@media (max-width: 760px) {
+    .authShell {
+        padding: 24px 16px;
+    }
+
+    .authHeader {
+        flex-direction: column;
+    }
+
+    .authInputRow {
         grid-template-columns: 1fr;
     }
 
-    .fieldLabel {
-        text-align: left;
+    .authCard {
+        padding: 20px;
+    }
+
+    .authSection {
+        padding: 18px;
     }
 }

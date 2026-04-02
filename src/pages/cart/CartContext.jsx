@@ -17,7 +17,12 @@ const getSellerDisplayName = (businessName, ownerId) => {
 export const CartProvider = ({ children }) => {
     const [cartItems, setCartItems] = useState(() => {
         const savedCart = localStorage.getItem('shopping-cart');
-        return savedCart ? JSON.parse(savedCart) : [];
+        if (!savedCart) return [];
+
+        return JSON.parse(savedCart).map((item) => ({
+            ...item,
+            availableQuantity: item.availableQuantity ?? item.quantity ?? 1,
+        }));
     });
 
     useEffect(() => {
@@ -27,11 +32,19 @@ export const CartProvider = ({ children }) => {
     const addToCart = (product) => {
         setCartItems((prevItems) => {
             const existingItem = prevItems.find(item => item.id === product.id);
+            const availableQuantity = Math.max(
+                1,
+                Number(product.availableQuantity ?? product.quantity ?? existingItem?.availableQuantity ?? 1)
+            );
 
             if (existingItem) {
                 return prevItems.map(item =>
                     item.id === product.id
-                        ? { ...item, quantity: item.quantity + 1 }
+                        ? {
+                            ...item,
+                            availableQuantity,
+                            quantity: Math.min(item.quantity + 1, availableQuantity),
+                        }
                         : item
                 );
             }
@@ -40,6 +53,7 @@ export const CartProvider = ({ children }) => {
                 ...prevItems,
                 {
                     ...product,
+                    availableQuantity,
                     quantity: 1,
                 }
             ];
@@ -55,7 +69,8 @@ export const CartProvider = ({ children }) => {
             prev
                 .map(item => {
                     if (item.id === id) {
-                        const newQty = item.quantity + change;
+                        const maxQty = Math.max(1, Number(item.availableQuantity ?? item.quantity ?? 1));
+                        const newQty = Math.min(item.quantity + change, maxQty);
                         return newQty > 0 ? { ...item, quantity: newQty } : null;
                     }
                     return item;
