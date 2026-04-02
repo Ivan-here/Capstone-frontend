@@ -22,8 +22,10 @@ export default function EditBusinessProfilePage() {
         businessName: "",
         address: "",
         email: "",
+        phone: "",
         description: "",
         hours: "",
+        pickupAvailability: "",
         serviceArea: "",
         eligibilityNotes: "",
         avatarUrl: "",
@@ -43,8 +45,10 @@ export default function EditBusinessProfilePage() {
                         businessName: b.businessName || "",
                         address: b.address || "",
                         email: b.email || "",
+                        phone: b.phone || "",
                         description: b.description || "",
                         hours: b.hours || "",
+                        pickupAvailability: b.pickupAvailability || "",
                         serviceArea: b.serviceArea || "",
                         eligibilityNotes: b.eligibilityNotes || "",
                         avatarUrl: b.avatarUrl || "",
@@ -98,9 +102,11 @@ export default function EditBusinessProfilePage() {
                 businessName: form.businessName.trim(),
                 address: form.address.trim(),
                 email: form.email.trim(),
+                phone: form.phone.trim() || null,
                 avatarUrl,
                 description: form.description.trim() || null,
                 hours: form.hours.trim() || null,
+                pickupAvailability: form.pickupAvailability.trim() || null,
                 serviceArea: form.serviceArea.trim() || null,
                 eligibilityNotes: form.eligibilityNotes.trim() || null,
             });
@@ -188,6 +194,11 @@ export default function EditBusinessProfilePage() {
                                     onChange={(e) => setField("email", e.target.value)}
                                     error={errors.email}
                                 />
+                                <Input
+                                    label="Business Phone"
+                                    value={form.phone}
+                                    onChange={(e) => setField("phone", e.target.value)}
+                                />
                             </div>
                         </div>
 
@@ -217,6 +228,15 @@ export default function EditBusinessProfilePage() {
                                     value={form.hours}
                                     onChange={(e) => setField("hours", e.target.value)}
                                 />
+                                <Input
+                                    label="Pickup Availability"
+                                    icon={<Clock size={16}/>}
+                                    placeholder="e.g. Tue-Thu 2pm - 6pm"
+                                    value={form.pickupAvailability}
+                                    onChange={(e) => setField("pickupAvailability", e.target.value)}
+                                />
+                            </div>
+                            <div className="input-row">
                                 <Input
                                     label="Service Area"
                                     placeholder="e.g. Greater Toronto Area"

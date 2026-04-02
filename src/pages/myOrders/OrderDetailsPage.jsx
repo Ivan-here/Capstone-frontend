@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { ArrowLeft, CheckCircle2, Clock3, UserRound } from 'lucide-react';
+import { ArrowLeft, CheckCircle2, Clock3, UserRound, Mail, Phone, CalendarDays } from 'lucide-react';
 import { getStripe } from '@/lib/stripe';
 import { orderService } from '@/services/order.service';
 import { profileService } from '@/services/profile.service';
@@ -70,6 +70,10 @@ export default function OrderDetailsPage() {
         shopper: { label: '', role: 'SHOPPER' },
         seller: { label: '', role: 'SELLER' },
     });
+    const [participantProfiles, setParticipantProfiles] = useState({
+        shopper: null,
+        seller: null,
+    });
 
     const currentUserId = localStorage.getItem('userId');
     const isBuyer = !!order && currentUserId === order.shopperId;
@@ -124,6 +128,12 @@ export default function OrderDetailsPage() {
                     label: resolveProfileLabel(sellerProfile, order?.sellerUserId || 'Seller'),
                     role: resolveProfileRole(sellerProfile, 'SELLER'),
                 };
+                if (!cancelled) {
+                    setParticipantProfiles({
+                        shopper: shopperProfile,
+                        seller: sellerProfile,
+                    });
+                }
             } finally {
                 if (!cancelled) {
                     setParticipants(next);
@@ -140,6 +150,33 @@ export default function OrderDetailsPage() {
     const canDisputeHeld = (isBuyer || isSeller) && order?.paymentStatus === 'HELD' && !['CANCELLED', 'COMPLETED'].includes(order?.status);
     const canShowPickupCode = isBuyer && order?.paymentStatus === 'HELD';
     const canRepairPayment = isBuyer && order?.status === 'PENDING_PAYMENT' && !!order?.stripeClientSecret && !!order?.stripePaymentIntentId;
+    const canOpenPickupPlanner = isBuyer && ['HELD', 'SUCCEEDED'].includes(order?.paymentStatus) && !['CANCELLED', 'COMPLETED'].includes(order?.status);
+
+    function getBuyerEmail() {
+        return participantProfiles.shopper?.personalProfile?.email?.trim() || '';
+    }
+
+    function getBuyerPhone() {
+        return participantProfiles.shopper?.personalProfile?.phone?.trim() || '';
+    }
+
+    function getSellerEmail() {
+        return participantProfiles.seller?.businessProfile?.email?.trim()
+            || participantProfiles.seller?.personalProfile?.email?.trim()
+            || '';
+    }
+
+    function getSellerPhone() {
+        return participantProfiles.seller?.businessProfile?.phone?.trim()
+            || participantProfiles.seller?.personalProfile?.phone?.trim()
+            || '';
+    }
+
+    function getSellerAvailability() {
+        return participantProfiles.seller?.businessProfile?.pickupAvailability?.trim()
+            || participantProfiles.seller?.businessProfile?.hours?.trim()
+            || '';
+    }
 
     const handleFetchPickupCode = async () => {
         if (!canShowPickupCode) {
@@ -348,6 +385,45 @@ export default function OrderDetailsPage() {
                     </section>
                 </div>
 
+                <section className="order-details-card">
+                    <h2>Contact Coordination</h2>
+                    <div className="order-details-contact-grid">
+                        <div className="order-details-contact-card">
+                            <h3>Seller contact</h3>
+                            <p className="order-details-copy">Reach out to confirm a pickup window, arrival details, and any changes before pickup.</p>
+                            <div className="order-details-contact-row">
+                                <Mail size={16} />
+                                {getSellerEmail() ? <a href={`mailto:${getSellerEmail()}`}>{getSellerEmail()}</a> : <span>No email shared</span>}
+                            </div>
+                            <div className="order-details-contact-row">
+                                <Phone size={16} />
+                                {getSellerPhone() ? <a href={`tel:${getSellerPhone()}`}>{getSellerPhone()}</a> : <span>No phone shared</span>}
+                            </div>
+                            {getSellerAvailability() ? (
+                                <div className="order-details-contact-note">
+                                    Pickup availability: {getSellerAvailability()}
+                                </div>
+                            ) : null}
+                        </div>
+
+                        <div className="order-details-contact-card">
+                            <h3>Buyer contact</h3>
+                            <p className="order-details-copy">Use these details if you need to confirm timing or pickup updates for this order.</p>
+                            <div className="order-details-contact-row">
+                                <Mail size={16} />
+                                {getBuyerEmail() ? <a href={`mailto:${getBuyerEmail()}`}>{getBuyerEmail()}</a> : <span>No email shared</span>}
+                            </div>
+                            <div className="order-details-contact-row">
+                                <Phone size={16} />
+                                {getBuyerPhone() ? <a href={`tel:${getBuyerPhone()}`}>{getBuyerPhone()}</a> : <span>No phone shared</span>}
+                            </div>
+                            <div className="order-details-contact-note">
+                                There is no in-app chat for orders. Coordinate directly using email or phone.
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
                 {notice && <div className="order-details-notice">{notice}</div>}
 
                 {userNotInOrder && (
@@ -377,6 +453,16 @@ export default function OrderDetailsPage() {
                                         onClick={handleFetchPickupCode}
                                     >
                                         {busyAction === 'pickup' ? 'Loading code...' : 'Show Pickup Code'}
+                                    </button>
+                                )}
+
+                                {canOpenPickupPlanner && (
+                                    <button
+                                        className="order-details-secondary"
+                                        onClick={() => navigate(`/orders/${order.id}/pickup-plan`)}
+                                    >
+                                        <CalendarDays size={16} />
+                                        Plan Pickup
                                     </button>
                                 )}
 
@@ -441,6 +527,9 @@ export default function OrderDetailsPage() {
                         <h2>Seller Actions</h2>
 
                         <div className="order-details-stack">
+                            <div className="order-details-contact-note">
+                                Contact the buyer directly to confirm pickup timing once the order is ready.
+                            </div>
                             {order.status === 'PAID' && (
                                 <button
                                     className="order-details-primary"

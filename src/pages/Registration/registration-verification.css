@@ -1,48 +1,51 @@
 .rvPage {
+    min-height: 100vh;
+}
+
+.rvHeader {
+    max-width: none;
+}
+
+.rvFormCard {
+    max-width: 850px;
     width: 100%;
-    min-height: 100vh;          /* use vh, not 100% */
-    display: grid;
-    place-items: center;
-    background: var(--color-primary);
-    padding: 24px;
+    align-self: center;
 }
 
-.rvCard {
-    width: min(760px, 92vw);
-    background: var(--color-background);
-    border-radius: 14px;
-    border: 1px solid var(--color-border);
-    box-shadow: 0 12px 28px rgba(0, 0, 0, 0.25);
-    padding: 28px 34px 22px;
+.rvMain {
+    width: min(900px, 100%);
 }
 
-.rvTitle {
-    text-align: center;
-    font-family: serif;
-    letter-spacing: 0.08em;
-    color: #3e3b32;
+.rvUploadGroup {
     margin-bottom: 18px;
-    font-size: 34px;
 }
 
-.rvForm {
-    display: flex;
-    flex-direction: column;
-    gap: 14px;
+.authInputGroup {
+    width: 100%;
 }
 
-/* This should be scoped so it doesn't break other pages */
-.rvForm .fieldRow {
-    display: grid;
-    grid-template-columns: 210px 1fr;
-    align-items: center;
-    gap: 12px;
-}
-
-.rvForm .fieldLabel {
+.authInputLabel {
+    display: block;
+    margin-bottom: 8px;
     font-weight: 700;
     color: #3e3b32;
-    text-align: right;
+}
+
+.authTextarea {
+    width: 100%;
+    min-height: 120px;
+    border-radius: 12px;
+    border: 1px solid rgba(0, 0, 0, 0.15);
+    padding: 12px 14px;
+    background: #fff;
+    font: inherit;
+    resize: vertical;
+}
+
+.authTextarea:focus {
+    outline: none;
+    border-color: #556b2f;
+    box-shadow: 0 0 0 3px rgba(85, 107, 47, 0.12);
 }
 
 .uploadWrap {
@@ -54,27 +57,45 @@
 .uploadBtn {
     display: inline-flex;
     align-items: center;
-    gap: 10px;
-
+    justify-content: center;
     width: fit-content;
-    padding: 10px 12px;
-    border-radius: 8px;
-
-    border: 1px solid rgba(0, 0, 0, 0.25);
-    background: white;
+    padding: 10px 14px;
+    border-radius: 10px;
+    border: 1px solid rgba(0, 0, 0, 0.18);
+    background: #fff;
     cursor: pointer;
-    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+    font-weight: 700;
+    color: #3e3b32;
 }
 
-.uploadBtn:hover { opacity: 0.95; }
-.uploadBtnError { border-color: #c0392b; }
+.uploadBtn:hover {
+    opacity: 0.95;
+}
 
-.uploadIcon { font-size: 16px; line-height: 1; }
-.uploadText { font-size: 12px; color: #3e3b32; }
-.uploadInput { display: none; }
+.uploadBtnError {
+    border-color: #c0392b;
+}
 
-.fileList { display: flex; flex-direction: column; gap: 4px; }
-.fileItem { font-size: 12px; color: #3e3b32; padding-left: 2px; }
+.uploadText {
+    font-size: 14px;
+    color: #3e3b32;
+}
+
+.uploadInput {
+    display: none;
+}
+
+.fileList {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.fileItem {
+    font-size: 12px;
+    color: #3e3b32;
+    padding-left: 2px;
+}
 
 .avatarUploadPreviewRow {
     display: flex;
@@ -90,33 +111,28 @@
     border: 1px solid rgba(0, 0, 0, 0.18);
 }
 
-.submitRow {
-    display: flex;
+.authActions--split {
+    width: 100%;
+    flex-direction: row;
     justify-content: center;
-    margin-top: 10px;
 }
 
-.registerBtn {
-    min-width: 140px;
-    border-radius: 10px;
-}
-
-.rvFooter {
-    margin-top: 18px;
-    display: flex;
-    justify-content: center;
-    gap: 8px;
+.authSecondaryBtn {
+    min-width: 180px;
+    border-radius: 12px;
+    padding: 12px 22px;
+    background: #f8f5ea;
     color: #3e3b32;
+    border: 1px solid rgba(62, 59, 50, 0.2);
 }
 
-.loginLink {
-    color: var(--color-primary);
-    font-weight: 700;
-    text-decoration: none;
+.authSecondaryBtn:hover {
+    background: #f1ebd7;
+    border-color: rgba(62, 59, 50, 0.28);
 }
-.loginLink:hover { text-decoration: underline; }
 
-@media (max-width: 760px) {
-    .rvForm .fieldRow { grid-template-columns: 1fr; }
-    .rvForm .fieldLabel { text-align: left; }
+@media (max-width: 700px) {
+    .authActions--split {
+        flex-direction: column;
+    }
 }
