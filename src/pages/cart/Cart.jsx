@@ -102,6 +102,9 @@ const Cart = () => {
                                         <div style={{ color: '#777', fontSize: '0.9rem', marginBottom: '10px' }}>
                                             {item.unit ? `Unit: ${item.unit}` : null}
                                         </div>
+                                        <div style={{ color: '#777', fontSize: '0.85rem', marginBottom: '10px' }}>
+                                            Available: {item.availableQuantity ?? item.quantity} {item.unit || 'items'}
+                                        </div>
 
                                         <div className="qty-controls">
                                             <button
@@ -116,6 +119,7 @@ const Cart = () => {
                                             <button
                                                 onClick={() => updateQuantity(item.id, 1)}
                                                 className="icon-btn"
+                                                disabled={item.quantity >= Number(item.availableQuantity ?? item.quantity ?? 1)}
                                             >
                                                 <Plus size={18} />
                                             </button>
