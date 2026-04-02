@@ -1,12 +1,12 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Users } from 'lucide-react';
 import { communityService } from "@/services/community.service.js";
 import { profileService } from "@/services/profile.service.js";
 import { authService } from "@/services/auth.service.js";
-import { followService } from "@/services/follow.service.js"; // <-- Imported new service
+import { followService } from "@/services/follow.service.js";
 import CommunityPostCard from "./CommunityPostCard";
-import { buildSidebarProfiles, getAvatarFallback, getProfileAvatarUrl, matchesCommunityFilters } from "./community.utils";
+import { buildSidebarProfiles, getAvatarFallback, getProfileAvatarUrl, matchesCommunityFilters, mergeAvatarMap } from "./community.utils";
 import "./Community.css";
 
 function SidebarAvatar({ name, avatarUrl }) {
@@ -33,7 +33,10 @@ export default function Community() {
   const [error, setError] = useState("");
   const [reactionBusyId, setReactionBusyId] = useState("");
   const [avatarUrls, setAvatarUrls] = useState({});
-  const [followingIds, setFollowingIds] = useState(new Set()); // <-- New state for following IDs
+  const [followingIds, setFollowingIds] = useState(new Set());
+  const [followingConnections, setFollowingConnections] = useState([]);
+  const [sidebarQuery, setSidebarQuery] = useState("");
+  const pendingAvatarIdsRef = useRef(new Set());
   const [filters, setFilters] = useState({
     query: "",
     creator: "",
@@ -52,6 +55,25 @@ export default function Community() {
       setPosts([]);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const loadFollowing = async () => {
+    if (!currentUserId) {
+      setFollowingIds(new Set());
+      setFollowingConnections([]);
+      return;
+    }
+
+    try {
+      const followingData = await followService.getFollowing(currentUserId);
+      const normalized = Array.isArray(followingData) ? followingData : [];
+      setFollowingConnections(normalized);
+      setFollowingIds(new Set(normalized.map((item) => item?.user?.id).filter(Boolean)));
+    } catch (e) {
+      console.error("Failed to fetch following ids", e);
+      setFollowingIds(new Set());
+      setFollowingConnections([]);
     }
   };
 
@@ -80,29 +102,8 @@ export default function Community() {
     };
   }, [isLoggedIn]);
 
-  // Fetch the REAL following list from the new microservice
   useEffect(() => {
-    if (!currentUserId) return;
-
-    let cancelled = false;
-    const fetchFollowing = async () => {
-      try {
-        const followingData = await followService.getFollowing(currentUserId);
-        if (cancelled) return;
-
-        // Extract all the IDs the user is following safely
-        const ids = new Set((followingData || []).map(f => f.user?.id).filter(Boolean));
-        setFollowingIds(ids);
-      } catch (e) {
-        console.error("Failed to fetch following ids", e);
-      }
-    };
-
-    fetchFollowing();
-
-    return () => {
-      cancelled = true;
-    };
+    loadFollowing();
   }, [currentUserId]);
 
   useEffect(() => {
@@ -115,7 +116,9 @@ export default function Community() {
       });
     });
 
-    if (!userIds.size) return;
+    followingConnections.forEach((connection) => {
+      if (connection?.user?.id) userIds.add(connection.user.id);
+    });
 
     let cancelled = false;
     const known = {};
@@ -123,36 +126,52 @@ export default function Community() {
       known[currentUserId] = getProfileAvatarUrl(me);
     }
 
-    setAvatarUrls((prev) => ({ ...prev, ...known }));
+    if (Object.keys(known).length > 0) {
+      setAvatarUrls((prev) => mergeAvatarMap(prev, known));
+    }
 
-    const missingUserIds = Array.from(userIds).filter((userId) => !(userId in avatarUrls) && !(userId in known));
-    if (missingUserIds.length === 0) return;
+    const pendingIds = pendingAvatarIdsRef.current;
+    const missingUserIds = Array.from(userIds).filter(
+      (userId) => !(userId in avatarUrls) && !(userId in known) && !pendingIds.has(userId),
+    );
+
+    if (missingUserIds.length === 0) {
+      return () => {
+        cancelled = true;
+      };
+    }
+
+    missingUserIds.forEach((userId) => pendingIds.add(userId));
 
     (async () => {
       const results = await Promise.allSettled(
-          missingUserIds.map(async (userId) => {
-            const profile = await profileService.getProfileById(userId);
-            return [userId, getProfileAvatarUrl(profile)];
-          }),
+        missingUserIds.map(async (userId) => {
+          const profile = await profileService.getProfileById(userId);
+          return [userId, getProfileAvatarUrl(profile)];
+        }),
       );
 
+      missingUserIds.forEach((userId) => pendingIds.delete(userId));
       if (cancelled) return;
 
       const next = {};
-      results.forEach((result) => {
+      results.forEach((result, index) => {
+        const fallbackUserId = missingUserIds[index];
         if (result.status === "fulfilled") {
           const [userId, avatarUrl] = result.value;
           next[userId] = avatarUrl;
+        } else if (fallbackUserId) {
+          next[fallbackUserId] = "";
         }
       });
 
-      setAvatarUrls((prev) => ({ ...prev, ...next }));
+      setAvatarUrls((prev) => mergeAvatarMap(prev, next));
     })();
 
     return () => {
       cancelled = true;
     };
-  }, [posts, me, currentUserId]);
+  }, [posts, me, currentUserId, followingConnections]);
 
   const creatorSuggestions = useMemo(() => {
     const seen = new Map();
@@ -172,7 +191,17 @@ export default function Community() {
     return Array.from(seen).sort((a, b) => a.localeCompare(b));
   }, [posts]);
 
-  const sidebarProfiles = useMemo(() => buildSidebarProfiles(me, posts), [me, posts]);
+  const sidebarProfiles = useMemo(() => buildSidebarProfiles(followingConnections), [followingConnections]);
+
+  const filteredSidebarProfiles = useMemo(() => {
+    const query = String(sidebarQuery || "").trim().toLowerCase();
+    if (!query) return sidebarProfiles;
+
+    return sidebarProfiles.filter((profile) => {
+      const haystack = [profile.name, profile.handle, profile.type].filter(Boolean).join(" ").toLowerCase();
+      return haystack.includes(query);
+    });
+  }, [sidebarProfiles, sidebarQuery]);
 
   const filteredPosts = useMemo(
       () => posts.filter((post) => matchesCommunityFilters(post, filters)),
@@ -192,6 +221,41 @@ export default function Community() {
     }
   };
 
+  const handleFollowChange = (targetUserId, nextIsFollowing) => {
+    if (!targetUserId) return;
+
+    setFollowingIds((prev) => {
+      const next = new Set(prev);
+      if (nextIsFollowing) next.add(targetUserId);
+      else next.delete(targetUserId);
+      return next;
+    });
+
+    if (!nextIsFollowing) {
+      setFollowingConnections((prev) => prev.filter((item) => item?.user?.id !== targetUserId));
+      return;
+    }
+
+    const existingPost = posts.find((post) => post.userId === targetUserId);
+    const fallbackConnection = existingPost
+      ? {
+          followId: `local-${targetUserId}`,
+          user: {
+            id: targetUserId,
+            displayName: existingPost.authorDisplayName || existingPost.authorHeadline || existingPost.authorUsername || "User",
+            username: existingPost.authorUsername || "",
+            role: existingPost.authorType || "User",
+            avatarUrl: avatarUrls[targetUserId] || "",
+          },
+        }
+      : null;
+
+    setFollowingConnections((prev) => {
+      if (prev.some((item) => item?.user?.id === targetUserId)) return prev;
+      return fallbackConnection ? [...prev, fallbackConnection] : prev;
+    });
+  };
+
   return (
       <div className="community-page-shell community-page-shell--mockup">
         <div className="community-page community-page--mockup">
@@ -209,8 +273,8 @@ export default function Community() {
                   <h2 className="community-sidebar-title">Who you follow</h2>
                   <p className="community-sidebar-copy">
                     {followingIds.size > 0
-                        ? "Posts from creators you already follow"
-                        : "People showing up in your current community feed"}
+                        ? "Only the people you already follow appear here."
+                        : "You are not following anyone yet."}
                   </p>
                 </div>
               </div>
@@ -218,35 +282,39 @@ export default function Community() {
               <div className="community-sidebar-search-wrap">
                 <input
                     className="community-input community-input--soft"
-                    placeholder="Search posts or creators"
-                    value={filters.query}
-                    onChange={(event) => setFilters((prev) => ({ ...prev, query: event.target.value }))}
+                    placeholder="Search people you follow"
+                    value={sidebarQuery}
+                    onChange={(event) => setSidebarQuery(event.target.value)}
                 />
               </div>
 
               <div className="community-sidebar-list">
-                {sidebarProfiles.length === 0 && (
-                    <div className="community-empty-copy">No creators to show yet.</div>
+                {filteredSidebarProfiles.length === 0 && (
+                    <div className="community-empty-copy">No followed creators to show yet.</div>
                 )}
 
-                {sidebarProfiles.map((profile) => (
+                {filteredSidebarProfiles.map((profile) => (
                     <div key={profile.id} className="community-sidebar-item">
-                      <div className="community-sidebar-person">
-                        <SidebarAvatar name={profile.name} avatarUrl={avatarUrls[profile.id]} />
-                        <div>
-                          <div className="community-sidebar-name">{profile.name}</div>
-                          <div className="community-sidebar-meta">
-                            {profile.type}
-                            {profile.handle ? ` · ${profile.handle}` : ""}
+                      <Link to={`/profile/${profile.id}`} className="community-sidebar-link">
+                        <div className="community-sidebar-person">
+                          <SidebarAvatar
+                              name={profile.name}
+                              avatarUrl={profile.avatarUrl || avatarUrls[profile.id]}
+                          />
+                          <div>
+                            <div className="community-sidebar-name">{profile.name}</div>
+                            <div className="community-sidebar-meta">
+                              {profile.type}
+                              {profile.handle ? ` · ${profile.handle}` : ""}
+                            </div>
                           </div>
                         </div>
-                      </div>
+                      </Link>
                       <span className="community-sidebar-dot" aria-hidden="true" />
                     </div>
                 ))}
               </div>
 
-              {/* INTEGRATED CONNECTIONS BUTTON */}
               <button
                   onClick={() => navigate('/connections')}
                   style={{
@@ -336,6 +404,7 @@ export default function Community() {
                         isFollowing={followingIds.has(post.userId)}
                         reactionBusy={reactionBusyId === post.id}
                         onReact={handleReact}
+                        onFollowChange={handleFollowChange}
                         compact
                     />
                 ))}

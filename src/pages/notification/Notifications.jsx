@@ -3,14 +3,14 @@ import { useNavigate } from 'react-router-dom';
 import './Notifications.css';
 import { notificationService } from '../../services/notification.service';
 import { authService } from '../../services/auth.service';
-import { timeAgo, titleFromType } from '../../utils/notification.utils';
+import { messageFromNotification, timeAgo, titleFromType } from '../../utils/notification.utils';
 
 function mapNotification(n) {
   return {
     id: n.id,
     title: titleFromType(n.type, n.title),
     time: timeAgo(n.createdAt),
-    message: n.message,
+    message: messageFromNotification(n),
     type: n.type,
     read: !!n.read,
     createdAt: n.createdAt,

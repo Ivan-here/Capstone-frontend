@@ -336,6 +336,48 @@
   font-weight: 600;
 }
 
+
+.community-follow-badge {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 999px;
+  padding: 10px 14px;
+  font-weight: 700;
+  background: rgba(89, 75, 49, 0.08);
+  color: #7b735c;
+  flex-shrink: 0;
+  align-self: flex-start;
+}
+
+.community-sidebar-link {
+  display: flex;
+  flex: 1;
+  min-width: 0;
+  text-decoration: none;
+  color: inherit;
+}
+
+.community-sidebar-link:hover .community-sidebar-name,
+.community-sidebar-link:hover .community-sidebar-meta {
+  color: #556b2f;
+}
+
+.community-avatar-link,
+.community-author-link {
+  display: inline-flex;
+  text-decoration: none;
+  color: inherit;
+}
+
+.community-author-link:hover .community-post-author-name,
+.community-author-link:hover .community-comment-author,
+.community-author-link:hover .community-comment-preview-name,
+.community-avatar-link:hover .community-avatar,
+.community-avatar-link:hover .community-comment-preview-avatar {
+  opacity: 0.88;
+  color: #556b2f;
+}
+
 .community-primary-btn,
 .community-secondary-btn,
 .community-reaction-btn,
