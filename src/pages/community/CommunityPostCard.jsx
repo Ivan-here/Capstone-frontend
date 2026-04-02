@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
-import { followService } from "@/services/follow.service"; // <-- Import the new service
+import { Link, useNavigate } from "react-router-dom";
+import { followService } from "@/services/follow.service";
 import {
   displayTime,
   getAvatarFallback,
@@ -12,9 +12,15 @@ import {
   getReactionForUser,
 } from "./community.utils";
 
-function Avatar({ label, avatarUrl, className = "community-avatar" }) {
+function getProfilePath(userId, currentUserId) {
+  if (!userId) return null;
+  return userId === currentUserId ? "/profile" : `/profile/${userId}`;
+}
+
+function Avatar({ label, avatarUrl, className = "community-avatar", userId, currentUserId }) {
   const initial = getAvatarFallback(label);
-  return (
+  const profilePath = getProfilePath(userId, currentUserId);
+  const content = (
       <div className={className}>
         {avatarUrl ? (
             <img src={avatarUrl} alt={label || "User"} className="community-avatar-image" />
@@ -23,47 +29,57 @@ function Avatar({ label, avatarUrl, className = "community-avatar" }) {
         )}
       </div>
   );
+
+  if (!profilePath) return content;
+
+  return (
+      <Link to={profilePath} className="community-avatar-link" aria-label={`Open ${label || "user"} profile`}>
+        {content}
+      </Link>
+  );
 }
 
 export default function CommunityPostCard({
-                                            post,
-                                            avatarUrls = {},
-                                            currentUserId,
-                                            isFollowing,
-                                            reactionBusy = false,
-                                            onReact,
-                                            compact = false,
-                                            showOpenPostAction = true,
-                                            showFollowButton = true,
-                                          }) {
+  post,
+  avatarUrls = {},
+  currentUserId,
+  isFollowing,
+  reactionBusy = false,
+  onReact,
+  onFollowChange,
+  compact = false,
+  showOpenPostAction = true,
+  showFollowButton = true,
+}) {
   const navigate = useNavigate();
   const currentReaction = getReactionForUser(post, currentUserId);
   const commentCount = Array.isArray(post?.comments) ? post.comments.length : 0;
   const previewComments = compact ? getPreviewComments(post, 3) : [];
   const accent = getCreatorAccent(post);
   const hasImage = Boolean(post?.imageUrl);
+  const isOwnPost = Boolean(currentUserId) && currentUserId === post?.userId;
+  const canFollow = showFollowButton && Boolean(currentUserId) && Boolean(post?.userId) && !isOwnPost;
 
-  // LOCAL STATE: Manage the follow toggle optimistically for a snappy UI
-  const [localIsFollowing, setLocalIsFollowing] = useState(isFollowing);
+  const [localIsFollowing, setLocalIsFollowing] = useState(Boolean(isFollowing));
   const [isFollowLoading, setIsFollowLoading] = useState(false);
 
-  // Keep local state in sync if the parent component forces an update
   useEffect(() => {
-    setLocalIsFollowing(isFollowing);
+    setLocalIsFollowing(Boolean(isFollowing));
   }, [isFollowing]);
 
-  // THE FOLLOW HANDLER
   const handleFollowToggle = async () => {
-    if (!currentUserId || post.userId === currentUserId) return;
+    if (!canFollow) return;
 
     setIsFollowLoading(true);
     try {
       if (localIsFollowing) {
         await followService.unfollowUser(post.userId);
         setLocalIsFollowing(false);
+        onFollowChange?.(post.userId, false);
       } else {
         await followService.followUser(post.userId);
         setLocalIsFollowing(true);
+        onFollowChange?.(post.userId, true);
       }
     } catch (error) {
       console.error("Failed to toggle follow status", error);
@@ -87,9 +103,20 @@ export default function CommunityPostCard({
         <div className="community-post-content-column">
           <div className="community-post-header community-post-header--mockup">
             <div className="community-post-author">
-              <Avatar label={getAuthorLabel(post)} avatarUrl={avatarUrls[post.userId]} />
+              <Avatar
+                  label={getAuthorLabel(post)}
+                  avatarUrl={avatarUrls[post.userId]}
+                  userId={post?.userId}
+                  currentUserId={currentUserId}
+              />
               <div>
-                <div className="community-post-author-name">{getAuthorLabel(post)}</div>
+                <Link
+                          to={getProfilePath(post?.userId, currentUserId) || "#"}
+                          className="community-author-link"
+                          onClick={(event) => { if (!post?.userId) event.preventDefault(); }}
+                      >
+                        <div className="community-post-author-name">{getAuthorLabel(post)}</div>
+                      </Link>
                 <div className="community-post-meta">
                   {getAuthorHandle(post)}
                   {getAuthorHandle(post) ? " · " : ""}
@@ -100,9 +127,11 @@ export default function CommunityPostCard({
               </div>
             </div>
 
-            {/* FOLLOW BUTTON INTEGRATION */}
-            {/* We hide the button if it's the current user's own post */}
-            {showFollowButton && currentUserId !== post.userId && (
+            {showFollowButton && isOwnPost && (
+                <span className="community-follow-badge community-follow-badge--self">Your post</span>
+            )}
+
+            {canFollow && (
                 <button
                     type="button"
                     onClick={handleFollowToggle}
@@ -139,11 +168,19 @@ export default function CommunityPostCard({
                           label={comment.displayName || comment.username || "User"}
                           avatarUrl={avatarUrls[comment.userId]}
                           className="community-comment-preview-avatar"
+                          userId={comment?.userId}
+                          currentUserId={currentUserId}
                       />
                       <div className="community-comment-preview-body">
-                        <div className="community-comment-preview-name">
-                          {comment.displayName || comment.username || "User"}
-                        </div>
+                        <Link
+                            to={getProfilePath(comment?.userId, currentUserId) || "#"}
+                            className="community-author-link"
+                            onClick={(event) => { if (!comment?.userId) event.preventDefault(); }}
+                        >
+                          <div className="community-comment-preview-name">
+                            {comment.displayName || comment.username || "User"}
+                          </div>
+                        </Link>
                         <div className="community-comment-preview-text">{comment.text}</div>
                       </div>
                     </div>

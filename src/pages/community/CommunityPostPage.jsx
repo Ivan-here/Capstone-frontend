@@ -1,11 +1,17 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { authService } from "../../services/auth.service";
 import { communityService } from "../../services/community.service";
 import { profileService } from "../../services/profile.service";
+import { followService } from "../../services/follow.service";
 import CommunityPostCard from "./CommunityPostCard";
-import { getAvatarFallback, getProfileAvatarUrl } from "./community.utils";
+import { getAvatarFallback, getProfileAvatarUrl, mergeAvatarMap } from "./community.utils";
 import "./Community.css";
+
+function getProfilePath(userId, currentUserId) {
+  if (!userId) return null;
+  return userId === currentUserId ? "/profile" : `/profile/${userId}`;
+}
 
 export default function CommunityPostPage() {
   const { postId } = useParams();
@@ -20,7 +26,8 @@ export default function CommunityPostPage() {
   const [commentBusy, setCommentBusy] = useState(false);
   const [reactionBusy, setReactionBusy] = useState(false);
   const [avatarUrls, setAvatarUrls] = useState({});
-
+  const [followingIds, setFollowingIds] = useState(new Set());
+  const pendingAvatarIdsRef = useRef(new Set());
 
   const loadPost = async () => {
     try {
@@ -33,6 +40,22 @@ export default function CommunityPostPage() {
       setPost(null);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const loadFollowing = async () => {
+    if (!currentUserId) {
+      setFollowingIds(new Set());
+      return;
+    }
+
+    try {
+      const followingData = await followService.getFollowing(currentUserId);
+      const ids = new Set((Array.isArray(followingData) ? followingData : []).map((item) => item?.user?.id).filter(Boolean));
+      setFollowingIds(ids);
+    } catch (e) {
+      console.error("Failed to fetch following ids", e);
+      setFollowingIds(new Set());
     }
   };
 
@@ -60,6 +83,10 @@ export default function CommunityPostPage() {
   }, [isLoggedIn]);
 
   useEffect(() => {
+    loadFollowing();
+  }, [currentUserId]);
+
+  useEffect(() => {
     if (!post) return;
 
     const userIds = new Set();
@@ -74,10 +101,21 @@ export default function CommunityPostPage() {
       known[currentUserId] = getProfileAvatarUrl(me);
     }
 
-    setAvatarUrls((prev) => ({ ...prev, ...known }));
+    if (Object.keys(known).length > 0) {
+      setAvatarUrls((prev) => mergeAvatarMap(prev, known));
+    }
 
-    const missingUserIds = Array.from(userIds).filter((userId) => !(userId in avatarUrls) && !(userId in known));
-    if (missingUserIds.length === 0) return;
+    const pendingIds = pendingAvatarIdsRef.current;
+    const missingUserIds = Array.from(userIds).filter(
+      (userId) => !(userId in avatarUrls) && !(userId in known) && !pendingIds.has(userId),
+    );
+    if (missingUserIds.length === 0) {
+      return () => {
+        cancelled = true;
+      };
+    }
+
+    missingUserIds.forEach((userId) => pendingIds.add(userId));
 
     (async () => {
       const results = await Promise.allSettled(
@@ -87,31 +125,27 @@ export default function CommunityPostPage() {
         }),
       );
 
+      missingUserIds.forEach((userId) => pendingIds.delete(userId));
       if (cancelled) return;
 
       const next = {};
-      results.forEach((result) => {
+      results.forEach((result, index) => {
+        const fallbackUserId = missingUserIds[index];
         if (result.status === "fulfilled") {
           const [userId, avatarUrl] = result.value;
           next[userId] = avatarUrl;
+        } else if (fallbackUserId) {
+          next[fallbackUserId] = "";
         }
       });
 
-      setAvatarUrls((prev) => ({ ...prev, ...next }));
+      setAvatarUrls((prev) => mergeAvatarMap(prev, next));
     })();
 
     return () => {
       cancelled = true;
     };
   }, [post, me, currentUserId]);
-
-  const followingIds = useMemo(() => {
-    const ids = new Set();
-    (me?.personalProfile?.followingPeople || []).forEach((person) => {
-      if (person?.id) ids.add(person.id);
-    });
-    return ids;
-  }, [me]);
 
   const handleReact = async (_, reactionType) => {
     if (!currentUserId || !post) return;
@@ -126,6 +160,15 @@ export default function CommunityPostPage() {
     }
   };
 
+  const handleFollowChange = (targetUserId, nextIsFollowing) => {
+    if (!targetUserId) return;
+    setFollowingIds((prev) => {
+      const next = new Set(prev);
+      if (nextIsFollowing) next.add(targetUserId);
+      else next.delete(targetUserId);
+      return next;
+    });
+  };
 
   const handleCommentSubmit = async (event) => {
     event.preventDefault();
@@ -153,7 +196,7 @@ export default function CommunityPostPage() {
         <div className="community-page-header">
           <div>
             <h1 className="community-page-title">Post</h1>
-                      </div>
+          </div>
           <Link to="/community" className="community-secondary-btn community-link-btn">Back to feed</Link>
         </div>
 
@@ -171,6 +214,7 @@ export default function CommunityPostPage() {
               isFollowing={followingIds.has(post.userId)}
               reactionBusy={reactionBusy}
               onReact={handleReact}
+              onFollowChange={handleFollowChange}
               showOpenPostAction={false}
             />
 
@@ -199,19 +243,32 @@ export default function CommunityPostPage() {
                 {(post.comments || []).map((comment) => (
                   <div key={comment.id} className="community-comment-card">
                     <div className="community-comment-preview-item community-comment-preview-item--stacked">
-                      <div className="community-comment-preview-avatar">
-                        {avatarUrls[comment.userId] ? (
-                          <img
-                            src={avatarUrls[comment.userId]}
-                            alt={comment.displayName || comment.username || "User"}
-                            className="community-avatar-image"
-                          />
-                        ) : (
-                          getAvatarFallback(comment.displayName || comment.username || "User")
-                        )}
-                      </div>
+                      <Link
+                        to={getProfilePath(comment?.userId, currentUserId) || "#"}
+                        className="community-avatar-link"
+                        onClick={(event) => { if (!comment?.userId) event.preventDefault(); }}
+                        aria-label={`Open ${(comment.displayName || comment.username || "user")} profile`}
+                      >
+                        <div className="community-comment-preview-avatar">
+                          {avatarUrls[comment.userId] ? (
+                            <img
+                              src={avatarUrls[comment.userId]}
+                              alt={comment.displayName || comment.username || "User"}
+                              className="community-avatar-image"
+                            />
+                          ) : (
+                            getAvatarFallback(comment.displayName || comment.username || "User")
+                          )}
+                        </div>
+                      </Link>
                       <div className="community-comment-preview-body">
-                        <div className="community-comment-author">{comment.displayName || comment.username || "User"}</div>
+                        <Link
+                          to={getProfilePath(comment?.userId, currentUserId) || "#"}
+                          className="community-author-link"
+                          onClick={(event) => { if (!comment?.userId) event.preventDefault(); }}
+                        >
+                          <div className="community-comment-author">{comment.displayName || comment.username || "User"}</div>
+                        </Link>
                         <div className="community-comment-meta">@{comment.username || "user"}</div>
                         <p className="community-comment-text">{comment.text}</p>
                       </div>
