@@ -53,6 +53,11 @@ const ProductDetails = () => {
 
                 setProduct({
                     ...data,
+                    // EXTREME DEFENSE: Ensure the cart always has every possible ID key so nothing gets lost!
+                    id: data.listingId || data.id || id,
+                    listingId: data.listingId || data.id || id,
+                    productId: data.listingId || data.id || id,
+
                     images: productImages,
                     seller: {
                         name: data.businessName || "Local Partner",
@@ -150,7 +155,6 @@ const ProductDetails = () => {
                                 reviews.map(r => (
                                     <div key={r.id} className="review-user" style={{ marginBottom: '15px', borderBottom: '1px solid #eee', paddingBottom: '10px' }}>
                                         <div className="review-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                            {/* Link to user profile */}
                                             <button
                                                 className="link-text"
                                                 onClick={() => navigate(`/profile/${r.reviewerId}`)}

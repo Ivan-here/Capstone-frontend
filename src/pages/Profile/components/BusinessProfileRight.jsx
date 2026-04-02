@@ -7,6 +7,7 @@ import { reviewService } from "@/services/reviewService";
 import { paymentService } from "@/services/payment.service";
 import { settingsService } from "@/services/settings.service";
 import { followService } from "@/services/follow.service";
+import { orderService } from "@/services/order.service"; // <-- Add this import
 import RatingsReviews from "./RatingsReviews";
 
 export default function BusinessProfileRight({ businessProfile, userId, isOwnProfile }) {
@@ -16,9 +17,14 @@ export default function BusinessProfileRight({ businessProfile, userId, isOwnPro
     const [verificationDoc, setVerificationDoc] = useState(null);
     const [products, setProducts] = useState([]);
     const [loading, setLoading] = useState(true);
+
+    // Stats States
     const [businessReviews, setBusinessReviews] = useState([]);
     const [ratingData, setRatingData] = useState({ averageRating: 0, totalReviews: 0 });
     const [followStats, setFollowStats] = useState({ followers: 0, following: 0 });
+    const [realPurchases, setRealPurchases] = useState(0); // <-- New State
+    const [realSales, setRealSales] = useState(0); // <-- New State
+
     const [paymentProfile, setPaymentProfile] = useState(null);
     const [resubmitFile, setResubmitFile] = useState(null);
     const [resubmittingDocument, setResubmittingDocument] = useState(false);
@@ -29,6 +35,7 @@ export default function BusinessProfileRight({ businessProfile, userId, isOwnPro
     const [showReviewForm, setShowReviewForm] = useState(false);
     const [newRating, setNewRating] = useState(5);
     const [newComment, setNewComment] = useState("");
+    const [reviewError, setReviewError] = useState(""); // <-- Replaces the native alert
 
     const isRestaurant = businessProfile?.businessType === "RESTAURANT";
     const isStripeEligibleBusiness =
@@ -81,14 +88,19 @@ export default function BusinessProfileRight({ businessProfile, userId, isOwnPro
     const refreshData = useCallback(async () => {
         if (!effectiveUserId) return;
         try {
-            const [avgData, reviewsList, fStats] = await Promise.all([
+            // Fetch everything concurrently, including actual orders
+            const [avgData, reviewsList, fStats, sellerOrders, buyerOrders] = await Promise.all([
                 reviewService.getAverageRating("SELLER", effectiveUserId),
                 reviewService.getTargetReviews("SELLER", effectiveUserId),
-                followService.getStats(effectiveUserId).catch(() => ({ followers: 0, following: 0 }))
+                followService.getStats(effectiveUserId).catch(() => ({ followers: 0, following: 0 })),
+                orderService.getOrdersBySeller(effectiveUserId).catch(() => []), // <-- Fetch Sales
+                orderService.getOrdersByBuyer(effectiveUserId).catch(() => [])   // <-- Fetch Purchases
             ]);
             setRatingData(avgData);
             setBusinessReviews(reviewsList);
             setFollowStats(fStats);
+            setRealSales(sellerOrders?.length || 0);
+            setRealPurchases(buyerOrders?.length || 0);
         } catch (err) {
             console.error("Error refreshing data:", err);
         }
@@ -130,7 +142,7 @@ export default function BusinessProfileRight({ businessProfile, userId, isOwnPro
             await paymentService.createConnectedAccount(effectiveUserId);
             const res = await paymentService.createOnboardingLink(effectiveUserId);
             if (res?.url) {
-                window.location.href = res.url; // redirect to Stripe
+                window.location.href = res.url;
                 return;
             }
             alert("Could not create Stripe onboarding link.");
@@ -142,7 +154,13 @@ export default function BusinessProfileRight({ businessProfile, userId, isOwnPro
 
     const handleSellerReviewSubmit = async () => {
         const currentUserId = localStorage.getItem('userId');
-        if (!newComment.trim()) return alert("Please write a comment.");
+
+        // Clean inline validation error
+        if (!newComment.trim()) {
+            setReviewError("Please write a comment before submitting.");
+            return;
+        }
+
         try {
             await reviewService.createReview({
                 targetId: effectiveUserId,
@@ -155,8 +173,10 @@ export default function BusinessProfileRight({ businessProfile, userId, isOwnPro
             await refreshData();
             setShowReviewForm(false);
             setNewComment("");
+            setReviewError(""); // Clear error on success
         } catch (err) {
             console.error("Failed to submit review", err);
+            setReviewError("Failed to submit review. Please try again.");
         }
     };
 
@@ -284,11 +304,11 @@ export default function BusinessProfileRight({ businessProfile, userId, isOwnPro
                         <div className="statLabel">reviews</div>
                     </div>
                     <div className="statBox">
-                        <div className="statValue">{businessProfile?.purchases ?? 0}</div>
+                        <div className="statValue">{realPurchases}</div>
                         <div className="statLabel">purchases</div>
                     </div>
                     <div className="statBox">
-                        <div className="statValue">{businessProfile?.totalSales ?? 0}</div>
+                        <div className="statValue">{realSales}</div>
                         <div className="statLabel">total sales</div>
                     </div>
                     <div className="statBox">
@@ -351,10 +371,18 @@ export default function BusinessProfileRight({ businessProfile, userId, isOwnPro
                 <div className="card" style={{ padding: '20px', background: '#F9FAFB', borderRadius: '12px' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px' }}>
                         <h3 style={{ margin: 0 }}>Rate this Seller</h3>
-                        <button onClick={() => setShowReviewForm(!showReviewForm)} className="linkBtn">{showReviewForm ? "Cancel" : "Write a Review"}</button>
+                        <button onClick={() => { setShowReviewForm(!showReviewForm); setReviewError(""); }} className="linkBtn">{showReviewForm ? "Cancel" : "Write a Review"}</button>
                     </div>
                     {showReviewForm && (
                         <div style={{ padding: '15px', background: '#fff', borderRadius: '8px', border: '1px solid #ddd' }}>
+
+                            {/* Inline Error Display */}
+                            {reviewError && (
+                                <div style={{ color: '#d32f2f', fontSize: '0.9rem', marginBottom: '10px', fontWeight: 'bold' }}>
+                                    {reviewError}
+                                </div>
+                            )}
+
                             <div style={{ display: 'flex', gap: '5px', justifyContent: 'center', marginBottom: '15px' }}>
                                 {[1, 2, 3, 4, 5].map((s) => (
                                     <button key={s} onClick={() => setNewRating(s)} style={{ background: 'none', border: 'none', cursor: 'pointer' }}>
@@ -362,8 +390,17 @@ export default function BusinessProfileRight({ businessProfile, userId, isOwnPro
                                     </button>
                                 ))}
                             </div>
-                            <textarea placeholder="Your experience..." value={newComment} onChange={e => setNewComment(e.target.value)} style={{ width: '100%', height: '80px', padding: '10px', marginBottom: '10px' }} />
-                            <button onClick={handleSellerReviewSubmit} style={{ width: '100%', padding: '10px', background: '#ff9800', color: '#fff', border: 'none', borderRadius: '5px', fontWeight: 'bold' }}>Submit Review</button>
+
+                            <textarea
+                                placeholder="Your experience..."
+                                value={newComment}
+                                onChange={e => { setNewComment(e.target.value); setReviewError(""); }}
+                                style={{ width: '100%', height: '80px', padding: '10px', marginBottom: '10px', borderColor: reviewError ? '#d32f2f' : '#ccc', borderRadius: '4px' }}
+                            />
+
+                            <button onClick={handleSellerReviewSubmit} style={{ width: '100%', padding: '10px', background: '#ff9800', color: '#fff', border: 'none', borderRadius: '5px', fontWeight: 'bold', cursor: 'pointer' }}>
+                                Submit Review
+                            </button>
                         </div>
                     )}
                 </div>

@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import PreferencesChips from "./PreferencesChips";
 import RatingsReviews from "./RatingsReviews";
 import { reviewService } from "@/services/reviewService";
 import { followService } from "@/services/follow.service";
+import { orderService } from "@/services/order.service"; // <-- Add this import
 
 function StatBox({ value, label, privacy, isVisible = true, onClick }) {
     if (!isVisible) return null;
@@ -27,6 +27,7 @@ export default function UserProfileRight({ profile, isOwnProfile }) {
     const [writtenReviews, setWrittenReviews] = useState([]);
     const [buyerRating, setBuyerRating] = useState({ averageRating: 0, totalReviews: 0 });
     const [followStats, setFollowStats] = useState({ followers: 0, following: 0 });
+    const [realPurchases, setRealPurchases] = useState(0); // <-- New State
     const [loading, setLoading] = useState(true);
 
     const userId = profile?.userId || profile?.id || localStorage.getItem('userId');
@@ -37,14 +38,17 @@ export default function UserProfileRight({ profile, isOwnProfile }) {
             if (!userId) return;
             try {
                 setLoading(true);
-                const [history, avgData, fStats] = await Promise.all([
+                // Fetch actual buyer orders concurrently
+                const [history, avgData, fStats, buyerOrders] = await Promise.all([
                     reviewService.getReviewsByReviewer(userId),
                     reviewService.getAverageRating("BUYER", userId),
-                    followService.getStats(userId).catch(() => ({ followers: 0, following: 0 }))
+                    followService.getStats(userId).catch(() => ({ followers: 0, following: 0 })),
+                    orderService.getOrdersByBuyer(userId).catch(() => []) // <-- Fetch real purchases
                 ]);
                 setWrittenReviews(history);
                 setBuyerRating(avgData);
                 setFollowStats(fStats);
+                setRealPurchases(buyerOrders?.length || 0); // <-- Set real count
             } catch (err) {
                 console.error("Failed to load user data:", err);
             } finally {
@@ -53,8 +57,6 @@ export default function UserProfileRight({ profile, isOwnProfile }) {
         };
         fetchUserData();
     }, [userId]);
-
-    const stats = profile?.stats || {};
 
     const formattedRatings = writtenReviews.map(r => ({
         id: r.id,
@@ -90,7 +92,10 @@ export default function UserProfileRight({ profile, isOwnProfile }) {
                 <div className="statsHeader">Statistics</div>
                 <div className="statsRow">
                     <StatBox label="reviews written" value={writtenReviews.length} privacy="Public" />
-                    <StatBox label="purchases" value={stats.purchases ?? 0} privacy="Public" />
+
+                    {/* Replaced static stats.purchases with realPurchases */}
+                    <StatBox label="purchases" value={realPurchases} privacy="Public" />
+
                     <StatBox
                         label="following"
                         value={followStats.following}
