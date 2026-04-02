@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Store, MapPin, Mail, Clock, Truck, Info, ArrowLeft } from "lucide-react";
+import { Store, MapPin, Mail, Clock, Truck, Info, ArrowLeft, Phone, ShieldCheck } from "lucide-react";
 import Button from "@/components/ui/Button";
 import Input from "@/components/ui/Input";
 import { cloudinaryService } from "@/services/cloudinary.service";
@@ -23,6 +23,8 @@ export default function EditBusinessProfilePage() {
         address: "",
         email: "",
         phone: "",
+        emailVisibility: "PUBLIC",
+        phoneVisibility: "PUBLIC",
         description: "",
         hours: "",
         pickupAvailability: "",
@@ -46,6 +48,8 @@ export default function EditBusinessProfilePage() {
                         address: b.address || "",
                         email: b.email || "",
                         phone: b.phone || "",
+                        emailVisibility: b.emailVisibility || "PUBLIC",
+                        phoneVisibility: b.phoneVisibility || "PUBLIC",
                         description: b.description || "",
                         hours: b.hours || "",
                         pickupAvailability: b.pickupAvailability || "",
@@ -84,6 +88,7 @@ export default function EditBusinessProfilePage() {
         if (!form.address.trim()) e.address = "Address is required.";
         if (!form.email.trim()) e.email = "Email is required.";
         else if (!/^\S+@\S+\.\S+$/.test(form.email.trim())) e.email = "Invalid email.";
+        if (!form.phone.trim()) e.phone = "Business phone is required.";
         return e;
     }
 
@@ -102,7 +107,9 @@ export default function EditBusinessProfilePage() {
                 businessName: form.businessName.trim(),
                 address: form.address.trim(),
                 email: form.email.trim(),
-                phone: form.phone.trim() || null,
+                phone: form.phone.trim(),
+                emailVisibility: form.emailVisibility,
+                phoneVisibility: form.phoneVisibility,
                 avatarUrl,
                 description: form.description.trim() || null,
                 hours: form.hours.trim() || null,
@@ -188,7 +195,7 @@ export default function EditBusinessProfilePage() {
                                     error={errors.address}
                                 />
                                 <Input
-                                    label="Public Email"
+                                    label="Business Email"
                                     icon={<Mail size={16}/>}
                                     value={form.email}
                                     onChange={(e) => setField("email", e.target.value)}
@@ -196,9 +203,42 @@ export default function EditBusinessProfilePage() {
                                 />
                                 <Input
                                     label="Business Phone"
+                                    icon={<Phone size={16}/>}
                                     value={form.phone}
                                     onChange={(e) => setField("phone", e.target.value)}
+                                    error={errors.phone}
                                 />
+                            </div>
+                        </div>
+
+                        <div className="form-section">
+                            <div className="section-title"><ShieldCheck size={18} /> Contact Visibility</div>
+                            <p className="muted" style={{ marginBottom: "18px" }}>
+                                Marketplace contact stays visible inside order details even if you make it private on your profile.
+                            </p>
+                            <div className="input-row">
+                                <div className="input-group">
+                                    <label className="input-label">Email visibility</label>
+                                    <select
+                                        className="premium-select"
+                                        value={form.emailVisibility}
+                                        onChange={(e) => setField("emailVisibility", e.target.value)}
+                                    >
+                                        <option value="PUBLIC">Public</option>
+                                        <option value="PRIVATE">Private</option>
+                                    </select>
+                                </div>
+                                <div className="input-group">
+                                    <label className="input-label">Phone visibility</label>
+                                    <select
+                                        className="premium-select"
+                                        value={form.phoneVisibility}
+                                        onChange={(e) => setField("phoneVisibility", e.target.value)}
+                                    >
+                                        <option value="PUBLIC">Public</option>
+                                        <option value="PRIVATE">Private</option>
+                                    </select>
+                                </div>
                             </div>
                         </div>
 
