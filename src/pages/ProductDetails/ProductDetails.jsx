@@ -88,6 +88,7 @@ const ProductDetails = () => {
     if (error) return <div className="pd-wrapper center-content"><h2>{error}</h2></div>;
 
     const isLocked = product.isNgoOnly && (!isNgo || !isVerifiedNgo);
+    const isUnavailable = String(product.status || "").toUpperCase() !== "ACTIVE" || Number(product.quantity || 0) <= 0;
 
     return (
         <div className="pd-wrapper">
@@ -124,10 +125,15 @@ const ProductDetails = () => {
                         </div>
 
                         <div className="pd-buttons">
-                            {!isLocked ? (
+                            {!isLocked && !isUnavailable ? (
                                 <button className="btn-cart" onClick={() => { addToCart(product); setShowToast(true); setTimeout(()=>setShowToast(false), 3000); }}>
                                     {product.price === 0 ? "Claim Donation" : "Add to Basket"}
                                 </button>
+                            ) : isUnavailable ? (
+                                <div className="pd-locked-message" style={{ marginTop: '0' }}>
+                                    <Lock size={18}/>
+                                    <span>This listing is no longer available.</span>
+                                </div>
                             ) : (
                                 <div className="pd-locked-message" style={{ marginTop: '0' }}>
                                     <Lock size={18}/>
@@ -179,6 +185,15 @@ const ProductDetails = () => {
                             {product.price > 0 ? `$${product.price}/${product.unit}` : "Free Donation"}
                         </div>
 
+                        <div className="pd-meta-row">
+                            <span className="pd-meta-label">Available</span>
+                            <span className="pd-meta-value">
+                                {product.quantity != null
+                                    ? `${product.quantity} ${product.unit || "items"}`
+                                    : "Quantity unavailable"}
+                            </span>
+                        </div>
+
                         <div className="info-block">
                             <h2>About this product</h2>
                             <p>{product.description}</p>
@@ -196,7 +211,7 @@ const ProductDetails = () => {
                             </button>
                         </div>
 
-                        {isLocked && (
+                        {isLocked && !isUnavailable && (
                             <div className="pd-locked-message">
                                 <Lock size={18}/>
                                 <span>This item is currently reserved for verified NGOs.</span>

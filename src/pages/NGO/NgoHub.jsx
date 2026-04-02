@@ -24,7 +24,12 @@ const NgoHub = () => {
                 setLoading(true);
                 const data = await listingService.getAllListings("NGO");
                 const mappedData = data
-                    .filter(item => item.type && item.type.toUpperCase() === "SURPLUS_FOOD")
+                    .filter(item =>
+                        item.type &&
+                        item.type.toUpperCase() === "SURPLUS_FOOD" &&
+                        String(item.status || "").toUpperCase() === "ACTIVE" &&
+                        Number(item.quantity || 0) > 0
+                    )
                     .map(item => ({
                         ...item,
                         id: item.listingId || item.id,

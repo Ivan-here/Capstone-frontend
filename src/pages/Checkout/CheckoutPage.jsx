@@ -4,6 +4,7 @@ import { Elements, PaymentElement, useElements, useStripe } from "@stripe/react-
 import { ArrowLeft, CreditCard } from "lucide-react";
 import { getStripe } from "@/lib/stripe";
 import { orderService } from "@/services/order.service";
+import { listingService } from "@/services/listing.service.js";
 import { useCart } from "../cart/CartContext.jsx";
 import "./CheckoutPage.css";
 
@@ -107,7 +108,7 @@ function DonationCheckoutForm({ orderId, sellerId, shopperId, onClaimSuccess }) 
 export default function CheckoutPage() {
     const location = useLocation();
     const navigate = useNavigate();
-    const { removeSellerItems } = useCart();
+    const { removeSellerItems, removeFromCart } = useCart();
 
     const sellerId = location.state?.sellerId;
     const sellerName = location.state?.sellerName;
@@ -165,6 +166,34 @@ export default function CheckoutPage() {
                 const stripe = await getStripe();
                 setStripePromise(Promise.resolve(stripe));
 
+                const listingChecks = await Promise.all(
+                    items.map(async (item) => {
+                        try {
+                            const listing = await listingService.getListingById(item.id);
+                            const availableQty = Number(listing?.quantity || 0);
+                            const isActive = String(listing?.status || "").toUpperCase() === "ACTIVE";
+                            const requestedQty = Number(item.quantity || 0);
+
+                            if (!listing?.id || !isActive || availableQty < requestedQty) {
+                                return { itemId: item.id, valid: false };
+                            }
+
+                            return { itemId: item.id, valid: true };
+                        } catch {
+                            return { itemId: item.id, valid: false };
+                        }
+                    })
+                );
+
+                const invalidItemIds = listingChecks
+                    .filter((result) => !result.valid)
+                    .map((result) => result.itemId);
+
+                if (invalidItemIds.length > 0) {
+                    invalidItemIds.forEach((itemId) => removeFromCart(itemId));
+                    throw new Error("One or more selected listings are no longer available. They were removed from your cart.");
+                }
+
                 const createdOrder = await orderService.createOrder(orderPayload);
                 setOrderId(createdOrder.orderId);
 
@@ -185,7 +214,7 @@ export default function CheckoutPage() {
         };
 
         initCheckout();
-    }, [shopperId, items, orderPayload, navigate, sellerId, sellerName, subtotal]);
+    }, [shopperId, items, orderPayload, navigate, removeFromCart, sellerId, sellerName, subtotal]);
 
     const handlePaymentSuccess = async (resolvedSellerId) => {
         setPaymentCompleted(true);

@@ -27,6 +27,11 @@ const ListingCard = ({ item, onEdit, onDelete, hideActions = false }) => {
                         </>
                     ) : (
                         <>
+                            <p className="grid-desc">
+                                {item.quantity != null
+                                    ? `${item.quantity} ${item.unit || "items"} available`
+                                    : "Quantity unavailable"}
+                            </p>
                             <p className="grid-desc">{item.description}</p>
                             <p className="grid-price">
                                 ${item.price ? Number(item.price).toFixed(2) : "0.00"}

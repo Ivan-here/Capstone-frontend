@@ -328,6 +328,11 @@ export default function BusinessProfileRight({ businessProfile, userId, isOwnPro
                             <img src={p.imageUrls?.[0] || "https://via.placeholder.com/120x90"} className="productImg" alt={p.title} />
                             <div className="productInfo">
                                 <div className="productName">{p.title}</div>
+                                <div className="productMeta">
+                                    {p.quantity != null
+                                        ? `${p.quantity} ${p.unit || "items"} available`
+                                        : "Quantity unavailable"}
+                                </div>
                                 <div className="productDesc">{p.description}</div>
                                 <button
                                     type="button"

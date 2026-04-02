@@ -36,6 +36,7 @@ import SurplusEditor from "@/pages/RestaurantHub/SurplusEditor.jsx";
 import RestaurantHub from "@/pages/RestaurantHub/RestaurantHub.jsx";
 import MyOrders from "@/pages/myOrders/MyOrders.jsx";
 import OrderDetailsPage from "@/pages/myOrders/OrderDetailsPage.jsx";
+import PickupPlannerPage from "@/pages/myOrders/PickupPlannerPage.jsx";
 import NgoHub from "@/pages/NGO/NgoHub.jsx";
 import CheckoutPage from "@/pages/Checkout/CheckoutPage.jsx";
 import Connections from "@/pages/Connections/Connections.jsx";
@@ -98,6 +99,7 @@ function App() {
                         <Route path="/admin/notifications" element={<AdminRoute><AdminNotifications /></AdminRoute>} />
                         <Route path="/my-orders" element={<MyOrders />} />
                         <Route path="/orders/:orderId" element={<OrderDetailsPage />} />
+                        <Route path="/orders/:orderId/pickup-plan" element={<PickupPlannerPage />} />
                         <Route path="/ngo-hub" element={<NgoHub />} />
                         <Route path="/checkout" element={<CheckoutPage />} />
                         <Route path="/connections" element={<Connections />} />
