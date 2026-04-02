@@ -1,5 +1,6 @@
 import Button from "@/components/ui/Button";
 import { useNavigate } from "react-router-dom";
+import { Mail, Phone } from "lucide-react";
 
 export default function UserProfileLeft({ profile, aboutExpanded, onToggleAbout, isOwnProfile }) {
     const aboutShort =
@@ -10,6 +11,11 @@ export default function UserProfileLeft({ profile, aboutExpanded, onToggleAbout,
     const displayName = hasDisplayName ? profile.displayName.trim() : fullName;
     const avatarFallback = (displayName || "U").charAt(0).toUpperCase();
     const navigate = useNavigate();
+    const publicEmail = profile?.email?.trim();
+    const publicPhone = profile?.phone?.trim();
+    const showEmail = isOwnProfile || profile?.emailVisibility === "PUBLIC";
+    const showPhone = isOwnProfile || profile?.phoneVisibility === "PUBLIC";
+    const hasContactDetails = !!((showEmail && publicEmail) || (showPhone && publicPhone));
 
     return (
         <>
@@ -70,6 +76,45 @@ export default function UserProfileLeft({ profile, aboutExpanded, onToggleAbout,
                     ) : null}
                 </p>
             </div>
+
+            {hasContactDetails && (
+                <div className="card businessDetailsCard">
+                    <div className="cardHeader">
+                        <span>Contact Details</span>
+                        <span className="muted">{isOwnProfile ? "Your settings" : "Visible on profile"}</span>
+                    </div>
+
+                    <div className="businessDetailsList">
+                        {showEmail && publicEmail && (
+                            <div className="businessDetailRow">
+                                <div className="businessDetailLabel">
+                                    <Mail size={16} />
+                                    <span>Email</span>
+                                </div>
+                                <div className="businessDetailValue">
+                                    <a href={`mailto:${publicEmail}`} className="linkBtn businessDetailLink">
+                                        {publicEmail}
+                                    </a>
+                                </div>
+                            </div>
+                        )}
+
+                        {showPhone && publicPhone && (
+                            <div className="businessDetailRow">
+                                <div className="businessDetailLabel">
+                                    <Phone size={16} />
+                                    <span>Phone</span>
+                                </div>
+                                <div className="businessDetailValue">
+                                    <a href={`tel:${publicPhone}`} className="linkBtn businessDetailLink">
+                                        {publicPhone}
+                                    </a>
+                                </div>
+                            </div>
+                        )}
+                    </div>
+                </div>
+            )}
 
             {isOwnProfile && (
                 <div className="card followCard">
