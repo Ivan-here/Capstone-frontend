@@ -76,7 +76,7 @@ function CheckoutForm({ orderId, paymentIntentId, sellerId, shopperId, onPayment
     );
 }
 
-function DonationCheckoutForm({ orderId, sellerId, shopperId, items, onClaimSuccess }) {
+function DonationCheckoutForm({ orderId, sellerId, shopperId, onClaimSuccess }) {
     const [submitting, setSubmitting] = useState(false);
     const [error, setError] = useState("");
 
@@ -86,20 +86,7 @@ function DonationCheckoutForm({ orderId, sellerId, shopperId, items, onClaimSucc
         setError("");
 
         try {
-            if (orderId.startsWith("res-")) {
-                const guaranteedId = items[0].listingId || items[0].id || items[0].productId;
-
-                // Strict Donation: Bypass Orders and hit the Reservation Endpoint directly!
-                await orderService.createReservation({
-                    ngoId: shopperId,
-                    listingId: guaranteedId,
-                    productId: guaranteedId, // Send both keys to prevent the backend throwing a null error
-                    quantity: items[0].quantity || 1
-                });
-            } else {
-                // Surplus Food (Fake Donation): Standard confirmation
-                await orderService.confirmDonationOrder(orderId, shopperId);
-            }
+            await orderService.confirmDonationOrder(orderId, shopperId);
             await onClaimSuccess?.(sellerId);
         } catch (claimError) {
             setError(mapCheckoutError(claimError?.message) || "Could not confirm this donation claim.");
@@ -138,33 +125,17 @@ export default function CheckoutPage() {
     const [paymentCompleted, setPaymentCompleted] = useState(false);
 
     const shopperId = localStorage.getItem("userId");
-
     const isDonationCheckout = useMemo(
         () => items.length > 0 && items.every((item) => Number(item.price) === 0),
         [items]
     );
 
-    // FIXED: Now checks isNgoOnly to guarantee the bypass activates immediately
-    const isStrictDonation = useMemo(
-        () => items.some(item =>
-            item.listingType === 'DONATION' ||
-            item.type === 'DONATION' ||
-            item.visibility === 'NGO_ONLY' ||
-            item.isNgoOnly === true
-        ),
-        [items]
-    );
-
     const orderPayload = useMemo(() => ({
         shopperId,
-        items: items.map((item) => {
-            const guaranteedId = item.listingId || item.id || item.productId;
-            return {
-                listingId: guaranteedId,
-                productId: guaranteedId, // Pass multiple keys so backend parsing never fails
-                quantity: item.quantity || 1,
-            };
-        }),
+        items: items.map((item) => ({
+            listingId: item.id,
+            quantity: item.quantity,
+        })),
     }), [items, shopperId]);
 
     useEffect(() => {
@@ -173,7 +144,12 @@ export default function CheckoutPage() {
                 navigate("/login", {
                     state: {
                         redirectTo: "/checkout",
-                        checkoutData: { sellerId, sellerName, items, subtotal },
+                        checkoutData: {
+                            sellerId,
+                            sellerName,
+                            items,
+                            subtotal,
+                        },
                     },
                     replace: true,
                 });
@@ -187,14 +163,6 @@ export default function CheckoutPage() {
             }
 
             try {
-                // BYPASS orders endpoint completely if it's a strict donation!
-                if (isStrictDonation) {
-                    setOrderId("res-" + Date.now());
-                    setLoading(false);
-                    return;
-                }
-
-                // Normal paid/surplus flow
                 const stripe = await getStripe();
                 setStripePromise(Promise.resolve(stripe));
 
@@ -246,23 +214,19 @@ export default function CheckoutPage() {
         };
 
         initCheckout();
-<<<<<<< HEAD
-    }, [shopperId, items, orderPayload, navigate, sellerId, sellerName, subtotal, isStrictDonation]);
-=======
     }, [shopperId, items, orderPayload, navigate, removeFromCart, sellerId, sellerName, subtotal]);
->>>>>>> 65aebc7c532b0591af045df6f2de85ed5a7d78cc
 
     const handlePaymentSuccess = async (resolvedSellerId) => {
         setPaymentCompleted(true);
         removeSellerItems(resolvedSellerId);
-        const target = orderId && !orderId.startsWith("res-")
+        const target = orderId
             ? `/my-orders?payment=success&orderId=${encodeURIComponent(orderId)}`
             : "/my-orders?payment=success";
         navigate(target);
     };
 
     const handleBack = async () => {
-        if (orderId && !orderId.startsWith("res-") && shopperId && !paymentCompleted) {
+        if (orderId && shopperId && !paymentCompleted) {
             try {
                 setCancellingDraft(true);
                 await orderService.cancelOrder(orderId, shopperId, "Checkout closed before payment.");
@@ -272,6 +236,7 @@ export default function CheckoutPage() {
                 setCancellingDraft(false);
             }
         }
+
         navigate(-1);
     };
 
@@ -307,8 +272,8 @@ export default function CheckoutPage() {
                 </div>
 
                 <div className="checkout-items">
-                    {items.map((item, idx) => (
-                        <div key={item.id || idx} className="checkout-item">
+                    {items.map((item) => (
+                        <div key={item.id} className="checkout-item">
                             <div>
                                 <div className="checkout-item-title">{item.title}</div>
                                 <div className="checkout-item-subtitle">Quantity: {item.quantity}</div>
@@ -323,7 +288,6 @@ export default function CheckoutPage() {
                         orderId={orderId}
                         sellerId={sellerId}
                         shopperId={shopperId}
-                        items={items}
                         onClaimSuccess={handlePaymentSuccess}
                     />
                 ) : (
