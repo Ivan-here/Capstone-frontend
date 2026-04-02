@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { User, MapPin, Phone, Mail, Heart, Info, ArrowLeft, AlignLeft } from "lucide-react";
+import { User, MapPin, Phone, Mail, Heart, Info, ArrowLeft, AlignLeft, ShieldCheck } from "lucide-react";
 import Button from "@/components/ui/Button";
 import Input from "@/components/ui/Input";
 import { cloudinaryService } from "@/services/cloudinary.service";
@@ -36,6 +36,8 @@ export default function EditPersonalProfilePage() {
         role: "",
         location: "",
         phone: "",
+        emailVisibility: "PRIVATE",
+        phoneVisibility: "PRIVATE",
         about: "",
         addressesText: "",
         preferencesText: "",
@@ -59,6 +61,8 @@ export default function EditPersonalProfilePage() {
                     role: p?.role ?? "",
                     location: p?.location ?? "",
                     phone: p?.phone ?? "",
+                    emailVisibility: p?.emailVisibility ?? "PRIVATE",
+                    phoneVisibility: p?.phoneVisibility ?? "PRIVATE",
                     about: p?.about ?? "",
                     addressesText: joinLines(p?.addresses),
                     preferencesText: joinLines(p?.preferences),
@@ -95,6 +99,7 @@ export default function EditPersonalProfilePage() {
         if (!form.lastName.trim()) e.lastName = "Last name is required.";
         if (!form.email.trim()) e.email = "Email is required.";
         else if (!/^\S+@\S+\.\S+$/.test(form.email.trim())) e.email = "Invalid email.";
+        if (!form.phone.trim()) e.phone = "Phone is required.";
         return e;
     }
 
@@ -115,7 +120,9 @@ export default function EditPersonalProfilePage() {
                 displayName: form.displayName.trim() || null,
                 avatarUrl,
                 location: form.location.trim() || null,
-                phone: form.phone.trim() || null,
+                phone: form.phone.trim(),
+                emailVisibility: form.emailVisibility,
+                phoneVisibility: form.phoneVisibility,
                 about: form.about.trim() || null,
                 addresses: splitLines(form.addressesText),
                 preferences: splitLines(form.preferencesText),
@@ -191,7 +198,38 @@ export default function EditPersonalProfilePage() {
                             <Input label="Email Address" value={form.email} onChange={(e) => setField("email", e.target.value)} error={errors.email} />
                             <div className="input-row">
                                 <Input label="Location" icon={<MapPin size={16}/>} value={form.location} onChange={(e) => setField("location", e.target.value)} />
-                                <Input label="Phone" icon={<Phone size={16}/>} value={form.phone} onChange={(e) => setField("phone", e.target.value)} />
+                                <Input label="Phone" icon={<Phone size={16}/>} value={form.phone} onChange={(e) => setField("phone", e.target.value)} error={errors.phone} />
+                            </div>
+                        </div>
+
+                        <div className="form-section">
+                            <div className="section-title"><ShieldCheck size={18} /> Contact Visibility</div>
+                            <p className="muted" style={{ marginBottom: "18px" }}>
+                                Your contact details stay visible in order details for active buyers and sellers, regardless of these settings.
+                            </p>
+                            <div className="input-row">
+                                <div className="input-group">
+                                    <label className="input-label">Email visibility</label>
+                                    <select
+                                        className="premium-select"
+                                        value={form.emailVisibility}
+                                        onChange={(e) => setField("emailVisibility", e.target.value)}
+                                    >
+                                        <option value="PRIVATE">Private</option>
+                                        <option value="PUBLIC">Public</option>
+                                    </select>
+                                </div>
+                                <div className="input-group">
+                                    <label className="input-label">Phone visibility</label>
+                                    <select
+                                        className="premium-select"
+                                        value={form.phoneVisibility}
+                                        onChange={(e) => setField("phoneVisibility", e.target.value)}
+                                    >
+                                        <option value="PRIVATE">Private</option>
+                                        <option value="PUBLIC">Public</option>
+                                    </select>
+                                </div>
                             </div>
                         </div>
 

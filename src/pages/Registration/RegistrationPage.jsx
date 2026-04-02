@@ -16,6 +16,7 @@ export default function RegistrationPage() {
         displayName: "",
         role: "",
         email: "",
+        phone: "",
         username: "",
         password: "",
     });
@@ -53,7 +54,7 @@ export default function RegistrationPage() {
         }
         if (!form.email.trim()) e.email = "Email is required.";
         else if (!/^\S+@\S+\.\S+$/.test(form.email.trim())) e.email = "Invalid email.";
-
+        if (!form.phone.trim()) e.phone = "Phone number is required.";
         if (!form.username.trim()) e.username = "Username is required.";
         else if (form.username.trim().length < 3) e.username = "Min 3 characters.";
 
@@ -80,8 +81,10 @@ export default function RegistrationPage() {
                 lastName: form.lastName,
                 firstName: form.firstName,
                 displayName: form.displayName,
-                contactNumber: form.contactNumber,
+                phone: form.phone.trim(),
                 email: form.email,
+                emailVisibility: "PRIVATE",
+                phoneVisibility: "PRIVATE",
                 avatarUrl,
             });
 
@@ -199,11 +202,26 @@ export default function RegistrationPage() {
                                 error={errors.email}
                             />
                             <Input
+                                label="Phone number"
+                                value={form.phone}
+                                onChange={(ev) => setField("phone", ev.target.value)}
+                                error={errors.phone}
+                            />
+                        </div>
+
+                        <div className="authInputRow">
+                            <Input
                                 label="Username"
                                 value={form.username}
                                 onChange={(ev) => setField("username", ev.target.value)}
                                 error={errors.username}
                             />
+                            <div className="authInputGroup">
+                                <label className="authInputLabel">Contact visibility</label>
+                                <p className="authHelperText">
+                                    Your email and phone start private. You can change visibility later in profile settings.
+                                </p>
+                            </div>
                         </div>
 
                         <div className="authInputRow authInputRow--single">
