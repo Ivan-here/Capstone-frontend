@@ -44,3 +44,24 @@ export function titleFromType(type, explicitTitle) {
     }
   }
 }
+
+function actorLabel(notification) {
+  const displayName = String(notification?.actorDisplayName || "").trim();
+  if (displayName) return displayName;
+
+  const username = String(notification?.actorUsername || "").trim();
+  if (username) return `@${username}`;
+
+  return "Someone";
+}
+
+export function messageFromNotification(notification) {
+  const type = String(notification?.type || "").toUpperCase();
+  const rawMessage = String(notification?.message || "").trim();
+
+  if (type === "NEW_FOLLOWER") {
+    return `${actorLabel(notification)} started following you.`;
+  }
+
+  return rawMessage || "You have a new notification.";
+}

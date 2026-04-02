@@ -62,35 +62,27 @@ export function getProfileAvatarUrl(profileResponse) {
   return "";
 }
 
-export function buildSidebarProfiles(me, posts) {
-  const following = me?.personalProfile?.followingPeople || [];
-  const typeByUserId = new Map(
-    (posts || []).map((post) => [post.userId, getCreatorTypeLabel(post)]),
-  );
+export function buildSidebarProfiles(followingConnections = []) {
+  return (followingConnections || [])
+    .map((connection) => {
+      const user = connection?.user || {};
+      const normalizedId = user.id || user.userId || user.username || null;
+      if (!normalizedId) return null;
 
-  if (following.length > 0) {
-    return following.map((person) => ({
-      id: person?.id || person?.userId || person?.username || Math.random().toString(36),
-      name: person?.displayName || person?.username || "User",
-      handle: person?.username ? `@${person.username}` : "",
-      type: typeByUserId.get(person?.id) || "User",
-    }));
-  }
+      const rawDisplayName = String(user.displayName || "").trim();
+      const rawUsername = String(user.username || "").trim();
+      const rawRole = String(user.role || "").trim();
 
-  const seen = new Set();
-  return (posts || [])
-    .filter((post) => {
-      if (!post?.userId || seen.has(post.userId)) return false;
-      seen.add(post.userId);
-      return true;
+      return {
+        id: normalizedId,
+        name: rawDisplayName || (rawUsername ? `@${rawUsername}` : "User"),
+        handle: rawUsername ? `@${rawUsername}` : "",
+        type: rawRole || "User",
+        avatarUrl: user.avatarUrl || "",
+      };
     })
-    .slice(0, 8)
-    .map((post) => ({
-      id: post.userId,
-      name: getAuthorLabel(post),
-      handle: getAuthorHandle(post),
-      type: getCreatorTypeLabel(post),
-    }));
+    .filter(Boolean)
+    .sort((a, b) => a.name.localeCompare(b.name));
 }
 
 export function matchesCommunityFilters(post, filters) {
@@ -138,4 +130,26 @@ export function matchesCommunityFilters(post, filters) {
   }
 
   return true;
+}
+
+
+export function mergeAvatarMap(previous = {}, nextEntries = {}) {
+  const safePrevious = previous || {};
+  const safeNextEntries = nextEntries || {};
+  const entries = Object.entries(safeNextEntries).filter(([key]) => Boolean(key));
+
+  if (entries.length === 0) return safePrevious;
+
+  let changed = false;
+  const merged = { ...safePrevious };
+
+  entries.forEach(([key, value]) => {
+    const normalizedValue = value || "";
+    if (merged[key] !== normalizedValue) {
+      merged[key] = normalizedValue;
+      changed = true;
+    }
+  });
+
+  return changed ? merged : safePrevious;
 }
