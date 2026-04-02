@@ -1,6 +1,6 @@
 import Button from "@/components/ui/Button";
 import { useNavigate } from "react-router-dom";
-import { Clock3, Mail, MapPin, PackageCheck } from "lucide-react";
+import { Clock3, Mail, MapPin, PackageCheck, Phone } from "lucide-react";
 
 export default function BusinessProfileLeft({ businessProfile, isOwnProfile }) {
     const displayName = businessProfile?.businessName || "Your Business";
@@ -9,10 +9,12 @@ export default function BusinessProfileLeft({ businessProfile, isOwnProfile }) {
     const avatarFallback = displayName.charAt(0).toUpperCase();
     const navigate = useNavigate();
     const publicEmail = businessProfile?.email?.trim();
+    const publicPhone = businessProfile?.phone?.trim();
     const operatingHours = businessProfile?.hours?.trim();
+    const pickupAvailability = businessProfile?.pickupAvailability?.trim();
     const serviceArea = businessProfile?.serviceArea?.trim();
     const pickupInstructions = businessProfile?.eligibilityNotes?.trim();
-    const hasBusinessDetails = !!(publicEmail || operatingHours || serviceArea || pickupInstructions);
+    const hasBusinessDetails = !!(publicEmail || publicPhone || operatingHours || pickupAvailability || serviceArea || pickupInstructions);
 
     return (
         <>
@@ -77,6 +79,20 @@ export default function BusinessProfileLeft({ businessProfile, isOwnProfile }) {
                             </div>
                         )}
 
+                        {publicPhone && (
+                            <div className="businessDetailRow">
+                                <div className="businessDetailLabel">
+                                    <Phone size={16} />
+                                    <span>Business phone</span>
+                                </div>
+                                <div className="businessDetailValue">
+                                    <a href={`tel:${publicPhone}`} className="linkBtn businessDetailLink">
+                                        {publicPhone}
+                                    </a>
+                                </div>
+                            </div>
+                        )}
+
                         {operatingHours && (
                             <div className="businessDetailRow">
                                 <div className="businessDetailLabel">
@@ -84,6 +100,16 @@ export default function BusinessProfileLeft({ businessProfile, isOwnProfile }) {
                                     <span>Operating hours</span>
                                 </div>
                                 <div className="businessDetailValue">{operatingHours}</div>
+                            </div>
+                        )}
+
+                        {pickupAvailability && (
+                            <div className="businessDetailRow businessDetailRow--stacked">
+                                <div className="businessDetailLabel">
+                                    <Clock3 size={16} />
+                                    <span>Pickup availability</span>
+                                </div>
+                                <div className="businessDetailValue">{pickupAvailability}</div>
                             </div>
                         )}
 

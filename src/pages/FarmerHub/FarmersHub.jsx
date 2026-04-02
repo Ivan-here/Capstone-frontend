@@ -42,6 +42,7 @@ const FarmerHub = () => {
                     title: item.title,
                     price: item.price,
                     unit: item.unit,
+                    quantity: item.quantity,
                     description: item.description,
                     imageUrl: item.imageUrls && item.imageUrls.length > 0
                         ? item.imageUrls[0]
