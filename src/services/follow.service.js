@@ -1,4 +1,6 @@
-const API_BASE_URL = 'http://localhost:9000/api/follows';
+import { BASE_URL } from "./http";
+
+const API_BASE_URL = `${BASE_URL}/api/follows`;
 
 // Helper to get headers with the current user's ID
 const getHeaders = () => {
