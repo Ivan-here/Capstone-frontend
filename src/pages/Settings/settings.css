@@ -213,5 +213,28 @@
     .settings-danger-card {
         padding: 18px;
     }
+
+    .settings-page-shell {
+        min-height: auto;
+    }
+
+    .settings-page-inner {
+        padding: 0 12px 24px;
+    }
+
+    .settings-meta-row {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 4px;
+    }
+
+    .settings-danger-actions {
+        flex-direction: column;
+    }
+
+    .settings-danger-actions button,
+    .settings-submit-btn {
+        width: 100%;
+    }
 }
 
