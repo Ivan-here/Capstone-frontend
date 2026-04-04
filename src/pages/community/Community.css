@@ -575,6 +575,20 @@
     align-items: stretch;
   }
 
+  .community-layout-grid {
+    display: flex;
+    gap: 12px;
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .community-layout-grid > * {
+    flex: 0 0 100%;
+    min-width: 100%;
+    scroll-snap-align: start;
+  }
+
   .community-page-title--mockup {
     font-size: 1.75rem;
   }
