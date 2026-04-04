@@ -571,6 +571,10 @@
     padding: 16px;
   }
 
+  .community-hero {
+    align-items: stretch;
+  }
+
   .community-page-title--mockup {
     font-size: 1.75rem;
   }
@@ -602,6 +606,16 @@
     align-items: stretch;
   }
 
+  .community-post-author {
+    align-items: flex-start;
+  }
+
+  .community-post-meta,
+  .community-comment-count,
+  .community-sidebar-meta {
+    overflow-wrap: anywhere;
+  }
+
   .community-follow-badge,
   .community-follow-btn,
   .community-heart-btn,
@@ -613,6 +627,69 @@
 
   .community-open-post-link {
     white-space: normal;
+  }
+}
+
+@media (max-width: 480px) {
+  .community-page-shell {
+    padding: 8px;
+  }
+
+  .community-page {
+    padding: 12px;
+    border-radius: 16px;
+  }
+
+  .community-layout-grid--surface {
+    padding: 8px;
+    border-radius: 14px;
+  }
+
+  .community-post-card--mockup {
+    gap: 12px;
+    padding: 12px;
+  }
+
+  .community-post-image--mockup {
+    min-height: 180px;
+    aspect-ratio: 1.15;
+  }
+
+  .community-post-title {
+    font-size: 1rem;
+  }
+
+  .community-post-content,
+  .community-comment-preview-text {
+    font-size: 0.92rem;
+  }
+
+  .community-avatar {
+    width: 40px;
+    height: 40px;
+  }
+
+  .community-post-author {
+    gap: 10px;
+  }
+
+  .community-post-header--mockup,
+  .community-post-footer--mockup {
+    gap: 10px;
+  }
+
+  .community-reaction-row--single {
+    gap: 10px;
+  }
+
+  .community-heart-btn,
+  .community-follow-btn,
+  .community-primary-btn,
+  .community-secondary-btn,
+  .community-open-post-link {
+    min-width: 0;
+    padding: 10px 12px;
+    font-size: 0.92rem;
   }
 }
 
