@@ -5,6 +5,7 @@ import { getStripe } from '@/lib/stripe';
 import { orderService } from '@/services/order.service';
 import { profileService } from '@/services/profile.service';
 import { supportService } from '@/services/support.service';
+import { formatPublicOrderId } from '@/utils/formatters.js';
 import './OrderDetailsPage.css';
 
 function formatMoney(cents) {
@@ -292,7 +293,7 @@ export default function OrderDetailsPage() {
             setBusyAction('dispute');
             await supportService.createStaffRequest({
                 category: 'ORDER_DISPUTE',
-                subject: `Order dispute for #${order.id}`,
+                subject: `Order dispute for #${formatPublicOrderId(order.id)}`,
                 message: disputeMessage.trim(),
                 referenceType: 'ORDER',
                 referenceId: order.id,
@@ -335,7 +336,7 @@ export default function OrderDetailsPage() {
 
                 <div className="order-details-header">
                     <div>
-                        <h1>Order #{order.id}</h1>
+                        <h1>Order #{formatPublicOrderId(order.id)}</h1>
                         <div className={statusTone}>{order.status || 'UNKNOWN'}</div>
                     </div>
                     <div className="order-details-summary">
