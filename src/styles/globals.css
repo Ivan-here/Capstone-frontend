@@ -372,3 +372,67 @@ html, body {
     background-color: #2ecc71;
     color: white;
 }
+
+@media (max-width: 768px) {
+    .container {
+        padding: 16px;
+    }
+
+    .navbar-top {
+        height: auto;
+        min-height: 64px;
+        padding: 12px 16px;
+        gap: 12px;
+        flex-wrap: wrap;
+        justify-content: center;
+    }
+
+    .nav-spacer {
+        display: none;
+    }
+
+    .nav-title {
+        width: 100%;
+        text-align: center;
+        font-size: 1.5rem;
+        letter-spacing: 0.08em;
+        order: -1;
+    }
+
+    .nav-icons {
+        width: auto;
+        max-width: 100%;
+        justify-content: center;
+        gap: 10px;
+        flex-wrap: wrap;
+    }
+
+    .navbar-bottom {
+        height: auto;
+        overflow-x: auto;
+        overflow-y: hidden;
+        justify-content: flex-start;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    .nav-tab {
+        flex: 0 0 auto;
+        min-width: 140px;
+        min-height: 44px;
+        padding: 10px 14px;
+        white-space: nowrap;
+    }
+
+    .support-modal {
+        padding: 18px;
+    }
+
+    .support-modal-header,
+    .support-modal-actions {
+        flex-direction: column;
+    }
+
+    .support-modal-actions {
+        align-items: stretch;
+    }
+}
