@@ -571,10 +571,48 @@
     padding: 16px;
   }
 
+  .community-page-title--mockup {
+    font-size: 1.75rem;
+  }
+
+  .community-layout-grid--surface {
+    padding: 10px;
+    border-radius: 16px;
+  }
+
   .community-filters-grid,
   .community-form-grid,
   .community-filters-grid--mockup {
     grid-template-columns: 1fr;
+  }
+
+  .community-post-card,
+  .community-sidebar-card,
+  .community-filters-card,
+  .community-panel-card,
+  .community-status {
+    padding: 14px;
+    border-radius: 14px;
+  }
+
+  .community-post-footer--mockup,
+  .community-reaction-row--single,
+  .community-sidebar-item,
+  .community-sidebar-person {
+    align-items: stretch;
+  }
+
+  .community-follow-badge,
+  .community-follow-btn,
+  .community-heart-btn,
+  .community-primary-btn,
+  .community-secondary-btn {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .community-open-post-link {
+    white-space: normal;
   }
 }
 
