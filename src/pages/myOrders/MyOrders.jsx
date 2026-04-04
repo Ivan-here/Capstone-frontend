@@ -5,6 +5,7 @@ import { useCart } from '../cart/CartContext.jsx';
 import { orderService } from '@/services/order.service';
 import { profileService } from '@/services/profile.service';
 import ReviewModal from './ReviewModal.jsx';
+import { formatPublicOrderId } from '@/utils/formatters.js';
 import './MyOrders.css';
 
 const statusStyles = {
@@ -199,7 +200,7 @@ const MyOrders = () => {
                                                     {style.icon} {order.status || 'UNKNOWN'}
                                                 </span>
                                                 <span className="my-orders-meta">
-                                                    {formatDate(order)} | #{order.id}
+                                                    {formatDate(order)} | #{formatPublicOrderId(order.id)}
                                                 </span>
                                                 <span className="my-orders-meta">
                                                     Payment: {order.paymentStatus || 'N/A'}
