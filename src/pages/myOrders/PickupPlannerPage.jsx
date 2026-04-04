@@ -3,6 +3,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import { ArrowLeft, CalendarDays, Clock3, Mail, MapPin, Phone } from "lucide-react";
 import { orderService } from "@/services/order.service";
 import { profileService } from "@/services/profile.service";
+import { formatPublicOrderId } from "@/utils/formatters.js";
 import "./PickupPlannerPage.css";
 
 function formatDateLabel(date) {
@@ -97,7 +98,7 @@ export default function PickupPlannerPage() {
                         <p className="muted">Use this as a coordination guide after payment. Confirm the exact pickup time directly with the business.</p>
                     </div>
                     <div className="pickup-planner-header-actions">
-                        <div className="pickup-planner-chip">Order #{order.id}</div>
+                        <div className="pickup-planner-chip">Order #{formatPublicOrderId(order.id)}</div>
                         <button onClick={() => navigate(`/orders/${order.id}`)} className="back-link">
                             <ArrowLeft size={18} />
                             Back to Order Details

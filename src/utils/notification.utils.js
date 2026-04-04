@@ -1,3 +1,5 @@
+import { formatPublicOrderId } from "./formatters";
+
 export function timeAgo(dateInput) {
   const ts = typeof dateInput === "string"
     ? new Date(dateInput).getTime()
@@ -63,5 +65,9 @@ export function messageFromNotification(notification) {
     return `${actorLabel(notification)} started following you.`;
   }
 
-  return rawMessage || "You have a new notification.";
+  if (rawMessage) {
+    return rawMessage.replace(/order #([a-zA-Z0-9-]+)/gi, (_, orderId) => `order #${formatPublicOrderId(orderId)}`);
+  }
+
+  return "You have a new notification.";
 }
