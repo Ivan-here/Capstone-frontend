@@ -185,6 +185,13 @@ const ProductDetails = () => {
                             </span>
                         </div>
 
+                        {product.category ? (
+                            <div className="pd-category-row">
+                                <span className="pd-category-label">Category</span>
+                                <span className="pd-category-pill">{product.category}</span>
+                            </div>
+                        ) : null}
+
                         <div className="pd-price">
                             {product.price > 0 ? `$${product.price}/${product.unit}` : "Free Donation"}
                         </div>

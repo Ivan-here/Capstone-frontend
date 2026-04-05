@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Filter, Search, X } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { listingService } from '@/services/listing.service.js';
-import { BROWSE_CATEGORY_GROUPS } from '@/constants/listingCategories.js';
+import { BROWSE_CATEGORY_GROUPS, BROWSE_CATEGORY_OPTIONS } from '@/constants/listingCategories.js';
 import './Browse.css';
 
 const formatDate = (dateString) => {
@@ -71,15 +71,15 @@ const Browse = () => {
 
     const filteredListings = listings.filter(item => {
         const safeTitle = item.title || "";
-        const matchesSearch = safeTitle.toLowerCase().includes(searchTerm.toLowerCase());
+        const normalizedSearch = searchTerm.toLowerCase();
+        const matchesSearch =
+            safeTitle.toLowerCase().includes(normalizedSearch) ||
+            String(item.category || "").toLowerCase().includes(normalizedSearch);
 
         let matchesCategory = true;
         if (selectedCategories.length > 0) {
-            matchesCategory = selectedCategories.some(filterName => {
-                const allowedValues = BROWSE_CATEGORY_GROUPS[filterName] || [];
-                const itemCat = item.category || "";
-                return allowedValues.includes(itemCat.toLowerCase());
-            });
+            const itemCat = String(item.category || "").toLowerCase();
+            matchesCategory = selectedCategories.some((category) => category.toLowerCase() === itemCat);
         }
         return matchesSearch && matchesCategory;
     });
@@ -106,12 +106,26 @@ const Browse = () => {
                 </div>
                 <div className="filter-scroll-area">
                     <div className="filter-group">
+                        <h3>Browse Collections</h3>
+                        <div className="filter-pills">
+                            {Object.keys(BROWSE_CATEGORY_GROUPS).map((groupName) => (
+                                <span key={groupName} className="filter-pill">
+                                    {groupName}
+                                </span>
+                            ))}
+                        </div>
+                    </div>
+
+                    <div className="filter-group">
                         <h3>Category</h3>
-                        {Object.keys(BROWSE_CATEGORY_GROUPS).map(cat => (
-                            <label key={cat}>
-                                <input type="checkbox" checked={selectedCategories.includes(cat)} onChange={() => toggleCategory(cat)} /> {cat}
-                            </label>
-                        ))}
+                        <div className="filter-checkbox-grid">
+                            {BROWSE_CATEGORY_OPTIONS.map((cat) => (
+                                <label key={cat} className={`filter-checkbox-card ${selectedCategories.includes(cat) ? 'is-selected' : ''}`}>
+                                    <input type="checkbox" checked={selectedCategories.includes(cat)} onChange={() => toggleCategory(cat)} />
+                                    <span>{cat}</span>
+                                </label>
+                            ))}
+                        </div>
                     </div>
                     <div className="filter-actions">
                         <button className="btn-secondary full-width" onClick={() => { setSearchTerm(""); setSelectedCategories([]); }}>Reset All</button>
@@ -149,6 +163,7 @@ const Browse = () => {
                                     </div>
                                     <div className="tile-info">
                                         <h3>{item.title || "Unnamed Product"}</h3>
+                                        {item.category ? <div className="tile-category">{item.category}</div> : null}
                                         <p>{formatQuantityText(item.quantity, item.unit)}{item.description ? `, ${item.description}` : ''}</p>
 
                                         {item.price === 0 && item.expiryDate && (
