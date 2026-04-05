@@ -3,13 +3,15 @@ import { Search, RefreshCw, Package } from "lucide-react";
 import { adminService } from "@/services/admin.service";
 import "./AdminListings.css";
 
+const LISTING_STATUSES = ["ACTIVE", "OUT_OF_STOCK", "EXPIRED", "CLOSED"];
+
 function formatDate(value) {
-    if (!value) return "—";
+    if (!value) return "-";
     return new Date(value).toLocaleString();
 }
 
 function formatPrice(price, unit) {
-    if (price == null) return "—";
+    if (price == null) return "-";
     const num = Number(price);
     if (Number.isNaN(num)) return `${price}`;
     return unit ? `$${num.toFixed(2)}/${unit}` : `$${num.toFixed(2)}`;
@@ -62,16 +64,20 @@ export default function AdminListings() {
         });
     }, [listings, searchTerm, statusFilter, typeFilter]);
 
-    async function closeListing(id) {
+    async function updateListingStatus(id, status) {
         try {
-            const updated = await adminService.closeListing(id);
+            const updated = await adminService.updateListingStatus(id, status);
             setListings((prev) => prev.map((item) => (item.id === id ? updated : item)));
             if (selectedListing?.id === id) {
                 setSelectedListing(updated);
             }
         } catch (err) {
-            alert(err.message || "Failed to close listing.");
+            alert(err.message || "Failed to update listing status.");
         }
+    }
+
+    async function closeListing(id) {
+        return updateListingStatus(id, "CLOSED");
     }
 
     async function deleteListing(id) {
@@ -113,7 +119,7 @@ export default function AdminListings() {
                 <div className="admin-section-header">
                     <div>
                         <h1>Listings</h1>
-                        <p>Monitor all marketplace listings, inspect details, close, or remove them.</p>
+                        <p>Monitor all marketplace listings, inspect details, change status, or remove them.</p>
                     </div>
 
                     <button className="admin-refresh-btn" onClick={loadListings}>
@@ -135,9 +141,11 @@ export default function AdminListings() {
 
                     <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)}>
                         <option value="">All Statuses</option>
-                        <option value="ACTIVE">ACTIVE</option>
-                        <option value="OUT_OF_STOCK">OUT_OF_STOCK</option>
-                        <option value="EXPIRED">EXPIRED</option>
+                        {LISTING_STATUSES.map((status) => (
+                            <option key={status} value={status}>
+                                {status}
+                            </option>
+                        ))}
                     </select>
 
                     <select value={typeFilter} onChange={(e) => setTypeFilter(e.target.value)}>
@@ -187,14 +195,22 @@ export default function AdminListings() {
                                                     </div>
                                                 </td>
 
-                                                <td>{item.type || "—"}</td>
+                                                <td>{item.type || "-"}</td>
                                                 <td>{formatPrice(item.price, item.unit)}</td>
-                                                <td>{item.quantity ?? "—"}</td>
+                                                <td>{item.quantity ?? "-"}</td>
 
                                                 <td>
-                                                        <span className={`admin-badge admin-badge-${String(item.status || "").toLowerCase()}`}>
-                                                            {item.status}
-                                                        </span>
+                                                    <select
+                                                        className="admin-status-select"
+                                                        value={item.status || "ACTIVE"}
+                                                        onChange={(e) => updateListingStatus(item.id, e.target.value)}
+                                                    >
+                                                        {LISTING_STATUSES.map((status) => (
+                                                            <option key={status} value={status}>
+                                                                {status}
+                                                            </option>
+                                                        ))}
+                                                    </select>
                                                 </td>
 
                                                 <td>
@@ -250,35 +266,45 @@ export default function AdminListings() {
 
                                 <div className="admin-detail-group">
                                     <label>Business</label>
-                                    <p>{selectedListing.businessName || "—"}</p>
+                                    <p>{selectedListing.businessName || "-"}</p>
                                 </div>
 
                                 <div className="admin-detail-group">
                                     <label>Owner ID</label>
-                                    <p>{selectedListing.ownerId || "—"}</p>
+                                    <p>{selectedListing.ownerId || "-"}</p>
                                 </div>
 
                                 <div className="admin-detail-group">
                                     <label>Description</label>
-                                    <p>{selectedListing.description || "—"}</p>
+                                    <p>{selectedListing.description || "-"}</p>
                                 </div>
 
                                 <div className="admin-detail-grid">
                                     <div className="admin-detail-group">
                                         <label>Category</label>
-                                        <p>{selectedListing.category || "—"}</p>
+                                        <p>{selectedListing.category || "-"}</p>
                                     </div>
                                     <div className="admin-detail-group">
                                         <label>Type</label>
-                                        <p>{selectedListing.type || "—"}</p>
+                                        <p>{selectedListing.type || "-"}</p>
                                     </div>
                                     <div className="admin-detail-group">
                                         <label>Status</label>
-                                        <p>{selectedListing.status || "—"}</p>
+                                        <select
+                                            className="admin-status-select"
+                                            value={selectedListing.status || "ACTIVE"}
+                                            onChange={(e) => updateListingStatus(selectedListing.id, e.target.value)}
+                                        >
+                                            {LISTING_STATUSES.map((status) => (
+                                                <option key={status} value={status}>
+                                                    {status}
+                                                </option>
+                                            ))}
+                                        </select>
                                     </div>
                                     <div className="admin-detail-group">
                                         <label>Pickup Location</label>
-                                        <p>{selectedListing.pickupLocation || "—"}</p>
+                                        <p>{selectedListing.pickupLocation || "-"}</p>
                                     </div>
                                     <div className="admin-detail-group">
                                         <label>Price</label>
@@ -286,7 +312,7 @@ export default function AdminListings() {
                                     </div>
                                     <div className="admin-detail-group">
                                         <label>Quantity</label>
-                                        <p>{selectedListing.quantity ?? "—"}</p>
+                                        <p>{selectedListing.quantity ?? "-"}</p>
                                     </div>
                                     <div className="admin-detail-group">
                                         <label>Expiry</label>
@@ -306,7 +332,7 @@ export default function AdminListings() {
                                                 <span key={tag} className="admin-role-pill">{tag}</span>
                                             ))
                                         ) : (
-                                            <p>—</p>
+                                            <p>-</p>
                                         )}
                                     </div>
                                 </div>

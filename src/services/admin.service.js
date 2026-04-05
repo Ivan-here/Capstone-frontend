@@ -169,6 +169,12 @@ export const adminService = {
         });
     },
 
+    updateListingStatus(id, status) {
+        return apiFetch(`/admin/listings/${id}/status?status=${encodeURIComponent(status)}`, {
+            method: "PATCH",
+        });
+    },
+
     deleteListing(id) {
         return apiFetch(`/admin/listings/${id}`, {
             method: "DELETE",
