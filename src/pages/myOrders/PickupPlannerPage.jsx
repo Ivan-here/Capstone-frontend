@@ -4,6 +4,7 @@ import { ArrowLeft, CalendarDays, Clock3, Mail, MapPin, Phone } from "lucide-rea
 import { orderService } from "@/services/order.service";
 import { profileService } from "@/services/profile.service";
 import { formatPublicOrderId } from "@/utils/formatters.js";
+import { getScheduleForDate, isNormalizedWeeklySchedule, weeklyScheduleLines } from "@/utils/weeklySchedule.js";
 import "./PickupPlannerPage.css";
 
 function formatDateLabel(date) {
@@ -80,6 +81,9 @@ export default function PickupPlannerPage() {
     const days = useMemo(() => buildUpcomingDays(), []);
     const sellerBusiness = sellerProfile?.businessProfile;
     const buyerPersonal = buyerProfile?.personalProfile;
+    const sellerAvailability = sellerBusiness?.pickupAvailability || sellerBusiness?.hours || "";
+    const structuredAvailability = isNormalizedWeeklySchedule(sellerAvailability);
+    const availabilityLines = weeklyScheduleLines(sellerAvailability);
 
     if (loading) {
         return <div className="pickup-planner-page"><div className="pickup-planner-shell">Loading pickup planner...</div></div>;
@@ -109,14 +113,33 @@ export default function PickupPlannerPage() {
                 <div className="profileContainer pickup-planner-shell">
                     <section className="pickup-planner-card pickup-planner-card--wide">
                         <h2><CalendarDays size={18} /> Suggested Pickup Window</h2>
-                        <p className="pickup-planner-copy">
-                            Seller availability: {sellerBusiness?.pickupAvailability || sellerBusiness?.hours || "Not provided yet. Contact the seller directly."}
-                        </p>
+                        {sellerAvailability ? (
+                            structuredAvailability ? (
+                                <div className="pickup-planner-schedule-box">
+                                    <strong>Seller availability</strong>
+                                    <div className="pickup-planner-schedule-list">
+                                        {availabilityLines.map((line) => (
+                                            <div key={line}>{line}</div>
+                                        ))}
+                                    </div>
+                                </div>
+                            ) : (
+                                <p className="pickup-planner-copy">
+                                    Seller availability: {sellerAvailability}
+                                </p>
+                            )
+                        ) : (
+                            <p className="pickup-planner-copy">Seller availability: Not provided yet. Contact the seller directly.</p>
+                        )}
                         <div className="pickup-planner-days">
                             {days.map((day) => (
                                 <div key={day.key} className="pickup-planner-day">
                                     <strong>{day.label}</strong>
-                                    <span>{sellerBusiness?.pickupAvailability || sellerBusiness?.hours || "Contact seller to agree on a time"}</span>
+                                    <span>
+                                        {structuredAvailability
+                                            ? (getScheduleForDate(sellerAvailability, new Date(`${day.key}T12:00:00`))?.label || "Contact seller to agree on a time")
+                                            : (sellerAvailability || "Contact seller to agree on a time")}
+                                    </span>
                                 </div>
                             ))}
                         </div>
