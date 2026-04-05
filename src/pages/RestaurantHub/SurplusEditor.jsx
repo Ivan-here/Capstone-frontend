@@ -3,7 +3,9 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { ImagePlus, PencilLine, X } from 'lucide-react';
 import { listingService } from '@/services/listing.service.js';
 import { authService } from '@/services/auth.service.js';
+import { SURPLUS_FOOD_CATEGORIES } from '@/constants/listingCategories.js';
 import '../FarmerHub/ProductEditor.css';
+import '../FarmerHub/editorOptions.css';
 
 const SurplusEditor = ({ mode = 'add' }) => {
     const { id } = useParams();
@@ -12,7 +14,7 @@ const SurplusEditor = ({ mode = 'add' }) => {
     const [title, setTitle] = useState('');
     const [quantity, setQuantity] = useState('');
     const [unit, setUnit] = useState('kg');
-    const [category, setCategory] = useState('Prepared Meals');
+    const [category, setCategory] = useState(SURPLUS_FOOD_CATEGORIES[0]);
     const [description, setDescription] = useState('');
     const [expiryDate, setExpiryDate] = useState('');
 
@@ -28,7 +30,7 @@ const SurplusEditor = ({ mode = 'add' }) => {
                     setTitle(data.title || '');
                     setQuantity(data.quantity || '');
                     setUnit(data.unit || 'kg');
-                    setCategory(data.category || 'Prepared Meals');
+                    setCategory(data.category || SURPLUS_FOOD_CATEGORIES[0]);
                     setDescription(data.description || '');
 
                     if (data.expiryDate) {
@@ -228,12 +230,11 @@ const SurplusEditor = ({ mode = 'add' }) => {
 
                             <div className="input-row">
                                 <label>Category:</label>
-                                <div className="input-with-icon" style={{ paddingRight: '10px' }}>
-                                    <select value={category} onChange={(e) => setCategory(e.target.value)} style={{ background: 'transparent', border: 'none', outline: 'none', width: '100%', fontSize: '18px', padding: '5px' }}>
-                                        <option value="Prepared Meals">Prepared Meals</option>
-                                        <option value="Baked Goods">Baked Goods</option>
-                                        <option value="Fresh Ingredients">Fresh Ingredients</option>
-                                        <option value="Canned/Packaged">Canned/Packaged</option>
+                                <div className="editor-select-wrap">
+                                    <select className="editor-select" value={category} onChange={(e) => setCategory(e.target.value)}>
+                                        {SURPLUS_FOOD_CATEGORIES.map((item) => (
+                                            <option key={item} value={item}>{item}</option>
+                                        ))}
                                     </select>
                                 </div>
                             </div>
