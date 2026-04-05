@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { Store, MapPin, Mail, Clock, Truck, Info, ArrowLeft, Phone, ShieldCheck } from "lucide-react";
 import Button from "@/components/ui/Button";
 import Input from "@/components/ui/Input";
+import WeeklyScheduleEditor from "@/components/ui/WeeklyScheduleEditor";
 import { cloudinaryService } from "@/services/cloudinary.service";
 import { profileService } from "@/services/profile.service";
 
@@ -260,20 +261,20 @@ export default function EditBusinessProfilePage() {
                         {/* Section 3: Logistics & Operations */}
                         <div className="form-section">
                             <div className="section-title"><Truck size={18} /> Logistics & Operations</div>
-                            <div className="input-row">
-                                <Input
+                            <div className="input-group">
+                                <WeeklyScheduleEditor
                                     label="Operating Hours"
-                                    icon={<Clock size={16}/>}
-                                    placeholder="e.g. Mon-Fri, 9am - 5pm"
                                     value={form.hours}
-                                    onChange={(e) => setField("hours", e.target.value)}
+                                    onChange={(nextValue) => setField("hours", nextValue)}
+                                    helperText="This keeps business hours normalized across the profile and admin views."
                                 />
-                                <Input
+                            </div>
+                            <div className="input-group" style={{ marginTop: "18px" }}>
+                                <WeeklyScheduleEditor
                                     label="Pickup Availability"
-                                    icon={<Clock size={16}/>}
-                                    placeholder="e.g. Tue-Thu 2pm - 6pm"
                                     value={form.pickupAvailability}
-                                    onChange={(e) => setField("pickupAvailability", e.target.value)}
+                                    onChange={(nextValue) => setField("pickupAvailability", nextValue)}
+                                    helperText="Use a separate schedule if pickups are narrower than your main business hours."
                                 />
                             </div>
                             <div className="input-row">

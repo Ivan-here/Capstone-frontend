@@ -1,0 +1,124 @@
+.weeklySchedule {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+}
+
+.weeklyScheduleHeader {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.weeklyScheduleLabel {
+    font-weight: 700;
+    color: #3e4a2c;
+}
+
+.weeklyScheduleHelp {
+    margin: 0;
+    font-size: 0.92rem;
+    color: rgba(62, 74, 44, 0.75);
+    line-height: 1.45;
+}
+
+.weeklyScheduleGrid {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.weeklyScheduleRow {
+    display: grid;
+    grid-template-columns: 64px 88px minmax(0, 1fr) 28px minmax(0, 1fr);
+    gap: 10px;
+    align-items: center;
+    padding: 12px 14px;
+    border-radius: 14px;
+    background: #f9fbf7;
+    border: 1px solid #e2e8da;
+}
+
+.weeklyScheduleRow.is-closed {
+    opacity: 0.82;
+    background: #f3f4ef;
+}
+
+.weeklyScheduleDay {
+    font-weight: 800;
+    color: #2d2d2d;
+}
+
+.weeklyScheduleClosed {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.92rem;
+    color: #55653f;
+}
+
+.weeklyScheduleTime {
+    width: 100%;
+    min-height: 44px;
+    border: 1px solid #d7decf;
+    border-radius: 12px;
+    padding: 0 12px;
+    background: #fff;
+    font: inherit;
+    color: #2d2d2d;
+}
+
+.weeklyScheduleTime:disabled {
+    background: #ecefe5;
+    color: #8a9675;
+}
+
+.weeklyScheduleDash {
+    text-align: center;
+    color: #6f795b;
+    font-weight: 700;
+}
+
+.weeklySchedulePreview {
+    border-radius: 14px;
+    background: #f3f0e6;
+    border: 1px solid rgba(74, 93, 35, 0.12);
+    padding: 12px 14px;
+}
+
+.weeklySchedulePreview span {
+    display: block;
+    margin-bottom: 8px;
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: #55653f;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.weeklySchedulePreview pre {
+    margin: 0;
+    white-space: pre-wrap;
+    font-family: inherit;
+    font-size: 0.92rem;
+    color: #3e3b32;
+    line-height: 1.5;
+}
+
+@media (max-width: 700px) {
+    .weeklyScheduleRow {
+        grid-template-columns: 1fr 1fr;
+    }
+
+    .weeklyScheduleDay {
+        grid-column: 1 / -1;
+    }
+
+    .weeklyScheduleClosed {
+        grid-column: 1 / -1;
+    }
+
+    .weeklyScheduleDash {
+        display: none;
+    }
+}
