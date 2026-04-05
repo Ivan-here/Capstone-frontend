@@ -8,6 +8,49 @@
     gap: 15px;
 }
 
+.grid-card-status {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding: 14px 16px;
+    border-radius: 16px;
+}
+
+.grid-card-status-ngo {
+    background: linear-gradient(135deg, #eef3df 0%, #f8f3e6 100%);
+    border: 1px solid rgba(118, 143, 72, 0.28);
+}
+
+.grid-card-status-head {
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+}
+
+.grid-card-status-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 7px 12px;
+    border-radius: 999px;
+    background: #768F48;
+    color: #fff;
+    font-size: 0.78rem;
+    font-weight: 800;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+}
+
+.grid-card-status-copy {
+    display: inline-flex;
+    align-items: flex-start;
+    gap: 8px;
+    color: #465131;
+    font-size: 0.9rem;
+    line-height: 1.4;
+    font-weight: 600;
+}
+
 .grid-card-content {
     display: flex;
     gap: 15px;
