@@ -40,6 +40,7 @@
 
 .admin-badge-rejected,
 .admin-badge-cancelled,
+.admin-badge-closed,
 .admin-badge-suspended,
 .admin-badge-expired {
     background-color: #F4D8D8;
