@@ -106,6 +106,32 @@
 .rating-row { display: flex; align-items: center; gap: 8px; margin-bottom: 20px; }
 .rating-number { font-weight: bold; font-size: 0.9rem; }
 
+.pd-category-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 18px;
+}
+
+.pd-category-label {
+    font-size: 0.82rem;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: #7f6d4a;
+}
+
+.pd-category-pill {
+    display: inline-flex;
+    align-items: center;
+    padding: 7px 12px;
+    border-radius: 999px;
+    background: #e7e1ce;
+    color: #5b4720;
+    font-size: 0.9rem;
+    font-weight: 700;
+}
+
 .pd-price { font-size: 1.5rem; font-weight: bold; color: #333; margin-bottom: 24px; }
 
 .pd-meta-row {
