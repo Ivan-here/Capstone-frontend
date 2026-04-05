@@ -175,6 +175,27 @@ export const adminService = {
         });
     },
 
+    // Community
+    getAllCommunityPosts() {
+        return apiFetch("/admin/community/posts");
+    },
+
+    getCommunityPostById(id) {
+        return apiFetch(`/admin/community/posts/${id}`);
+    },
+
+    deleteCommunityComment(postId, commentId) {
+        return apiFetch(`/admin/community/posts/${postId}/comments/${commentId}`, {
+            method: "DELETE",
+        });
+    },
+
+    deleteCommunityPost(id) {
+        return apiFetch(`/admin/community/posts/${id}`, {
+            method: "DELETE",
+        });
+    },
+
     // Orders
     getAllOrders() {
         return apiFetch("/admin/orders");
