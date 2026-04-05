@@ -6,8 +6,13 @@ import "./AdminReservations.css";
 const RESERVATION_STATUSES = ["RESERVED", "PICKED_UP", "CANCELLED"];
 
 function formatDate(value) {
-    if (!value) return "—";
+    if (!value) return "-";
     return new Date(value).toLocaleString();
+}
+
+function normalizeReservationStatus(status) {
+    const normalized = String(status || "").trim().toUpperCase();
+    return normalized === "CANCELED" ? "CANCELLED" : normalized;
 }
 
 export default function AdminReservations() {
@@ -40,6 +45,7 @@ export default function AdminReservations() {
     const filteredReservations = useMemo(() => {
         return reservations.filter((item) => {
             const q = searchTerm.trim().toLowerCase();
+            const normalizedStatus = normalizeReservationStatus(item.status);
 
             const matchesSearch =
                 !q ||
@@ -47,9 +53,9 @@ export default function AdminReservations() {
                 item.ngoId?.toLowerCase().includes(q) ||
                 item.restaurantId?.toLowerCase().includes(q) ||
                 item.surplusItemId?.toLowerCase().includes(q) ||
-                item.status?.toLowerCase().includes(q);
+                normalizedStatus.toLowerCase().includes(q);
 
-            const matchesStatus = !statusFilter || item.status === statusFilter;
+            const matchesStatus = !statusFilter || normalizedStatus === statusFilter;
 
             return matchesSearch && matchesStatus;
         });
@@ -57,7 +63,7 @@ export default function AdminReservations() {
 
     async function updateStatus(id, status) {
         try {
-            const updated = await adminService.updateReservationStatus(id, status);
+            const updated = await adminService.updateReservationStatus(id, normalizeReservationStatus(status));
             setReservations((prev) => prev.map((item) => (item.id === id ? updated : item)));
             if (selectedReservation?.id === id) {
                 setSelectedReservation(updated);
@@ -169,19 +175,19 @@ export default function AdminReservations() {
                                                     </div>
                                                     <div>
                                                         <strong>{item.id}</strong>
-                                                        <p>Item: {item.surplusItemId || "—"}</p>
-                                                        <span>{item.status || "—"}</span>
+                                                        <p>Item: {item.surplusItemId || "-"}</p>
+                                                        <span>{normalizeReservationStatus(item.status) || "-"}</span>
                                                     </div>
                                                 </div>
                                             </td>
 
-                                            <td>{item.ngoId || "—"}</td>
-                                            <td>{item.restaurantId || "—"}</td>
+                                            <td>{item.ngoId || "-"}</td>
+                                            <td>{item.restaurantId || "-"}</td>
 
                                             <td>
                                                 <select
                                                     className="admin-status-select"
-                                                    value={item.status || "RESERVED"}
+                                                    value={normalizeReservationStatus(item.status) || "RESERVED"}
                                                     onChange={(e) => updateStatus(item.id, e.target.value)}
                                                 >
                                                     {RESERVATION_STATUSES.map((status) => (
@@ -236,22 +242,22 @@ export default function AdminReservations() {
 
                                     <div className="admin-detail-group">
                                         <label>NGO ID</label>
-                                        <p>{selectedReservation.ngoId || "—"}</p>
+                                        <p>{selectedReservation.ngoId || "-"}</p>
                                     </div>
 
                                     <div className="admin-detail-group">
                                         <label>Restaurant ID</label>
-                                        <p>{selectedReservation.restaurantId || "—"}</p>
+                                        <p>{selectedReservation.restaurantId || "-"}</p>
                                     </div>
 
                                     <div className="admin-detail-group">
                                         <label>Surplus Item ID</label>
-                                        <p>{selectedReservation.surplusItemId || "—"}</p>
+                                        <p>{selectedReservation.surplusItemId || "-"}</p>
                                     </div>
 
                                     <div className="admin-detail-group">
                                         <label>Status</label>
-                                        <p>{selectedReservation.status || "—"}</p>
+                                        <p>{normalizeReservationStatus(selectedReservation.status) || "-"}</p>
                                     </div>
 
                                     <div className="admin-detail-group">
