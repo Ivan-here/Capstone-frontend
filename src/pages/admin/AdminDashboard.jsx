@@ -7,6 +7,7 @@ import {
     CalendarClock,
     Building2,
     Bell,
+    MessageSquareText,
     ArrowRight,
     RefreshCw,
 } from "lucide-react";
@@ -74,9 +75,15 @@ const quickLinks = [
     },
     {
         title: "Listings Control",
-        text: "Close, inspect, or delete marketplace listings.",
+        text: "Inspect, moderate, or remove marketplace listings.",
         route: "/admin/listings",
         icon: Package,
+    },
+    {
+        title: "Community Moderation",
+        text: "Review posts, inspect comments, and remove harmful content.",
+        route: "/admin/community",
+        icon: MessageSquareText,
     },
     {
         title: "Orders Overview",
