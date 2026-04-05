@@ -39,3 +39,8 @@ export const BROWSE_CATEGORY_GROUPS = {
     "Ready to Eat": ["prepared meals", "bakery & pastries", "frozen food", "desserts", "snacks", "beverages", "catering surplus", "mixed food boxes"],
     Donations: ["fresh produce", "prepared meals", "bakery & pastries", "pantry goods", "packaged meals", "frozen food", "beverages", "snacks", "desserts", "catering surplus", "mixed food boxes"],
 };
+
+export const BROWSE_CATEGORY_OPTIONS = [
+    ...FARM_PRODUCT_CATEGORIES,
+    ...SURPLUS_FOOD_CATEGORIES,
+];
