@@ -37,7 +37,7 @@ export default function AdminProfiles() {
     const [businessTypeFilter, setBusinessTypeFilter] = useState("");
     const [verifiedFilter, setVerifiedFilter] = useState("");
     const [selectedProfile, setSelectedProfile] = useState(null);
-    const [reviewingVerificationId, setReviewingVerificationId] = useState(null);
+    const [reviewState, setReviewState] = useState(null);
     const [reviewForm, setReviewForm] = useState({ status: "APPROVED", adminNotes: "", selectedRole: "" });
     const [savingReview, setSavingReview] = useState(false);
     const [changingRole, setChangingRole] = useState("");
@@ -107,7 +107,7 @@ export default function AdminProfiles() {
     const currentRoles = activeTab === "BUSINESS" && selectedProfile && Array.isArray(usersById[selectedProfile.userId]?.roles)
         ? usersById[selectedProfile.userId].roles
         : [];
-    const isReviewingSelectedBusiness = selectedVerification && reviewingVerificationId === selectedVerification.id;
+    const isReviewingSelectedBusiness = reviewState?.userId === selectedProfile?.userId;
 
     async function refreshBusinessProfile(userId) {
         const refreshed = await adminService.getBusinessProfile(userId);
@@ -128,7 +128,7 @@ export default function AdminProfiles() {
     function startBusinessReview(profile) {
         const verification = verificationByUser[profile.userId];
         if (!verification) return alert("No verification request is available for this business profile.");
-        setReviewingVerificationId(verification.id);
+        setReviewState({ mode: "verification", userId: profile.userId, verificationId: verification.id, targetVerified: true });
         setReviewForm({
             status: verification.status === "PENDING" ? "APPROVED" : verification.status || "APPROVED",
             adminNotes: verification.adminNotes || "",
@@ -136,8 +136,17 @@ export default function AdminProfiles() {
         });
     }
 
+    function startManualVerificationReview(profile, targetVerified) {
+        setReviewState({ mode: "manual", userId: profile.userId, targetVerified });
+        setReviewForm({
+            status: targetVerified ? "APPROVED" : "REJECTED",
+            adminNotes: "",
+            selectedRole: profile.businessType || "",
+        });
+    }
+
     function cancelBusinessReview() {
-        setReviewingVerificationId(null);
+        setReviewState(null);
         setReviewForm({ status: "APPROVED", adminNotes: "", selectedRole: "" });
         setChangingRole("");
     }
@@ -167,28 +176,47 @@ export default function AdminProfiles() {
     }
 
     async function submitBusinessReview(profile) {
+        if (!reviewState) return;
         const verification = verificationByUser[profile.userId];
-        if (!verification) return alert("No verification request is available for this business profile.");
-        if (reviewForm.status === "REJECTED" && !reviewForm.adminNotes.trim()) return alert("Please provide a rejection reason before saving.");
-        if (reviewForm.status === "APPROVED" && !reviewForm.selectedRole) return alert("Please select a role before approving.");
+        if (reviewState.mode === "verification" && !verification) return alert("No verification request is available for this business profile.");
+        if (!reviewForm.adminNotes.trim()) return alert("Please provide a reason before saving.");
+        if (reviewState.mode === "verification" && reviewForm.status === "APPROVED" && !reviewForm.selectedRole) {
+            return alert("Please select a role before approving.");
+        }
 
         try {
             setSavingReview(true);
-            if (reviewForm.status === "APPROVED") {
-                const normalizedRoles = currentRoles.map(normalizeRole);
-                const selectedRole = normalizeRole(reviewForm.selectedRole);
-                if (!normalizedRoles.includes(selectedRole)) {
-                    const added = await handleRoleChange(profile.userId, reviewForm.selectedRole, "add");
-                    if (!added) return;
+
+            if (reviewState.mode === "verification") {
+                if (reviewForm.status === "APPROVED") {
+                    const normalizedRoles = currentRoles.map(normalizeRole);
+                    const selectedRole = normalizeRole(reviewForm.selectedRole);
+                    if (!normalizedRoles.includes(selectedRole)) {
+                        const added = await handleRoleChange(profile.userId, reviewForm.selectedRole, "add");
+                        if (!added) return;
+                    }
+                    await adminService.verifyUser(profile.userId);
                 }
-                await adminService.verifyUser(profile.userId);
+
+                const updated = await adminService.reviewVerification(verification.id, {
+                    status: reviewForm.status,
+                    adminNotes: reviewForm.adminNotes.trim(),
+                });
+                setVerificationByUser((prev) => ({ ...prev, [profile.userId]: updated }));
+            } else {
+                await adminService.createAdminNote({
+                    targetType: "PROFILE",
+                    targetId: profile.userId,
+                    note: `${reviewState.targetVerified ? "Manual verification" : "Manual unverification"} reason: ${reviewForm.adminNotes.trim()}`,
+                });
+
+                if (reviewState.targetVerified) {
+                    await adminService.verifyUser(profile.userId);
+                } else {
+                    await adminService.setBusinessVerified(profile.userId, false);
+                }
             }
 
-            const updated = await adminService.reviewVerification(verification.id, {
-                status: reviewForm.status,
-                adminNotes: reviewForm.adminNotes.trim(),
-            });
-            setVerificationByUser((prev) => ({ ...prev, [profile.userId]: updated }));
             await refreshBusinessProfile(profile.userId);
             cancelBusinessReview();
         } catch (err) {
@@ -341,7 +369,7 @@ export default function AdminProfiles() {
                                                 <td>
                                                     <div className="admin-actions">
                                                         <button className="admin-btn" onClick={() => { setSelectedProfile(item); cancelBusinessReview(); }}>View</button>
-                                                        <button className="admin-btn" onClick={() => toggleVerified(item.userId, !item.verified)}>{item.verified ? "Unverify" : "Verify"}</button>
+                                                        <button className="admin-btn" onClick={() => startManualVerificationReview(item, !item.verified)}>{item.verified ? "Unverify" : "Verify"}</button>
                                                         <button className="admin-btn admin-btn-danger" onClick={() => deleteBusinessProfile(item.userId)}>Delete</button>
                                                     </div>
                                                 </td>
@@ -363,11 +391,12 @@ export default function AdminProfiles() {
                                 verification={selectedVerification}
                                 currentRoles={currentRoles}
                                 isReviewing={isReviewingSelectedBusiness}
+                                reviewState={reviewState}
                                 reviewForm={reviewForm}
                                 savingReview={savingReview}
                                 changingRole={changingRole}
                                 onClose={() => { setSelectedProfile(null); cancelBusinessReview(); }}
-                                onToggleVerified={toggleVerified}
+                                onToggleVerified={startManualVerificationReview}
                                 onStartReview={startBusinessReview}
                                 onCancelReview={cancelBusinessReview}
                                 onSubmitReview={submitBusinessReview}
@@ -449,6 +478,7 @@ function BusinessProfileDetail(props) {
         verification,
         currentRoles,
         isReviewing,
+        reviewState,
         reviewForm,
         savingReview,
         changingRole,
@@ -497,7 +527,7 @@ function BusinessProfileDetail(props) {
                 <button className="admin-btn admin-btn-primary" onClick={() => onStartReview(profile)} disabled={!verification}>
                     {verification ? "Review Verification" : "No Verification Request"}
                 </button>
-                <button className="admin-btn" onClick={() => onToggleVerified(profile.userId, !profile.verified)}>
+                <button className="admin-btn" onClick={() => onToggleVerified(profile, !profile.verified)}>
                     {profile.verified ? "Set Not Verified" : "Set Verified"}
                 </button>
             </div>
@@ -522,74 +552,91 @@ function BusinessProfileDetail(props) {
 
                             <DetailItem label="Admin Notes" value={verification.adminNotes} block />
 
-                            {isReviewing ? (
-                                <div className="admin-review-box">
-                                    <div className="admin-role-management-box">
-                                        <label>Role Management</label>
-                                        <div className="admin-role-management-note">
-                                            Removing a role here updates the user immediately and does not change the verification record by itself.
-                                        </div>
-                                        <div className="admin-roles-wrap">
-                                            {currentRoles.length > 0 ? currentRoles.map((role) => (
-                                                <span key={role} className="admin-role-pill admin-role-pill-removable">
-                                                    {role}
-                                                    <button
-                                                        type="button"
-                                                        onClick={() => onRemoveRole(profile.userId, role)}
-                                                        disabled={changingRole === `${profile.userId}-${role}-remove`}
-                                                        title={`Remove ${role}`}
-                                                    >
-                                                        x
-                                                    </button>
-                                                </span>
-                                            )) : <span className="admin-inline-note">No roles</span>}
-                                        </div>
-                                    </div>
-
-                                    <div className="admin-review-divider" />
-
-                                    <div className="admin-verification-review-box">
-                                        <label>Verification Review</label>
-                                        <select value={reviewForm.status} onChange={(e) => onReviewFormChange((prev) => ({ ...prev, status: e.target.value }))}>
-                                            <option value="APPROVED">APPROVED</option>
-                                            <option value="REJECTED">REJECTED</option>
-                                            <option value="PENDING">PENDING</option>
-                                        </select>
-                                        <select
-                                            value={reviewForm.selectedRole}
-                                            onChange={(e) => onReviewFormChange((prev) => ({ ...prev, selectedRole: e.target.value }))}
-                                            disabled={reviewForm.status !== "APPROVED"}
-                                        >
-                                            <option value="">Select role to grant on approval</option>
-                                            {ROLES.map((role) => <option key={role} value={role}>{role}</option>)}
-                                        </select>
-                                        {reviewForm.status === "APPROVED" && reviewForm.selectedRole ? (
-                                            <div className="admin-review-role-preview">On approval, this role will be granted: <strong>{reviewForm.selectedRole}</strong></div>
-                                        ) : null}
-                                        <textarea
-                                            rows="4"
-                                            placeholder={reviewForm.status === "REJECTED" ? "Reason for rejection" : "Admin notes"}
-                                            value={reviewForm.adminNotes}
-                                            onChange={(e) => onReviewFormChange((prev) => ({ ...prev, adminNotes: e.target.value }))}
-                                        />
-                                        {reviewForm.status === "REJECTED" ? (
-                                            <div className="admin-review-role-preview">A rejection reason is required so the business can see why the request was declined.</div>
-                                        ) : null}
-                                        <div className="admin-actions">
-                                            <button className="admin-btn admin-btn-primary" onClick={() => onSubmitReview(profile)} disabled={savingReview}>
-                                                {savingReview ? "Saving..." : "Save Review"}
-                                            </button>
-                                            <button className="admin-btn" onClick={onCancelReview} disabled={savingReview}>Cancel</button>
-                                        </div>
-                                    </div>
-                                </div>
-                            ) : null}
                         </>
                     ) : (
                         <p className="admin-inline-note">This business profile does not currently have a verification request in the queue.</p>
                     )}
                 </div>
             </div>
+
+            {isReviewing ? (
+                <div className="admin-review-box">
+                    <div className="admin-role-management-box">
+                        <label>{reviewState?.mode === "manual" ? "Current Roles" : "Role Management"}</label>
+                        <div className="admin-role-management-note">
+                            {reviewState?.mode === "manual"
+                                ? "Provide a reason for this manual verification change. Existing roles are shown for context."
+                                : "Removing a role here updates the user immediately and does not change the verification record by itself."}
+                        </div>
+                        <div className="admin-roles-wrap">
+                            {currentRoles.length > 0 ? currentRoles.map((role) => (
+                                <span key={role} className={`admin-role-pill ${reviewState?.mode === "verification" ? "admin-role-pill-removable" : ""}`}>
+                                    {role}
+                                    {reviewState?.mode === "verification" ? (
+                                        <button
+                                            type="button"
+                                            onClick={() => onRemoveRole(profile.userId, role)}
+                                            disabled={changingRole === `${profile.userId}-${role}-remove`}
+                                            title={`Remove ${role}`}
+                                        >
+                                            x
+                                        </button>
+                                    ) : null}
+                                </span>
+                            )) : <span className="admin-inline-note">No roles</span>}
+                        </div>
+                    </div>
+
+                    <div className="admin-review-divider" />
+
+                    <div className="admin-verification-review-box">
+                        <label>{reviewState?.mode === "manual" ? "Verification Decision" : "Verification Review"}</label>
+                        {reviewState?.mode === "verification" ? (
+                            <>
+                                <select value={reviewForm.status} onChange={(e) => onReviewFormChange((prev) => ({ ...prev, status: e.target.value }))}>
+                                    <option value="APPROVED">APPROVED</option>
+                                    <option value="REJECTED">REJECTED</option>
+                                    <option value="PENDING">PENDING</option>
+                                </select>
+                                <select
+                                    value={reviewForm.selectedRole}
+                                    onChange={(e) => onReviewFormChange((prev) => ({ ...prev, selectedRole: e.target.value }))}
+                                    disabled={reviewForm.status !== "APPROVED"}
+                                >
+                                    <option value="">Select role to grant on approval</option>
+                                    {ROLES.map((role) => <option key={role} value={role}>{role}</option>)}
+                                </select>
+                                {reviewForm.status === "APPROVED" && reviewForm.selectedRole ? (
+                                    <div className="admin-review-role-preview">On approval, this role will be granted: <strong>{reviewForm.selectedRole}</strong></div>
+                                ) : null}
+                            </>
+                        ) : (
+                            <div className="admin-review-role-preview">
+                                This action will set the profile to <strong>{reviewState?.targetVerified ? "VERIFIED" : "NOT VERIFIED"}</strong>.
+                            </div>
+                        )}
+                        <textarea
+                            rows="4"
+                            placeholder={reviewState?.mode === "manual"
+                                ? `Reason for ${reviewState?.targetVerified ? "verifying" : "unverifying"}`
+                                : reviewForm.status === "REJECTED"
+                                    ? "Reason for rejection"
+                                    : "Admin notes"}
+                            value={reviewForm.adminNotes}
+                            onChange={(e) => onReviewFormChange((prev) => ({ ...prev, adminNotes: e.target.value }))}
+                        />
+                        <div className="admin-review-role-preview">
+                            A reason is required for this action.
+                        </div>
+                        <div className="admin-actions">
+                            <button className="admin-btn admin-btn-primary" onClick={() => onSubmitReview(profile)} disabled={savingReview}>
+                                {savingReview ? "Saving..." : "Save Review"}
+                            </button>
+                            <button className="admin-btn" onClick={onCancelReview} disabled={savingReview}>Cancel</button>
+                        </div>
+                    </div>
+                </div>
+            ) : null}
         </>
     );
 }
