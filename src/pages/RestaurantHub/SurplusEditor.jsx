@@ -7,6 +7,20 @@ import { SURPLUS_FOOD_CATEGORIES } from '@/constants/listingCategories.js';
 import '../FarmerHub/ProductEditor.css';
 import '../FarmerHub/editorOptions.css';
 
+function toDateTimeLocalValue(value) {
+    if (!value) return '';
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return '';
+
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    const hours = String(date.getHours()).padStart(2, '0');
+    const minutes = String(date.getMinutes()).padStart(2, '0');
+
+    return `${year}-${month}-${day}T${hours}:${minutes}`;
+}
+
 const SurplusEditor = ({ mode = 'add' }) => {
     const { id } = useParams();
     const navigate = useNavigate();
@@ -34,7 +48,7 @@ const SurplusEditor = ({ mode = 'add' }) => {
                     setDescription(data.description || '');
 
                     if (data.expiryDate) {
-                        setExpiryDate(data.expiryDate.split('T')[0]);
+                        setExpiryDate(toDateTimeLocalValue(data.expiryDate));
                     }
 
                     if (data.imageUrls && data.imageUrls.length > 0) {
@@ -121,7 +135,7 @@ const SurplusEditor = ({ mode = 'add' }) => {
                 type: "SURPLUS_FOOD",
                 ownerId: currentUserId,
                 businessName: userPayload?.displayName || userPayload?.username || "Restaurant",
-                expiryDate: expiryDate ? `${expiryDate}T23:59:59` : null,
+                expiryDate: expiryDate ? `${expiryDate}:00` : null,
                 retainedImages: retainedImages
             };
 
@@ -242,7 +256,7 @@ const SurplusEditor = ({ mode = 'add' }) => {
                             <div className="input-row">
                                 <label>Available Until:</label>
                                 <div className="input-with-icon">
-                                    <input type="date" value={expiryDate} onChange={(e) => setExpiryDate(e.target.value)} />
+                                    <input type="datetime-local" value={expiryDate} onChange={(e) => setExpiryDate(e.target.value)} />
                                 </div>
                             </div>
 
