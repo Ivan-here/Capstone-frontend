@@ -160,6 +160,21 @@
     line-height: 1.45;
 }
 
+.order-details-contact-note strong {
+    display: block;
+    margin-bottom: 8px;
+}
+
+.order-details-schedule {
+    display: grid;
+    gap: 4px;
+    font-size: 0.92rem;
+}
+
+.order-details-schedule-raw {
+    white-space: pre-wrap;
+}
+
 .order-details-item {
     display: flex;
     justify-content: space-between;
