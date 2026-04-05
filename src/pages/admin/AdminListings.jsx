@@ -76,10 +76,6 @@ export default function AdminListings() {
         }
     }
 
-    async function closeListing(id) {
-        return updateListingStatus(id, "CLOSED");
-    }
-
     async function deleteListing(id) {
         const confirmed = window.confirm("Delete this listing?");
         if (!confirmed) return;
@@ -220,12 +216,6 @@ export default function AdminListings() {
                                                             onClick={() => setSelectedListing(item)}
                                                         >
                                                             View
-                                                        </button>
-                                                        <button
-                                                            className="admin-btn"
-                                                            onClick={() => closeListing(item.id)}
-                                                        >
-                                                            Close
                                                         </button>
                                                         <button
                                                             className="admin-btn admin-btn-danger"
