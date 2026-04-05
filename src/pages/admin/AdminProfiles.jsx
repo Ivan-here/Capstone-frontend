@@ -369,7 +369,7 @@ export default function AdminProfiles() {
                                                 <td>
                                                     <div className="admin-actions">
                                                         <button className="admin-btn" onClick={() => { setSelectedProfile(item); cancelBusinessReview(); }}>View</button>
-                                                        <button className="admin-btn" onClick={() => startManualVerificationReview(item, !item.verified)}>{item.verified ? "Unverify" : "Verify"}</button>
+                                                        <button className="admin-btn" onClick={() => { setSelectedProfile(item); startManualVerificationReview(item, !item.verified); }}>{item.verified ? "Unverify" : "Verify"}</button>
                                                         <button className="admin-btn admin-btn-danger" onClick={() => deleteBusinessProfile(item.userId)}>Delete</button>
                                                     </div>
                                                 </td>
