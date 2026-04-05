@@ -4,7 +4,9 @@ import { ImagePlus, PencilLine, X } from 'lucide-react';
 import { listingService } from '@/services/listing.service.js';
 import { authService } from '@/services/auth.service.js';
 import { paymentService } from '@/services/payment.service.js';
+import { FARM_PRODUCT_CATEGORIES } from '@/constants/listingCategories.js';
 import './ProductEditor.css';
+import './editorOptions.css';
 
 const ProductEditor = ({ mode = 'add' }) => {
     const { id } = useParams();
@@ -14,7 +16,7 @@ const ProductEditor = ({ mode = 'add' }) => {
     const [price, setPrice] = useState('');
     const [unit, setUnit] = useState('lb');
     const [quantity, setQuantity] = useState('');
-    const [category, setCategory] = useState('Vegetables');
+    const [category, setCategory] = useState(FARM_PRODUCT_CATEGORIES[0]);
     const [description, setDescription] = useState('');
 
     const [imageSlots, setImageSlots] = useState([null, null, null, null]);
@@ -32,7 +34,7 @@ const ProductEditor = ({ mode = 'add' }) => {
                     setPrice(data.price || '');
                     setUnit(data.unit || 'lb');
                     setQuantity(data.quantity || '');
-                    setCategory(data.category || 'Vegetables');
+                    setCategory(data.category || FARM_PRODUCT_CATEGORIES[0]);
                     setDescription(data.description || '');
 
                     if (data.imageUrls && data.imageUrls.length > 0) {
@@ -263,12 +265,11 @@ const ProductEditor = ({ mode = 'add' }) => {
 
                             <div className="input-row">
                                 <label>Category:</label>
-                                <div className="input-with-icon" style={{ paddingRight: '10px' }}>
-                                    <select value={category} onChange={(e) => setCategory(e.target.value)} style={{ background: 'transparent', border: 'none', outline: 'none', width: '100%', fontSize: '18px', padding: '5px' }}>
-                                        <option value="Vegetables">Vegetables</option>
-                                        <option value="Fruits">Fruits</option>
-                                        <option value="Dairy">Dairy</option>
-                                        <option value="Baked Goods">Baked Goods</option>
+                                <div className="editor-select-wrap">
+                                    <select className="editor-select" value={category} onChange={(e) => setCategory(e.target.value)}>
+                                        {FARM_PRODUCT_CATEGORIES.map((item) => (
+                                            <option key={item} value={item}>{item}</option>
+                                        ))}
                                     </select>
                                 </div>
                             </div>
