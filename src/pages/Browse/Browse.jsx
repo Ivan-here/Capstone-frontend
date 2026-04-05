@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Filter, Search, X } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { listingService } from '@/services/listing.service.js';
+import { BROWSE_CATEGORY_GROUPS } from '@/constants/listingCategories.js';
 import './Browse.css';
 
 const formatDate = (dateString) => {
@@ -20,14 +21,6 @@ const Browse = () => {
     const [searchTerm, setSearchTerm] = useState("");
     const [selectedCategories, setSelectedCategories] = useState([]);
     const navigate = useNavigate();
-
-    // COMBINED CATEGORIES: Includes both Farm and Restaurant categories
-    const CATEGORY_GROUPS = {
-        "Produce & Fresh": ["vegetables", "veggies", "fruits", "fruit", "fresh ingredients"],
-        "Dairy & Eggs": ["dairy", "milk", "cheese", "eggs"],
-        "Bakery & Meals": ["bakery", "bread", "baked goods", "prepared meals"],
-        "Pantry": ["canned/packaged", "pantry"]
-    };
 
     useEffect(() => {
         const fetchListings = async () => {
@@ -83,7 +76,7 @@ const Browse = () => {
         let matchesCategory = true;
         if (selectedCategories.length > 0) {
             matchesCategory = selectedCategories.some(filterName => {
-                const allowedValues = CATEGORY_GROUPS[filterName] || [];
+                const allowedValues = BROWSE_CATEGORY_GROUPS[filterName] || [];
                 const itemCat = item.category || "";
                 return allowedValues.includes(itemCat.toLowerCase());
             });
@@ -114,7 +107,7 @@ const Browse = () => {
                 <div className="filter-scroll-area">
                     <div className="filter-group">
                         <h3>Category</h3>
-                        {Object.keys(CATEGORY_GROUPS).map(cat => (
+                        {Object.keys(BROWSE_CATEGORY_GROUPS).map(cat => (
                             <label key={cat}>
                                 <input type="checkbox" checked={selectedCategories.includes(cat)} onChange={() => toggleCategory(cat)} /> {cat}
                             </label>
