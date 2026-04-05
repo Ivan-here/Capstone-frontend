@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Search, Users, ShieldCheck, Clock } from 'lucide-react';
+import { Search, ShieldCheck } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { listingService } from '@/services/listing.service.js';
 import { authService } from '@/services/auth.service.js';
@@ -108,18 +108,7 @@ const RestaurantHub = () => {
 
             <div className="hub-listing-grid">
                 {listings.map(item => (
-                    <div key={item.id} className="card-wrapper" style={{ position: 'relative' }}>
-                        {/* --- NGO ONLY BADGE: Visible only when in the exclusive phase --- */}
-                        {item.isNgoOnly && (
-                            <div className="ngo-badge">
-                                <Users size={12} />
-                                <span>NGO ONLY</span>
-                                <div className="tooltip">
-                                    <Clock size={10} /> Hidden from Public until Half-Life reached.
-                                </div>
-                            </div>
-                        )}
-
+                    <div key={item.id} className="card-wrapper">
                         <ListingCard
                             item={item}
                             onDelete={() => handleDeleteTrigger(item)}

@@ -1,4 +1,5 @@
 import React from 'react';
+import { Clock3, Users } from 'lucide-react';
 import './ListingCard.css';
 
 // Added hideActions to the props
@@ -7,6 +8,21 @@ const ListingCard = ({ item, onEdit, onDelete, hideActions = false }) => {
 
     return (
         <div className="grid-card">
+            {item.isNgoOnly && (
+                <div className="grid-card-status grid-card-status-ngo">
+                    <div className="grid-card-status-head">
+                        <span className="grid-card-status-chip">
+                            <Users size={14} />
+                            NGO Only
+                        </span>
+                    </div>
+                    <div className="grid-card-status-copy">
+                        <Clock3 size={14} />
+                        <span>Hidden from public browse until the donation reaches half-life.</span>
+                    </div>
+                </div>
+            )}
+
             <div className="grid-card-content">
                 <img src={item.imageUrl} alt={item.title} className="grid-img" />
                 <div className="grid-text">
