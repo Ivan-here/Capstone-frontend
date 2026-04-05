@@ -94,16 +94,6 @@ export default function SettingsPage() {
         });
     };
 
-    const handleDeleteProfile = async () => {
-        if (!window.confirm("Delete your personal profile? You will be logged out.")) return;
-
-        await runAction("delete-profile", async () => {
-            await settingsService.deletePersonalProfile();
-            authService.logout();
-            navigate("/login", { replace: true });
-        });
-    };
-
     const handleDeleteAccount = async () => {
         if (!window.confirm("Delete your full account permanently? This cannot be undone.")) return;
 
@@ -223,9 +213,6 @@ export default function SettingsPage() {
                             <div className="section-title"><Trash2 size={18} /> Danger Zone</div>
                             <p className="muted settings-card-intro">These actions are destructive and cannot be undone.</p>
                             <div className="settings-danger-actions">
-                                <button onClick={handleDeleteProfile} disabled={busyAction === "delete-profile"}>
-                                    Delete Profile
-                                </button>
                                 <button onClick={handleDeleteBusiness} disabled={busyAction === "delete-business"}>
                                     Delete Business Profile
                                 </button>
