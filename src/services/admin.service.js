@@ -163,12 +163,6 @@ export const adminService = {
         return apiFetch(`/admin/listings/${id}`);
     },
 
-    closeListing(id) {
-        return apiFetch(`/admin/listings/${id}/close`, {
-            method: "PATCH",
-        });
-    },
-
     updateListingStatus(id, status) {
         return apiFetch(`/admin/listings/${id}/status?status=${encodeURIComponent(status)}`, {
             method: "PATCH",
