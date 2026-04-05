@@ -4,6 +4,7 @@ import RatingsReviews from "./RatingsReviews";
 import { reviewService } from "@/services/reviewService";
 import { followService } from "@/services/follow.service";
 import { orderService } from "@/services/order.service"; // <-- Add this import
+import Chip from "@/components/ui/Chip";
 
 function StatBox({ value, label, privacy, isVisible = true, onClick }) {
     if (!isVisible) return null;
@@ -32,6 +33,7 @@ export default function UserProfileRight({ profile, isOwnProfile }) {
 
     const userId = profile?.userId || profile?.id || localStorage.getItem('userId');
     const fullName = `${profile?.firstName ?? ""} ${profile?.lastName ?? ""}`.trim() || profile?.username;
+    const preferences = Array.isArray(profile?.preferences) ? profile.preferences.filter(Boolean) : [];
 
     useEffect(() => {
         const fetchUserData = async () => {
@@ -82,9 +84,16 @@ export default function UserProfileRight({ profile, isOwnProfile }) {
                         fullName?.charAt(0).toUpperCase()
                     )}
                 </div>
-                <div>
+                <div className="userProfileHeroCopy">
                     <h2 style={{ margin: 0 }}>{fullName}</h2>
                     <p style={{ margin: 0, color: '#666' }}>{profile?.role || "Shopper"}</p>
+                    {preferences.length > 0 ? (
+                        <div className="userProfileHeroPrefs">
+                            {preferences.map((preference) => (
+                                <Chip key={preference} label={preference} />
+                            ))}
+                        </div>
+                    ) : null}
                 </div>
             </div>
 

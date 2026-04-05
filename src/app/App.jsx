@@ -25,6 +25,7 @@ import AdminReservations from "../pages/admin/AdminReservations.jsx";
 import AdminProfiles from "../pages/admin/AdminProfiles.jsx";
 import AdminVerifications from "../pages/admin/AdminVerifications.jsx";
 import AdminNotifications from "../pages/admin/AdminNotifications.jsx";
+import AdminCommunityPosts from "../pages/admin/AdminCommunityPosts.jsx";
 import AdminRoute from "./AdminRoute.jsx";
 
 
@@ -96,6 +97,7 @@ function App() {
                         <Route path="/admin/reservations" element={<AdminRoute><AdminReservations /></AdminRoute>} />
                         <Route path="/admin/profiles" element={<AdminRoute><AdminProfiles /></AdminRoute>} />
                         <Route path="/admin/verifications" element={<AdminRoute><AdminVerifications /></AdminRoute>} />
+                        <Route path="/admin/community" element={<AdminRoute><AdminCommunityPosts /></AdminRoute>} />
                         <Route path="/admin/notifications" element={<AdminRoute><AdminNotifications /></AdminRoute>} />
                         <Route path="/my-orders" element={<MyOrders />} />
                         <Route path="/orders/:orderId" element={<OrderDetailsPage />} />
