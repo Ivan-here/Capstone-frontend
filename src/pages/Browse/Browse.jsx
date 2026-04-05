@@ -106,17 +106,6 @@ const Browse = () => {
                 </div>
                 <div className="filter-scroll-area">
                     <div className="filter-group">
-                        <h3>Browse Collections</h3>
-                        <div className="filter-pills">
-                            {Object.keys(BROWSE_CATEGORY_GROUPS).map((groupName) => (
-                                <span key={groupName} className="filter-pill">
-                                    {groupName}
-                                </span>
-                            ))}
-                        </div>
-                    </div>
-
-                    <div className="filter-group">
                         <h3>Category</h3>
                         <div className="filter-checkbox-grid">
                             {BROWSE_CATEGORY_OPTIONS.map((cat) => (
