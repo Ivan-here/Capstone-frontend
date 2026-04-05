@@ -8,6 +8,8 @@ import { listingService } from "@/services/listing.service.js";
 import { useCart } from "../cart/CartContext.jsx";
 import "./CheckoutPage.css";
 
+const CHECKOUT_SESSION_KEY = "checkout_state";
+
 function mapCheckoutError(message) {
     const normalized = String(message || "").toLowerCase();
 
@@ -20,6 +22,27 @@ function mapCheckoutError(message) {
     }
 
     return message || "Failed to initialize checkout.";
+}
+
+function getCheckoutReturnUrl() {
+    return `${window.location.origin}/checkout?payment_return=1`;
+}
+
+function saveCheckoutSession(state) {
+    sessionStorage.setItem(CHECKOUT_SESSION_KEY, JSON.stringify(state));
+}
+
+function readCheckoutSession() {
+    try {
+        const raw = sessionStorage.getItem(CHECKOUT_SESSION_KEY);
+        return raw ? JSON.parse(raw) : null;
+    } catch {
+        return null;
+    }
+}
+
+function clearCheckoutSession() {
+    sessionStorage.removeItem(CHECKOUT_SESSION_KEY);
 }
 
 function CheckoutForm({ orderId, paymentIntentId, sellerId, shopperId, onPaymentSuccess }) {
@@ -44,6 +67,9 @@ function CheckoutForm({ orderId, paymentIntentId, sellerId, shopperId, onPayment
 
         const result = await stripe.confirmPayment({
             elements,
+            confirmParams: {
+                return_url: getCheckoutReturnUrl(),
+            },
             redirect: "if_required",
         });
 
@@ -109,11 +135,13 @@ export default function CheckoutPage() {
     const location = useLocation();
     const navigate = useNavigate();
     const { removeSellerItems, removeFromCart } = useCart();
+    const searchParams = new URLSearchParams(location.search);
+    const checkoutSession = readCheckoutSession();
 
-    const sellerId = location.state?.sellerId;
-    const sellerName = location.state?.sellerName;
-    const items = location.state?.items || [];
-    const subtotal = location.state?.subtotal || 0;
+    const sellerId = location.state?.sellerId ?? checkoutSession?.sellerId;
+    const sellerName = location.state?.sellerName ?? checkoutSession?.sellerName;
+    const items = location.state?.items || checkoutSession?.items || [];
+    const subtotal = location.state?.subtotal ?? checkoutSession?.subtotal ?? 0;
 
     const [stripePromise, setStripePromise] = useState(null);
     const [clientSecret, setClientSecret] = useState("");
@@ -125,6 +153,7 @@ export default function CheckoutPage() {
     const [paymentCompleted, setPaymentCompleted] = useState(false);
 
     const shopperId = localStorage.getItem("userId");
+    const isPaymentReturn = searchParams.get("payment_return") === "1";
     const isDonationCheckout = useMemo(
         () => items.length > 0 && items.every((item) => Number(item.price) === 0),
         [items]
@@ -139,7 +168,77 @@ export default function CheckoutPage() {
     }), [items, shopperId]);
 
     useEffect(() => {
+        if (!items.length || !shopperId) {
+            return;
+        }
+
+        saveCheckoutSession({
+            sellerId,
+            sellerName,
+            items,
+            subtotal,
+            shopperId,
+            orderId,
+            paymentIntentId,
+            clientSecret,
+        });
+    }, [sellerId, sellerName, items, subtotal, shopperId, orderId, paymentIntentId, clientSecret]);
+
+    useEffect(() => {
+        const resumeRedirectPayment = async () => {
+            if (!isPaymentReturn) {
+                return;
+            }
+
+            const saved = readCheckoutSession();
+            const returnClientSecret = searchParams.get("payment_intent_client_secret") || saved?.clientSecret;
+            const returnOrderId = saved?.orderId;
+            const returnSellerId = saved?.sellerId;
+            const returnShopperId = saved?.shopperId || shopperId;
+
+            if (!returnClientSecret || !returnOrderId || !returnShopperId) {
+                setError("We couldn't restore your payment session. Please try checkout again.");
+                setLoading(false);
+                return;
+            }
+
+            try {
+                setLoading(true);
+                const stripe = await getStripe();
+                const { paymentIntent, error: stripeError } = await stripe.retrievePaymentIntent(returnClientSecret);
+
+                if (stripeError) {
+                    throw new Error(stripeError.message || "Failed to verify redirected payment.");
+                }
+
+                if (paymentIntent?.status === "succeeded" || paymentIntent?.status === "processing" || paymentIntent?.status === "requires_capture") {
+                    await orderService.confirmPayment(returnOrderId, returnShopperId, paymentIntent.id);
+                    clearCheckoutSession();
+                    setPaymentCompleted(true);
+                    removeSellerItems(returnSellerId);
+                    navigate(`/my-orders?payment=success&orderId=${encodeURIComponent(returnOrderId)}`, { replace: true });
+                    return;
+                }
+
+                if (paymentIntent?.status === "requires_payment_method") {
+                    throw new Error("Payment was not completed. Please choose a payment method and try again.");
+                }
+            } catch (err) {
+                setError(mapCheckoutError(err.message));
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        resumeRedirectPayment();
+    }, [isPaymentReturn, navigate, removeSellerItems, searchParams, shopperId]);
+
+    useEffect(() => {
         const initCheckout = async () => {
+            if (isPaymentReturn) {
+                return;
+            }
+
             if (!shopperId) {
                 navigate("/login", {
                     state: {
@@ -218,6 +317,7 @@ export default function CheckoutPage() {
 
     const handlePaymentSuccess = async (resolvedSellerId) => {
         setPaymentCompleted(true);
+        clearCheckoutSession();
         removeSellerItems(resolvedSellerId);
         const target = orderId
             ? `/my-orders?payment=success&orderId=${encodeURIComponent(orderId)}`
@@ -230,6 +330,7 @@ export default function CheckoutPage() {
             try {
                 setCancellingDraft(true);
                 await orderService.cancelOrder(orderId, shopperId, "Checkout closed before payment.");
+                clearCheckoutSession();
             } catch (err) {
                 console.error("Failed to cancel draft order:", err);
             } finally {
