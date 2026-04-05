@@ -6,6 +6,7 @@ import { profileService } from "@/services/profile.service";
 import { verificationService } from "@/services/verification.service";
 import Button from "@/components/ui/Button";
 import Input from "@/components/ui/Input";
+import WeeklyScheduleEditor from "@/components/ui/WeeklyScheduleEditor";
 import { authService } from "@/services/auth.service.js";
 import { cloudinaryService } from "@/services/cloudinary.service";
 import { ArrowLeft, Building2, Clock3, Mail, MapPin, Phone, ShieldCheck } from "lucide-react";
@@ -238,20 +239,20 @@ export default function RegistrationVerification() {
 
                     <div className="authSection">
                         <div className="authSectionTitle"><Clock3 size={18} /> Pickup Planning</div>
-                        <div className="authInputRow">
-                            <Input
+                        <div className="authInputGroup">
+                            <WeeklyScheduleEditor
                                 label="Business hours"
-                                icon={<Clock3 size={16} />}
                                 value={form.hours}
-                                onChange={(e) => setField("hours", e.target.value)}
-                                placeholder="Mon-Fri 9am-5pm"
+                                onChange={(nextValue) => setField("hours", nextValue)}
+                                helperText="Use the weekly calendar to keep your operating hours in a consistent format."
                             />
-                            <Input
+                        </div>
+                        <div className="authInputGroup" style={{ marginTop: "18px" }}>
+                            <WeeklyScheduleEditor
                                 label="Pickup availability"
-                                icon={<Clock3 size={16} />}
                                 value={form.pickupAvailability}
-                                onChange={(e) => setField("pickupAvailability", e.target.value)}
-                                placeholder="Tue-Thu 2pm-6pm, Sat 10am-1pm"
+                                onChange={(nextValue) => setField("pickupAvailability", nextValue)}
+                                helperText="Set the time windows when pickups can realistically happen."
                             />
                         </div>
                     </div>
