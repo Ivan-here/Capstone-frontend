@@ -86,24 +86,6 @@
 .filter-actions { display: flex; flex-direction: column; gap: 8px; }
 .btn-secondary { background-color: #768F48; color: white; border: none; padding: 10px; border-radius: 8px; cursor: pointer; }
 
-.filter-pills {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 8px;
-}
-
-.filter-pill {
-    display: inline-flex;
-    align-items: center;
-    padding: 7px 12px;
-    border-radius: 999px;
-    background: #f7f2df;
-    border: 1px solid rgba(72, 60, 32, 0.1);
-    color: #6e5221;
-    font-size: 0.78rem;
-    font-weight: 700;
-}
-
 .filter-checkbox-grid {
     display: grid;
     grid-template-columns: 1fr;
