@@ -6,6 +6,7 @@ import { orderService } from '@/services/order.service';
 import { profileService } from '@/services/profile.service';
 import { supportService } from '@/services/support.service';
 import { formatPublicOrderId } from '@/utils/formatters.js';
+import { isNormalizedWeeklySchedule, weeklyScheduleLines } from '@/utils/weeklySchedule.js';
 import './OrderDetailsPage.css';
 
 function formatMoney(cents) {
@@ -178,6 +179,10 @@ export default function OrderDetailsPage() {
             || participantProfiles.seller?.businessProfile?.hours?.trim()
             || '';
     }
+
+    const sellerAvailability = getSellerAvailability();
+    const sellerAvailabilityLines = weeklyScheduleLines(sellerAvailability);
+    const hasStructuredAvailability = isNormalizedWeeklySchedule(sellerAvailability);
 
     const handleFetchPickupCode = async () => {
         if (!canShowPickupCode) {
@@ -400,9 +405,18 @@ export default function OrderDetailsPage() {
                                 <Phone size={16} />
                                 {getSellerPhone() ? <a href={`tel:${getSellerPhone()}`}>{getSellerPhone()}</a> : <span>No phone shared</span>}
                             </div>
-                            {getSellerAvailability() ? (
+                            {sellerAvailability ? (
                                 <div className="order-details-contact-note">
-                                    Pickup availability: {getSellerAvailability()}
+                                    <strong>Pickup availability</strong>
+                                    {hasStructuredAvailability ? (
+                                        <div className="order-details-schedule">
+                                            {sellerAvailabilityLines.map((line) => (
+                                                <div key={line}>{line}</div>
+                                            ))}
+                                        </div>
+                                    ) : (
+                                        <div className="order-details-schedule-raw">{sellerAvailability}</div>
+                                    )}
                                 </div>
                             ) : null}
                         </div>

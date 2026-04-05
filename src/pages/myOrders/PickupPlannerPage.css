@@ -61,6 +61,27 @@
     line-height: 1.5;
 }
 
+.pickup-planner-schedule-box {
+    margin-bottom: 14px;
+    border-radius: 14px;
+    background: #f3f0e6;
+    border: 1px solid rgba(74, 93, 35, 0.12);
+    padding: 14px 16px;
+}
+
+.pickup-planner-schedule-box strong {
+    display: block;
+    margin-bottom: 8px;
+    color: #4a5d23;
+}
+
+.pickup-planner-schedule-list {
+    display: grid;
+    gap: 4px;
+    color: #5d5648;
+    line-height: 1.45;
+}
+
 .pickup-planner-days {
     display: grid;
     grid-template-columns: repeat(3, minmax(0, 1fr));
