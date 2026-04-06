@@ -22,9 +22,11 @@ const ProductDetails = () => {
     const [reviews, setReviews] = useState([]);
     const [ratingData, setRatingData] = useState({ averageRating: 0, totalReviews: 0 });
 
+    const [isNgo, setIsNgo] = useState(() => {
+        const rawRole = localStorage.getItem('userRole');
+        return rawRole ? rawRole.toUpperCase() === 'NGO' : false;
+    });
     const [isVerifiedNgo, setIsVerifiedNgo] = useState(false);
-    const rawRole = localStorage.getItem('userRole');
-    const isNgo = rawRole && rawRole.toUpperCase() === 'NGO';
 
     const loadReviewsOnly = useCallback(async () => {
         try {
@@ -38,6 +40,27 @@ const ProductDetails = () => {
             console.error("Failed to refresh reviews:", err);
         }
     }, [id]);
+
+    const syncNgoAccess = useCallback(async () => {
+        try {
+            const profileData = await profileService.getMe();
+            const businessType = String(profileData?.businessProfile?.businessType || "").toUpperCase();
+            const verified = profileData?.businessProfile?.verified === true;
+            const nextIsNgo = businessType === "NGO";
+
+            setIsNgo(nextIsNgo);
+            setIsVerifiedNgo(nextIsNgo && verified);
+
+            if (nextIsNgo) {
+                localStorage.setItem('userRole', 'NGO');
+            }
+            localStorage.setItem('isVerified', String(nextIsNgo && verified));
+        } catch {
+            const cachedIsNgo = String(localStorage.getItem('userRole') || '').toUpperCase() === 'NGO';
+            setIsNgo(cachedIsNgo);
+            setIsVerifiedNgo(cachedIsNgo && localStorage.getItem('isVerified') === 'true');
+        }
+    }, []);
 
     useEffect(() => {
         const loadPageData = async () => {
@@ -67,17 +90,7 @@ const ProductDetails = () => {
                 });
 
                 setMainImage(productImages[0]);
-
-                if (isNgo) {
-                    try {
-                        const profileData = await profileService.getMe();
-                        const verified = profileData?.businessProfile?.verified === true;
-                        setIsVerifiedNgo(verified);
-                        localStorage.setItem('isVerified', String(verified));
-                    } catch (profileErr) {
-                        setIsVerifiedNgo(localStorage.getItem('isVerified') === 'true');
-                    }
-                }
+                await syncNgoAccess();
 
                 setLoading(false);
             } catch (err) {
@@ -87,7 +100,21 @@ const ProductDetails = () => {
             }
         };
         loadPageData();
-    }, [id, isNgo, loadReviewsOnly]);
+    }, [id, loadReviewsOnly, syncNgoAccess]);
+
+    useEffect(() => {
+        const handleWindowFocus = () => {
+            syncNgoAccess();
+        };
+
+        window.addEventListener("focus", handleWindowFocus);
+        document.addEventListener("visibilitychange", handleWindowFocus);
+
+        return () => {
+            window.removeEventListener("focus", handleWindowFocus);
+            document.removeEventListener("visibilitychange", handleWindowFocus);
+        };
+    }, [syncNgoAccess]);
 
     if (loading) return <div className="pd-wrapper center-content"><h2>Loading...</h2></div>;
     if (error) return <div className="pd-wrapper center-content"><h2>{error}</h2></div>;
