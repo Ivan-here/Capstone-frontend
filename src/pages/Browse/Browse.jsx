@@ -13,6 +13,12 @@ const formatDate = (dateString) => {
     return date.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
 };
 
+// NEW: Helper function to truncate long descriptions
+const truncateText = (text, maxLength = 80) => {
+    if (!text) return "";
+    return text.length > maxLength ? text.substring(0, maxLength).trim() + "..." : text;
+};
+
 const Browse = () => {
     const [listings, setListings] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -153,7 +159,12 @@ const Browse = () => {
                                     <div className="tile-info">
                                         <h3>{item.title || "Unnamed Product"}</h3>
                                         {item.category ? <div className="tile-category">{item.category}</div> : null}
-                                        <p>{formatQuantityText(item.quantity, item.unit)}{item.description ? `, ${item.description}` : ''}</p>
+
+                                        {/* APPLIED TRUNCATION HERE */}
+                                        <p className="tile-desc">
+                                            {formatQuantityText(item.quantity, item.unit)}
+                                            {item.description ? `, ${truncateText(item.description, 80)}` : ''}
+                                        </p>
 
                                         {item.price === 0 && item.expiryDate && (
                                             <p style={{ fontWeight: '600', color: '#A03C3C', marginTop: '2px', fontSize: '0.8rem' }}>
