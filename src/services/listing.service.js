@@ -1,5 +1,13 @@
 import { apiFetch, BASE_URL, getToken } from "./http";
 
+function getMultipartError(error, fallbackMessage) {
+    if (error instanceof TypeError && String(error.message || "").toLowerCase().includes("fetch")) {
+        return new Error("The listing upload could not reach the server. Try fewer or smaller images, then submit again.");
+    }
+
+    return error || new Error(fallbackMessage);
+}
+
 export const listingService = {
         // listing.service.js
 
@@ -38,7 +46,7 @@ export const listingService = {
                 throw new Error(errorText || "Failed to create farm listing");
             }
             return await response.json();
-        } catch (error) { throw error; }
+        } catch (error) { throw getMultipartError(error, "Failed to create farm listing"); }
     },
 
     async createSurplusListing(formData) {
@@ -60,7 +68,7 @@ export const listingService = {
                 throw new Error(errorText || "Failed to create surplus listing");
             }
             return await response.json();
-        } catch (error) { throw error; }
+        } catch (error) { throw getMultipartError(error, "Failed to create surplus listing"); }
     },
 
     async closeListing(id) {
@@ -91,6 +99,6 @@ export const listingService = {
                 throw new Error(errorText || "Failed to update listing");
             }
             return await response.json();
-        } catch (error) { throw error; }
+        } catch (error) { throw getMultipartError(error, "Failed to update listing"); }
     }
 };

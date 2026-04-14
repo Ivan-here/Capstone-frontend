@@ -5,6 +5,7 @@ import { listingService } from '@/services/listing.service.js';
 import { authService } from '@/services/auth.service.js';
 import { paymentService } from '@/services/payment.service.js';
 import { FARM_PRODUCT_CATEGORIES } from '@/constants/listingCategories.js';
+import { prepareListingImages } from '@/utils/listingImages.js';
 import './ProductEditor.css';
 import './editorOptions.css';
 
@@ -149,7 +150,9 @@ const ProductEditor = ({ mode = 'add' }) => {
                 type: "application/json"
             }));
 
-            newFiles.forEach(file => {
+            const uploadFiles = await prepareListingImages(newFiles);
+
+            uploadFiles.forEach(file => {
                 formData.append("images", file);
             });
 
