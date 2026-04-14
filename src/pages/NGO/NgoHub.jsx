@@ -12,6 +12,12 @@ const formatDate = (dateString) => {
     return date.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
 };
 
+// NEW: Helper function to truncate long descriptions
+const truncateText = (text, maxLength = 80) => {
+    if (!text) return "";
+    return text.length > maxLength ? text.substring(0, maxLength).trim() + "..." : text;
+};
+
 const NgoHub = () => {
     const [listings, setListings] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -97,7 +103,12 @@ const NgoHub = () => {
                                     </div>
                                     <div className="tile-info">
                                         <h3>{item.title}</h3>
-                                        <p>{item.quantity} {item.unit}{item.description ? `, ${item.description}` : ''}</p>
+
+                                        {/* APPLIED TRUNCATION HERE */}
+                                        <p className="tile-desc">
+                                            {item.quantity} {item.unit}
+                                            {item.description ? `, ${truncateText(item.description, 80)}` : ''}
+                                        </p>
 
                                         {item.expiryDate && (
                                             <p style={{ color: '#A03C3C', fontWeight: 'bold', fontSize: '0.75rem' }}>
