@@ -4,6 +4,7 @@ import { ImagePlus, PencilLine, X } from 'lucide-react';
 import { listingService } from '@/services/listing.service.js';
 import { authService } from '@/services/auth.service.js';
 import { SURPLUS_FOOD_CATEGORIES } from '@/constants/listingCategories.js';
+import { prepareListingImages } from '@/utils/listingImages.js';
 import '../FarmerHub/ProductEditor.css';
 import '../FarmerHub/editorOptions.css';
 
@@ -143,7 +144,9 @@ const SurplusEditor = ({ mode = 'add' }) => {
                 type: "application/json"
             }));
 
-            newFiles.forEach(file => {
+            const uploadFiles = await prepareListingImages(newFiles);
+
+            uploadFiles.forEach(file => {
                 formData.append("images", file);
             });
 
