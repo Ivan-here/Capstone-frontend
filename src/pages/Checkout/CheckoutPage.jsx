@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { Elements, PaymentElement, useElements, useStripe } from "@stripe/react-stripe-js";
 import { ArrowLeft, CreditCard } from "lucide-react";
@@ -9,6 +9,7 @@ import { useCart } from "../cart/CartContext.jsx";
 import "./CheckoutPage.css";
 
 const CHECKOUT_SESSION_KEY = "checkout_state";
+const checkoutInitializations = new Map();
 
 function mapCheckoutError(message) {
     const normalized = String(message || "").toLowerCase();
@@ -135,18 +136,26 @@ export default function CheckoutPage() {
     const location = useLocation();
     const navigate = useNavigate();
     const { removeSellerItems, removeFromCart } = useCart();
-    const searchParams = new URLSearchParams(location.search);
-    const checkoutSession = readCheckoutSession();
+    const searchParams = useMemo(() => new URLSearchParams(location.search), [location.search]);
+    const [checkoutSession] = useState(() => readCheckoutSession());
+    const initStartedRef = useRef(false);
+    const hasLocationState = Boolean(location.state);
 
     const sellerId = location.state?.sellerId ?? checkoutSession?.sellerId;
     const sellerName = location.state?.sellerName ?? checkoutSession?.sellerName;
-    const items = location.state?.items || checkoutSession?.items || [];
+    const items = useMemo(
+        () => location.state?.items || checkoutSession?.items || [],
+        [location.state?.items, checkoutSession?.items]
+    );
     const subtotal = location.state?.subtotal ?? checkoutSession?.subtotal ?? 0;
+    const existingOrderId = location.state?.orderId ?? (!hasLocationState ? checkoutSession?.orderId : "") ?? "";
+    const existingPaymentIntentId = location.state?.paymentIntentId ?? (!hasLocationState ? checkoutSession?.paymentIntentId : "") ?? "";
+    const existingClientSecret = location.state?.clientSecret ?? (!hasLocationState ? checkoutSession?.clientSecret : "") ?? "";
 
     const [stripePromise, setStripePromise] = useState(null);
-    const [clientSecret, setClientSecret] = useState("");
-    const [paymentIntentId, setPaymentIntentId] = useState("");
-    const [orderId, setOrderId] = useState("");
+    const [clientSecret, setClientSecret] = useState(existingClientSecret);
+    const [paymentIntentId, setPaymentIntentId] = useState(existingPaymentIntentId);
+    const [orderId, setOrderId] = useState(existingOrderId);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState("");
     const [cancellingDraft, setCancellingDraft] = useState(false);
@@ -239,6 +248,11 @@ export default function CheckoutPage() {
                 return;
             }
 
+            if (initStartedRef.current) {
+                return;
+            }
+            initStartedRef.current = true;
+
             if (!shopperId) {
                 navigate("/login", {
                     state: {
@@ -265,47 +279,86 @@ export default function CheckoutPage() {
                 const stripe = await getStripe();
                 setStripePromise(Promise.resolve(stripe));
 
-                const listingChecks = await Promise.all(
-                    items.map(async (item) => {
-                        try {
-                            const listing = await listingService.getListingById(item.id);
-                            const availableQty = Number(listing?.quantity || 0);
-                            const isActive = String(listing?.status || "").toUpperCase() === "ACTIVE";
-                            const requestedQty = Number(item.quantity || 0);
+                if (existingOrderId) {
+                    setOrderId(existingOrderId);
 
-                            if (!listing?.id || !isActive || availableQty < requestedQty) {
-                                return { itemId: item.id, valid: false };
-                            }
+                    if (existingPaymentIntentId && existingClientSecret) {
+                        setPaymentIntentId(existingPaymentIntentId);
+                        setClientSecret(existingClientSecret);
+                        return;
+                    }
 
-                            return { itemId: item.id, valid: true };
-                        } catch {
-                            return { itemId: item.id, valid: false };
+                    if (!isDonationCheckout) {
+                        const paymentIntent = await orderService.createPaymentIntent(existingOrderId, shopperId);
+                        setPaymentIntentId(paymentIntent.paymentIntentId);
+                        setClientSecret(paymentIntent.clientSecret);
+                    }
+                    return;
+                }
+
+                const checkoutKey = JSON.stringify(orderPayload);
+                let checkoutInitialization = checkoutInitializations.get(checkoutKey);
+
+                if (!checkoutInitialization) {
+                    checkoutInitialization = (async () => {
+                        const listingChecks = await Promise.all(
+                            items.map(async (item) => {
+                                try {
+                                    const listing = await listingService.getListingById(item.id);
+                                    const availableQty = Number(listing?.quantity || 0);
+                                    const isActive = String(listing?.status || "").toUpperCase() === "ACTIVE";
+                                    const requestedQty = Number(item.quantity || 0);
+
+                                    if (!listing?.id || !isActive || availableQty < requestedQty) {
+                                        return { itemId: item.id, valid: false };
+                                    }
+
+                                    return { itemId: item.id, valid: true };
+                                } catch {
+                                    return { itemId: item.id, valid: false };
+                                }
+                            })
+                        );
+
+                        const invalidItemIds = listingChecks
+                            .filter((result) => !result.valid)
+                            .map((result) => result.itemId);
+
+                        if (invalidItemIds.length > 0) {
+                            invalidItemIds.forEach((itemId) => removeFromCart(itemId));
+                            throw new Error("One or more selected listings are no longer available. They were removed from your cart.");
                         }
-                    })
-                );
 
-                const invalidItemIds = listingChecks
-                    .filter((result) => !result.valid)
-                    .map((result) => result.itemId);
+                        const createdOrder = await orderService.createOrder(orderPayload);
+                        const requiresPayment = createdOrder.requiresPayment ?? Number(createdOrder.grossAmountCents || 0) > 0;
 
-                if (invalidItemIds.length > 0) {
-                    invalidItemIds.forEach((itemId) => removeFromCart(itemId));
-                    throw new Error("One or more selected listings are no longer available. They were removed from your cart.");
+                        if (!requiresPayment) {
+                            return {
+                                orderId: createdOrder.orderId,
+                                paymentIntentId: "",
+                                clientSecret: "",
+                            };
+                        }
+
+                        const paymentIntent = await orderService.createPaymentIntent(createdOrder.orderId, shopperId);
+                        return {
+                            orderId: createdOrder.orderId,
+                            paymentIntentId: paymentIntent.paymentIntentId,
+                            clientSecret: paymentIntent.clientSecret,
+                        };
+                    })().finally(() => {
+                        checkoutInitializations.delete(checkoutKey);
+                    });
+
+                    checkoutInitializations.set(checkoutKey, checkoutInitialization);
                 }
 
-                const createdOrder = await orderService.createOrder(orderPayload);
-                setOrderId(createdOrder.orderId);
-
-                const requiresPayment = createdOrder.requiresPayment ?? Number(createdOrder.grossAmountCents || 0) > 0;
-                if (requiresPayment) {
-                    const paymentIntent = await orderService.createPaymentIntent(createdOrder.orderId, shopperId);
-                    setPaymentIntentId(paymentIntent.paymentIntentId);
-                    setClientSecret(paymentIntent.clientSecret);
-                } else {
-                    setPaymentIntentId("");
-                    setClientSecret("");
-                }
+                const checkoutResult = await checkoutInitialization;
+                setOrderId(checkoutResult.orderId);
+                setPaymentIntentId(checkoutResult.paymentIntentId);
+                setClientSecret(checkoutResult.clientSecret);
             } catch (err) {
+                initStartedRef.current = false;
                 setError(mapCheckoutError(err.message));
             } finally {
                 setLoading(false);
@@ -313,7 +366,7 @@ export default function CheckoutPage() {
         };
 
         initCheckout();
-    }, [shopperId, items, orderPayload, navigate, removeFromCart, sellerId, sellerName, subtotal]);
+    }, [shopperId, items, orderPayload, navigate, removeFromCart, sellerId, sellerName, subtotal, existingOrderId, existingPaymentIntentId, existingClientSecret, isDonationCheckout, isPaymentReturn]);
 
     const handlePaymentSuccess = async (resolvedSellerId) => {
         setPaymentCompleted(true);

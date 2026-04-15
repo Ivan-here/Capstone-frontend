@@ -241,6 +241,9 @@ export default function OrderDetailsPage() {
                 sellerName: participants.seller.label || order.sellerUserId,
                 items: mapOrderItemsToCheckoutItems(order.items),
                 subtotal: Number(order.grossAmountCents || 0) / 100,
+                orderId: order.id,
+                paymentIntentId: order.stripePaymentIntentId,
+                clientSecret: order.stripeClientSecret,
             },
         });
     };
