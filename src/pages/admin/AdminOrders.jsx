@@ -25,6 +25,10 @@ function formatPrice(cents) {
     return `$${(Number(cents) / 100).toFixed(2)}`;
 }
 
+function isPaidOrder(item) {
+    return Number(item?.grossAmountCents || 0) > 0;
+}
+
 export default function AdminOrders() {
     const [searchParams] = useSearchParams();
     const [orders, setOrders] = useState([]);
@@ -53,7 +57,7 @@ export default function AdminOrders() {
             setLoading(true);
             setError("");
             const data = await adminService.getAllOrders();
-            setOrders(data || []);
+            setOrders((data || []).filter(isPaidOrder));
         } catch (err) {
             setError(err.message || "Failed to load orders.");
         } finally {
