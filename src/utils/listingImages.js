@@ -1,8 +1,8 @@
 const MAX_IMAGE_EDGE = 1600;
 const JPEG_QUALITY = 0.82;
 
-export const LISTING_MAX_FILE_BYTES = 10 * 1024 * 1024;
-export const LISTING_MAX_UPLOAD_BYTES = 95 * 1024 * 1024;
+export const LISTING_MAX_FILE_BYTES = 100 * 1024 * 1024;
+export const LISTING_MAX_UPLOAD_BYTES = 100 * 1024 * 1024;
 
 export function formatBytes(bytes) {
     if (!Number.isFinite(bytes) || bytes <= 0) return "0 MB";
