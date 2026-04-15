@@ -3,6 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { ImagePlus, PencilLine, X } from 'lucide-react';
 import { listingService } from '@/services/listing.service.js';
 import { authService } from '@/services/auth.service.js';
+import { cloudinaryService } from '@/services/cloudinary.service.js';
 import { SURPLUS_FOOD_CATEGORIES } from '@/constants/listingCategories.js';
 import { prepareListingImages } from '@/utils/listingImages.js';
 import '../FarmerHub/ProductEditor.css';
@@ -126,6 +127,18 @@ const SurplusEditor = ({ mode = 'add' }) => {
                 }
             });
 
+            const uploadFiles = await prepareListingImages(newFiles);
+            const backendUploadFiles = [];
+
+            if (cloudinaryService.isConfigured()) {
+                const uploadedImageUrls = await Promise.all(
+                    uploadFiles.map((file) => cloudinaryService.uploadImage(file))
+                );
+                retainedImages.push(...uploadedImageUrls);
+            } else {
+                backendUploadFiles.push(...uploadFiles);
+            }
+
             const listingData = {
                 title,
                 price: 0.00,
@@ -144,9 +157,7 @@ const SurplusEditor = ({ mode = 'add' }) => {
                 type: "application/json"
             }));
 
-            const uploadFiles = await prepareListingImages(newFiles);
-
-            uploadFiles.forEach(file => {
+            backendUploadFiles.forEach(file => {
                 formData.append("images", file);
             });
 
