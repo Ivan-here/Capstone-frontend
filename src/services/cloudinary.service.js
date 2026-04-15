@@ -2,6 +2,10 @@ const cloudName = import.meta.env.VITE_CLOUDINARY_CLOUD_NAME;
 const uploadPreset = import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET;
 
 export const cloudinaryService = {
+  isConfigured() {
+    return Boolean(cloudName && uploadPreset);
+  },
+
   async uploadImage(file) {
     if (!file) {
       throw new Error("Please choose an image first.");
