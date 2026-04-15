@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { Search, RefreshCw, CalendarClock } from "lucide-react";
+import { useSearchParams } from "react-router-dom";
 import { adminService } from "@/services/admin.service";
 import "./AdminReservations.css";
 
@@ -15,7 +16,32 @@ function normalizeReservationStatus(status) {
     return normalized === "CANCELED" ? "CANCELLED" : normalized;
 }
 
+function isZeroPriceOrder(item) {
+    return Number(item?.grossAmountCents || 0) === 0;
+}
+
+function normalizeOrderStatusAsReservation(status) {
+    const normalized = String(status || "").trim().toUpperCase();
+    if (["COMPLETED", "PICKUP_CODE_VERIFIED"].includes(normalized)) return "PICKED_UP";
+    if (normalized === "CANCELLED") return "CANCELLED";
+    return "RESERVED";
+}
+
+function orderToReservation(order) {
+    const firstItem = order?.items?.[0] || {};
+    return {
+        ...order,
+        __source: "order",
+        ngoId: order.shopperId,
+        restaurantId: order.sellerUserId,
+        surplusItemId: firstItem.listingId,
+        status: normalizeOrderStatusAsReservation(order.status),
+        reservationTime: order.orderDate,
+    };
+}
+
 export default function AdminReservations() {
+    const [searchParams] = useSearchParams();
     const [reservations, setReservations] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState("");
@@ -33,14 +59,29 @@ export default function AdminReservations() {
         try {
             setLoading(true);
             setError("");
-            const data = await adminService.getAllReservations();
-            setReservations(data || []);
+            const [reservationData, orderData] = await Promise.all([
+                adminService.getAllReservations(),
+                adminService.getAllOrders().catch(() => []),
+            ]);
+            const zeroPriceOrders = (orderData || []).filter(isZeroPriceOrder).map(orderToReservation);
+            setReservations([...(reservationData || []), ...zeroPriceOrders]);
         } catch (err) {
             setError(err.message || "Failed to load reservations.");
         } finally {
             setLoading(false);
         }
     }
+
+    useEffect(() => {
+        const reservationId = searchParams.get("reservationId") || searchParams.get("orderId");
+        if (!reservationId || reservations.length === 0) return;
+
+        const normalizedId = reservationId.startsWith("res-") ? reservationId.slice(4) : reservationId;
+        const match = reservations.find((item) => item.id === reservationId || item.id === normalizedId);
+        if (match) {
+            setSelectedReservation(match);
+        }
+    }, [reservations, searchParams]);
 
     const filteredReservations = useMemo(() => {
         return reservations.filter((item) => {
@@ -62,6 +103,12 @@ export default function AdminReservations() {
     }, [reservations, searchTerm, statusFilter]);
 
     async function updateStatus(id, status) {
+        const target = reservations.find((item) => item.id === id);
+        if (target?.__source === "order") {
+            alert("Zero-price order reservations use the order pickup flow for status changes.");
+            return;
+        }
+
         try {
             const updated = await adminService.updateReservationStatus(id, normalizeReservationStatus(status));
             setReservations((prev) => prev.map((item) => (item.id === id ? updated : item)));
@@ -78,7 +125,12 @@ export default function AdminReservations() {
         if (!confirmed) return;
 
         try {
-            await adminService.deleteReservation(id);
+            const target = reservations.find((item) => item.id === id);
+            if (target?.__source === "order") {
+                await adminService.deleteOrder(id);
+            } else {
+                await adminService.deleteReservation(id);
+            }
             setReservations((prev) => prev.filter((item) => item.id !== id));
             if (selectedReservation?.id === id) {
                 setSelectedReservation(null);
@@ -185,17 +237,21 @@ export default function AdminReservations() {
                                             <td>{item.restaurantId || "-"}</td>
 
                                             <td>
-                                                <select
-                                                    className="admin-status-select"
-                                                    value={normalizeReservationStatus(item.status) || "RESERVED"}
-                                                    onChange={(e) => updateStatus(item.id, e.target.value)}
-                                                >
-                                                    {RESERVATION_STATUSES.map((status) => (
-                                                        <option key={status} value={status}>
-                                                            {status}
-                                                        </option>
-                                                    ))}
-                                                </select>
+                                                {item.__source === "order" ? (
+                                                    normalizeReservationStatus(item.status) || "-"
+                                                ) : (
+                                                    <select
+                                                        className="admin-status-select"
+                                                        value={normalizeReservationStatus(item.status) || "RESERVED"}
+                                                        onChange={(e) => updateStatus(item.id, e.target.value)}
+                                                    >
+                                                        {RESERVATION_STATUSES.map((status) => (
+                                                            <option key={status} value={status}>
+                                                                {status}
+                                                            </option>
+                                                        ))}
+                                                    </select>
+                                                )}
                                             </td>
 
                                             <td>{formatDate(item.reservationTime)}</td>
@@ -258,6 +314,11 @@ export default function AdminReservations() {
                                     <div className="admin-detail-group">
                                         <label>Status</label>
                                         <p>{normalizeReservationStatus(selectedReservation.status) || "-"}</p>
+                                    </div>
+
+                                    <div className="admin-detail-group">
+                                        <label>Source</label>
+                                        <p>{selectedReservation.__source === "order" ? "Zero-price order" : "Reservation"}</p>
                                     </div>
 
                                     <div className="admin-detail-group">
