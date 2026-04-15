@@ -13,18 +13,15 @@ export const listingService = {
 
         // listing.service.js
         async getAllListings(role = "SHOPPER", userId = null) { // Changed ownerId to userId
-            try {
-                let url = `/api/listings?role=${role}`;
-                if (userId) {
-                    url += `&userId=${userId}`; // Match the @RequestParam in Java
-                }
-                return await apiFetch(url);
-            } catch (error) { throw error; }
+            let url = `/api/listings?role=${role}`;
+            if (userId) {
+                url += `&userId=${userId}`; // Match the @RequestParam in Java
+            }
+            return await apiFetch(url);
         },
 
     async getListingById(id) {
-        try { return await apiFetch(`/api/listings/${id}`); }
-        catch (error) { throw error; }
+        return await apiFetch(`/api/listings/${id}`);
     },
 
     async createFarmListing(formData) {
@@ -38,7 +35,7 @@ export const listingService = {
 
             // THE FIX: Intercept the 413 Too Large error
             if (response.status === 413) {
-                throw new Error("One or more images are too large. Please keep files under 10MB.");
+                throw new Error("One or more images are too large. Please keep files under 100MB.");
             }
 
             if (!response.ok) {
@@ -60,7 +57,7 @@ export const listingService = {
 
             // THE FIX: Intercept the 413 Too Large error
             if (response.status === 413) {
-                throw new Error("One or more images are too large. Please keep files under 10MB.");
+                throw new Error("One or more images are too large. Please keep files under 100MB.");
             }
 
             if (!response.ok) {
@@ -72,13 +69,11 @@ export const listingService = {
     },
 
     async closeListing(id) {
-        try { return await apiFetch(`/api/listings/${id}/close`, { method: "PATCH" }); }
-        catch (error) { throw error; }
+        return await apiFetch(`/api/listings/${id}/close`, { method: "PATCH" });
     },
 
     async updateStock(id, dto) {
-        try { return await apiFetch(`/api/listings/${id}/quantity`, { method: "PATCH", body: JSON.stringify(dto) }); }
-        catch (error) { throw error; }
+        return await apiFetch(`/api/listings/${id}/quantity`, { method: "PATCH", body: JSON.stringify(dto) });
     },
 
     async updateListing(id, formData) {
@@ -91,7 +86,7 @@ export const listingService = {
             });
 
             if (response.status === 413) {
-                throw new Error("One or more images are too large. Please keep files under 10MB.");
+                throw new Error("One or more images are too large. Please keep files under 100MB.");
             }
 
             if (!response.ok) {
