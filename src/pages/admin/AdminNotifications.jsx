@@ -132,10 +132,22 @@ export default function AdminNotifications() {
         setSearchParams(nextParams, { replace: true });
     }
 
-    function openReference(notification) {
+    async function openReference(notification) {
         const orderId = notification?.referenceType === "ORDER" ? notification?.referenceId : "";
         if (orderId) {
-            navigate(`/admin/orders?orderId=${orderId}`);
+            const normalizedOrderId = orderId.startsWith("res-") ? orderId.slice(4) : orderId;
+            try {
+                const order = await adminService.getOrderById(normalizedOrderId);
+                if (Number(order?.grossAmountCents || 0) === 0) {
+                    navigate(`/admin/reservations?reservationId=${encodeURIComponent(normalizedOrderId)}`);
+                    return;
+                }
+            } catch {
+                navigate(`/admin/reservations?reservationId=${encodeURIComponent(normalizedOrderId)}`);
+                return;
+            }
+
+            navigate(`/admin/orders?orderId=${encodeURIComponent(normalizedOrderId)}`);
             return;
         }
 
