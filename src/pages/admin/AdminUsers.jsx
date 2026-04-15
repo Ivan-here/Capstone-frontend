@@ -20,16 +20,6 @@ export default function AdminUsers() {
     const [statusFilter, setStatusFilter] = useState("");
     const [roleFilter, setRoleFilter] = useState("");
 
-    const [editingUserId, setEditingUserId] = useState(null);
-    const [editForm, setEditForm] = useState({
-        firstName: "",
-        lastName: "",
-        displayName: "",
-        email: "",
-        username: "",
-        status: "",
-    });
-
     useEffect(() => {
         loadUsers();
     }, []);
@@ -68,40 +58,6 @@ export default function AdminUsers() {
             return matchesSearch && matchesStatus && matchesRole;
         });
     }, [users, searchTerm, statusFilter, roleFilter]);
-
-    function startEdit(user) {
-        setEditingUserId(user.id);
-        setEditForm({
-            firstName: user.firstName || "",
-            lastName: user.lastName || "",
-            displayName: user.displayName || "",
-            email: user.email || "",
-            username: user.username || "",
-            status: user.status || "ACTIVE",
-        });
-    }
-
-    function cancelEdit() {
-        setEditingUserId(null);
-        setEditForm({
-            firstName: "",
-            lastName: "",
-            displayName: "",
-            email: "",
-            username: "",
-            status: "",
-        });
-    }
-
-    async function saveEdit(userId) {
-        try {
-            const updated = await adminService.updateUserDetails(userId, editForm);
-            setUsers((prev) => prev.map((u) => (u.id === userId ? updated : u)));
-            cancelEdit();
-        } catch (err) {
-            alert(err.message || "Failed to update user.");
-        }
-    }
 
     async function changeStatus(userId, status) {
         try {
@@ -173,10 +129,10 @@ export default function AdminUsers() {
     return (
         <div className="admin-page">
             <div className="admin-shell">
-                <div className="admin-users-header">
-                    <div>
-                        <h1>User Management</h1>
-                        <p>Search, edit, suspend, delete, and manage user roles.</p>
+                    <div className="admin-users-header">
+                        <div>
+                            <h1>User Management</h1>
+                        <p>Search, suspend, delete, and manage user roles.</p>
                     </div>
 
                     <button className="admin-refresh-btn" onClick={loadUsers}>
@@ -235,96 +191,24 @@ export default function AdminUsers() {
                             </tr>
                         ) : (
                             filteredUsers.map((user) => {
-                                const isEditing = editingUserId === user.id;
-
                                 return (
                                     <tr key={user.id}>
                                         <td>
-                                            {isEditing ? (
-                                                <div className="admin-edit-grid">
-                                                    <input
-                                                        value={editForm.firstName}
-                                                        onChange={(e) =>
-                                                            setEditForm((prev) => ({
-                                                                ...prev,
-                                                                firstName: e.target.value,
-                                                            }))
-                                                        }
-                                                        placeholder="First name"
-                                                    />
-                                                    <input
-                                                        value={editForm.lastName}
-                                                        onChange={(e) =>
-                                                            setEditForm((prev) => ({
-                                                                ...prev,
-                                                                lastName: e.target.value,
-                                                            }))
-                                                        }
-                                                        placeholder="Last name"
-                                                    />
-                                                    <input
-                                                        value={editForm.displayName}
-                                                        onChange={(e) =>
-                                                            setEditForm((prev) => ({
-                                                                ...prev,
-                                                                displayName: e.target.value,
-                                                            }))
-                                                        }
-                                                        placeholder="Display name"
-                                                    />
-                                                    <input
-                                                        value={editForm.email}
-                                                        onChange={(e) =>
-                                                            setEditForm((prev) => ({
-                                                                ...prev,
-                                                                email: e.target.value,
-                                                            }))
-                                                        }
-                                                        placeholder="Email"
-                                                    />
-                                                    <input
-                                                        value={editForm.username}
-                                                        onChange={(e) =>
-                                                            setEditForm((prev) => ({
-                                                                ...prev,
-                                                                username: e.target.value,
-                                                            }))
-                                                        }
-                                                        placeholder="Username"
-                                                    />
-                                                    <select
-                                                        value={editForm.status}
-                                                        onChange={(e) =>
-                                                            setEditForm((prev) => ({
-                                                                ...prev,
-                                                                status: e.target.value,
-                                                            }))
-                                                        }
-                                                    >
-                                                        {ALL_STATUSES.map((status) => (
-                                                            <option key={status} value={status}>
-                                                                {status}
-                                                            </option>
-                                                        ))}
-                                                    </select>
+                                            <div className="admin-user-cell">
+                                                <div className="admin-user-avatar">
+                                                    <Shield size={16} />
                                                 </div>
-                                            ) : (
-                                                <div className="admin-user-cell">
-                                                    <div className="admin-user-avatar">
-                                                        <Shield size={16} />
-                                                    </div>
-                                                    <div>
-                                                        <strong>
-                                                            {user.displayName ||
-                                                                `${user.firstName || ""} ${user.lastName || ""}`.trim() ||
-                                                                user.username ||
-                                                                "Unnamed User"}
-                                                        </strong>
-                                                        <p>{user.email || "No email"}</p>
-                                                        <span>{user.id}</span>
-                                                    </div>
+                                                <div>
+                                                    <strong>
+                                                        {user.displayName ||
+                                                            `${user.firstName || ""} ${user.lastName || ""}`.trim() ||
+                                                            user.username ||
+                                                            "Unnamed User"}
+                                                    </strong>
+                                                    <p>{user.email || "No email"}</p>
+                                                    <span>{user.id}</span>
                                                 </div>
-                                            )}
+                                            </div>
                                         </td>
 
                                         <td>
@@ -379,37 +263,12 @@ export default function AdminUsers() {
 
                                         <td>
                                             <div className="admin-actions">
-                                                {isEditing ? (
-                                                    <>
-                                                        <button
-                                                            className="admin-btn admin-btn-primary"
-                                                            onClick={() => saveEdit(user.id)}
-                                                        >
-                                                            Save
-                                                        </button>
-                                                        <button
-                                                            className="admin-btn"
-                                                            onClick={cancelEdit}
-                                                        >
-                                                            Cancel
-                                                        </button>
-                                                    </>
-                                                ) : (
-                                                    <>
-                                                        <button
-                                                            className="admin-btn"
-                                                            onClick={() => startEdit(user)}
-                                                        >
-                                                            Edit
-                                                        </button>
-                                                        <button
-                                                            className="admin-btn admin-btn-danger"
-                                                            onClick={() => deleteUser(user.id)}
-                                                        >
-                                                            Delete
-                                                        </button>
-                                                    </>
-                                                )}
+                                                <button
+                                                    className="admin-btn admin-btn-danger"
+                                                    onClick={() => deleteUser(user.id)}
+                                                >
+                                                    Delete
+                                                </button>
                                             </div>
                                         </td>
                                     </tr>
