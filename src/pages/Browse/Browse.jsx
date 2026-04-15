@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { Filter, Search, X } from 'lucide-react';
+import { Filter, Search, Star, Store, X } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { listingService } from '@/services/listing.service.js';
-import { BROWSE_CATEGORY_GROUPS, BROWSE_CATEGORY_OPTIONS } from '@/constants/listingCategories.js';
+import { reviewService } from '@/services/reviewService.js';
+import { BROWSE_CATEGORY_OPTIONS } from '@/constants/listingCategories.js';
 import './Browse.css';
 
 const formatDate = (dateString) => {
@@ -17,6 +18,11 @@ const formatDate = (dateString) => {
 const truncateText = (text, maxLength = 80) => {
     if (!text) return "";
     return text.length > maxLength ? text.substring(0, maxLength).trim() + "..." : text;
+};
+
+const formatRating = (rating) => {
+    const value = Number(rating || 0);
+    return value > 0 ? value.toFixed(1) : "New";
 };
 
 const Browse = () => {
@@ -40,20 +46,28 @@ const Browse = () => {
 
                 console.log("RAW BACKEND DATA:", data);
 
-                const mappedData = data.map(item => {
+                const mappedData = await Promise.all(data.map(async (item) => {
                     const firstImage = item.imageUrls && item.imageUrls.length > 0
                         ? item.imageUrls[0]
                         : "https://images.unsplash.com/photo-1550989460-0adf9ea622e2?auto=format&fit=crop&w=400&q=80";
 
+                    const listingId = item.listingId || item.id;
+                    const ratingData = listingId
+                        ? await reviewService.getAverageRating("LISTING", listingId)
+                        : { averageRating: 0, totalReviews: 0 };
+
                     return {
                         ...item,
-                        id: item.listingId || item.id,
+                        id: listingId,
                         imageUrl: firstImage,
                         expiryDate: formatDate(item.expiryDate),
+                        sellerName: item.businessName || "Local seller",
+                        averageRating: Number(ratingData?.averageRating || 0),
+                        totalReviews: Number(ratingData?.totalReviews || 0),
                         // If it's on this page and price is 0, it's a donation that crossed the half-life
                         tag: item.price === 0 ? "Donation !" : ""
                     };
-                });
+                }));
 
                 setListings(mappedData);
                 setLoading(false);
@@ -158,7 +172,19 @@ const Browse = () => {
                                     </div>
                                     <div className="tile-info">
                                         <h3>{item.title || "Unnamed Product"}</h3>
-                                        {item.category ? <div className="tile-category">{item.category}</div> : null}
+                                        <div className="tile-meta-row">
+                                            {item.category ? <div className="tile-category">{item.category}</div> : null}
+                                            <div className="tile-rating" aria-label={`${formatRating(item.averageRating)} star rating`}>
+                                                <Star size={13} fill="currentColor" />
+                                                <span>{formatRating(item.averageRating)}</span>
+                                                {item.totalReviews > 0 ? <span className="tile-review-count">({item.totalReviews})</span> : null}
+                                            </div>
+                                        </div>
+
+                                        <div className="tile-seller">
+                                            <Store size={13} />
+                                            <span>{item.sellerName}</span>
+                                        </div>
 
                                         {/* APPLIED TRUNCATION HERE */}
                                         <p className="tile-desc">
