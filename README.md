@@ -1,67 +1,104 @@
-# Frontend Project Structure (Vite + React JSX)
+# Capstone Frontend
 
-Overview of the folder and file structure, with explanations of what goes where and why:
+React/Vite frontend for the Locally capstone platform. The app supports browsing food listings, role-based hubs for farmers, restaurants, and NGOs, checkout and order tracking, community posts, profiles, notifications, settings, and admin moderation screens.
 
-# Root files
-package.json – dependencies and scripts.
-vite.config.js – Vite configuration.
-index.html – single HTML entry point.
-.env – environment variables.
-.gitignore – excludes node_modules, dist, .env, etc.
+## Tech Stack
 
-# public/
-Static files copied directly to the build output.
-Favicons,
-Static images,
-Raw files, copied 1:1, no processing, accessed by URL.
-downloadable files (.pdf, .zip, .mp3),
-WHATEVER IS USED BY A COMPONENT - ADD TO ASSETS,
-Files here are not processed by Vite.
+- React 19
+- Vite 7
+- React Router 7
+- Stripe React SDK
+- Axios/fetch service layer
+- ESLint
 
-# src/app/ — Application Wiring
+## Prerequisites
 
-This folder connects the entire app together.
-main.jsx – Application entry point (ReactDOM render, providers)
-App.jsx – Root component (usually renders the router)
-layouts/
-AppLayout.jsx – Shared layout (navbar, sidebar, footer)
-router/
-index.jsx – All route definitions
-ProtectedRoute.jsx – Route guard for authenticated pages
+- Node.js 20 or newer is recommended
+- npm
+- Backend API gateway running locally on `http://localhost:9000`, or a deployed API gateway URL
 
-# src/pages/ — Pages (Routes)
-Each folder represents a full page / route.
-profile.constants.js – Labels, field names, enums.
-profile.validation.js – Validation logic for profile forms.
+## Getting Started
 
-# src/components/ — Reusable Components
-Shared UI components used across multiple pages.
-ui/ – Pure UI elements (Button, Input).
-layout/ – Structural components (Navbar, Sidebar).
-common/ – Generic helpers (Loader, ErrorState, EmptyState).
+Install dependencies:
 
-# src/services/ — API Layer
-All communication with the backend lives here.
-api/client.js – Axios/fetch wrapper (base URL, headers, auth).
-api/endpoints.js – Centralized API paths.
-profile.service.js – Profile-related API calls.
+```bash
+npm install
+```
 
-# src/hooks/ — Custom React Hooks
-Reusable logic extracted into hooks.
-useAuth.js – Authentication state and helpers
+Run the development server:
 
-# src/context/ — React Context
-Global app state using React Context.
-AuthContext.jsx – User, roles, authentication state
+```bash
+npm run dev
+```
 
-# src/utils/ — Utility Functions
-Pure helper functions (no React).
-validators.js – Reusable validation helpers.
-formatters.js – Date, currency, string formatting.
+Build for production:
 
-# src/styles/ — Global Styles
-Global CSS
-Resets, variables, fonts
+```bash
+npm run build
+```
 
-# src/assets/ — Static Assets
-Images and SVGs imported into components
+Preview the production build:
+
+```bash
+npm run preview
+```
+
+Run linting:
+
+```bash
+npm run lint
+```
+
+## Main Routes
+
+- `/browse` - public marketplace browsing
+- `/product/:id` - listing details
+- `/cart` and `/checkout` - cart and payment flow
+- `/login`, `/register`, `/register/verify/:role` - authentication and role verification
+- `/profile`, `/profile/:userId`, `/profile/edit`, `/profile/business/edit` - profile views and editors
+- `/settings` - account, profile, and verification settings
+- `/farmer-hub`, `/add-product`, `/edit-product/:id` - farmer listing management
+- `/restaurant-hub`, `/add-surplus`, `/edit-surplus/:id` - restaurant surplus management
+- `/ngo-hub` - NGO reservations and donations
+- `/my-orders`, `/orders/:orderId`, `/orders/:orderId/pickup-plan` - order history and pickup planning
+- `/community`, `/community/create`, `/community/posts/:postId` - community feed and posts
+- `/connections` - followers/following connections
+- `/admin/*` - protected admin dashboard, users, listings, orders, reservations, profiles, verifications, community posts, and notifications
+
+## Project Structure
+
+```text
+src/
+  app/          App entry, layout, router, and route guards
+  components/   Shared UI, common states, and role-based navigation
+  context/      React context providers, including auth state
+  hooks/        Reusable React hooks
+  lib/          Third-party integration helpers, including Stripe
+  pages/        Route-level screens and page-specific components/styles
+  services/     Backend API wrappers
+  styles/       Global CSS
+  utils/        Formatting, validation, schedules, images, and notifications
+```
+
+## API Integration
+
+The shared API helper is `src/services/http.js`. It builds requests against `VITE_API_BASE_URL`, attaches `Authorization: Bearer <token>` for authenticated requests, parses JSON/text responses, and normalizes API errors.
+
+The frontend talks to the backend through the API gateway routes:
+
+- `/auth/**`
+- `/profiles/**`
+- `/internal/profiles/**`
+- `/api/listings/**`
+- `/api/orders/**`
+- `/api/reservations/**`
+- `/api/verification/**`
+- `/notifications/**`
+- `/admin/**`
+- `/support/**`
+- `/api/community/**`
+- `/api/reviews/**`
+- `/api/payments/**`
+- `/api/sellers/**`
+- `/api/stripe/**`
+- `/api/follows/**`
