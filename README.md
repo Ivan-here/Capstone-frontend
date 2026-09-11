@@ -49,6 +49,29 @@ Run linting:
 npm run lint
 ```
 
+## Deployment
+
+GitHub Actions builds and deploys to the Cloudflare Worker `locallyl` on pushes to
+`main`. You can also run **Frontend Deploy** manually from the Actions tab.
+`wrangler.jsonc` configures the `dist` assets and single-page application fallback.
+
+In GitHub **Settings > Environments > Frontend-env**, configure these secrets:
+
+- `CLOUDFLARE_API_TOKEN`: a Cloudflare API token with the **Edit Cloudflare Workers**
+  template permissions, scoped to the target account.
+- `CLOUDFLARE_ACCOUNT_ID`: the account containing the `locallyl` Worker.
+- `VITE_API_BASE_URL`: the production backend API URL.
+- `VITE_CLOUDINARY_CLOUD_NAME` and `VITE_CLOUDINARY_UPLOAD_PRESET`: the upload
+  configuration used by the frontend.
+
+The `VITE_*` values are included in the public frontend bundle at build time;
+they must not contain private credentials. AWS secrets are no longer used.
+If Cloudflare Workers Builds is also connected to this repository, disable its
+automatic deployments when using GitHub Actions to avoid duplicate deployments.
+
+See the [Cloudflare GitHub Actions documentation](https://developers.cloudflare.com/workers/ci-cd/external-cicd/github-actions/)
+for token setup.
+
 ## Main Routes
 
 - `/browse` - public marketplace browsing
