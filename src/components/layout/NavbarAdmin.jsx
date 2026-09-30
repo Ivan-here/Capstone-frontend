@@ -9,7 +9,7 @@ const NavbarAdmin = () => {
     const location = useLocation();
     const [showNotifications, setShowNotifications] = useState(false);
 
-    const token = localStorage.getItem("accessToken");
+    const token = sessionStorage.getItem("accessToken");
     const userLink = token ? "/profile" : "/login";
     const settingsLink = token ? "/settings" : "/login";
 

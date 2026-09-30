@@ -1,34 +1,13 @@
-const cloudName = import.meta.env.VITE_CLOUDINARY_CLOUD_NAME;
-const uploadPreset = import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET;
-
+import { apiFetch } from "./http";
 export const cloudinaryService = {
-  isConfigured() {
-    return Boolean(cloudName && uploadPreset);
-  },
-
+  isConfigured() { return true; },
   async uploadImage(file) {
-    if (!file) {
-      throw new Error("Please choose an image first.");
+    if (!file || !["image/jpeg", "image/png", "image/gif"].includes(file.type) || file.size > 10 * 1024 * 1024) {
+      throw new Error("Choose a PNG, JPEG, or GIF image under 10 MB.");
     }
-
-    if (!cloudName || !uploadPreset) {
-      throw new Error("Cloudinary is not configured. Add VITE_CLOUDINARY_CLOUD_NAME and VITE_CLOUDINARY_UPLOAD_PRESET to .env.");
-    }
-
-    const formData = new FormData();
-    formData.append("file", file);
-    formData.append("upload_preset", uploadPreset);
-
-    const res = await fetch(`https://api.cloudinary.com/v1_1/${cloudName}/image/upload`, {
-      method: "POST",
-      body: formData,
-    });
-
-    const data = await res.json().catch(() => null);
-    if (!res.ok || !data?.secure_url) {
-      throw new Error(data?.error?.message || "Image upload failed.");
-    }
-
-    return data.secure_url;
+    const form = new FormData();
+    form.append("image", file);
+    const result = await apiFetch("/profiles/me/images", { method: "POST", body: form });
+    return result.url;
   },
 };

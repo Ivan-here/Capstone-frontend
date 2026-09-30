@@ -35,7 +35,7 @@ export const listingService = {
 
             // THE FIX: Intercept the 413 Too Large error
             if (response.status === 413) {
-                throw new Error("One or more images are too large. Please keep files under 100MB.");
+                throw new Error("One or more images are too large. Please keep files under 10 MB, with a total upload under 25 MB.");
             }
 
             if (!response.ok) {
@@ -57,7 +57,7 @@ export const listingService = {
 
             // THE FIX: Intercept the 413 Too Large error
             if (response.status === 413) {
-                throw new Error("One or more images are too large. Please keep files under 100MB.");
+                throw new Error("One or more images are too large. Please keep files under 10 MB, with a total upload under 25 MB.");
             }
 
             if (!response.ok) {
@@ -86,7 +86,7 @@ export const listingService = {
             });
 
             if (response.status === 413) {
-                throw new Error("One or more images are too large. Please keep files under 100MB.");
+                throw new Error("One or more images are too large. Please keep files under 10 MB, with a total upload under 25 MB.");
             }
 
             if (!response.ok) {

@@ -1,6 +1,12 @@
+[Visit Locally](https://www.locallyl.com/)
+
 # Capstone Frontend
 
 React/Vite frontend for the Locally capstone platform. The app supports browsing food listings, role-based hubs for farmers, restaurants, and NGOs, checkout and order tracking, community posts, profiles, notifications, settings, and admin moderation screens.
+
+## Security
+
+See [SECURITY.md](SECURITY.md) for browser protections and rollout requirements. Set the actual HTTPS `VITE_API_BASE_URL` before production builds; the build generates Cloudflare security headers for that origin. Images are uploaded through the authenticated backend. Run `npm test` and `npm audit` before deployment.
 
 ## Tech Stack
 
@@ -13,7 +19,7 @@ React/Vite frontend for the Locally capstone platform. The app supports browsing
 
 ## Prerequisites
 
-- Node.js 20 or newer is recommended
+- Node.js 22.12 or newer is recommended
 - npm
 - Backend API gateway running locally on `http://localhost:9000`, or a deployed API gateway URL
 
@@ -61,8 +67,6 @@ In GitHub **Settings > Environments > Frontend-env**, configure these secrets:
   template permissions, scoped to the target account.
 - `CLOUDFLARE_ACCOUNT_ID`: the account containing the `locallyl` Worker.
 - `VITE_API_BASE_URL`: the production backend API URL.
-- `VITE_CLOUDINARY_CLOUD_NAME` and `VITE_CLOUDINARY_UPLOAD_PRESET`: the upload
-  configuration used by the frontend.
 
 The `VITE_*` values are included in the public frontend bundle at build time;
 they must not contain private credentials. AWS secrets are no longer used.
@@ -111,7 +115,6 @@ The frontend talks to the backend through the API gateway routes:
 
 - `/auth/**`
 - `/profiles/**`
-- `/internal/profiles/**`
 - `/api/listings/**`
 - `/api/orders/**`
 - `/api/reservations/**`
