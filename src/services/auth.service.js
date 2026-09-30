@@ -1,14 +1,17 @@
+import { validToken } from "./security";
 import { apiFetch } from "./http";
 import { getRolesFromToken } from "@/services/jwt.js";
 
 const TOKEN_KEY = "accessToken";
 
 function saveToken(token) {
-    if (token) localStorage.setItem(TOKEN_KEY, token);
+    if (token) sessionStorage.setItem(TOKEN_KEY, token);
 }
 
 function clearToken() {
     localStorage.removeItem(TOKEN_KEY);
+    localStorage.removeItem("token");
+    sessionStorage.removeItem(TOKEN_KEY);
     localStorage.removeItem("userRole");
     localStorage.removeItem("isVerified");
     localStorage.removeItem("userId");
@@ -97,7 +100,7 @@ export const authService = {
     },
 
     getToken() {
-        return localStorage.getItem(TOKEN_KEY);
+        return sessionStorage.getItem(TOKEN_KEY);
     },
 
     getUserPayload() {
@@ -118,7 +121,7 @@ export const authService = {
     },
 
     isLoggedIn() {
-        return !!localStorage.getItem(TOKEN_KEY);
+        return validToken(sessionStorage.getItem(TOKEN_KEY));
     },
 
     getRoles() {

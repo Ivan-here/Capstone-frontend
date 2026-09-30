@@ -59,7 +59,7 @@ export default function RegistrationPage() {
         else if (form.username.trim().length < 3) e.username = "Min 3 characters.";
 
         if (!form.password) e.password = "Password is required.";
-        else if (form.password.length < 6) e.password = "Min 6 characters.";
+        else if (form.password.length < 12 || new TextEncoder().encode(form.password).length > 72) e.password = "Use at least 12 characters and at most 72 bytes.";
 
         return e;
     }
@@ -72,9 +72,10 @@ export default function RegistrationPage() {
 
         try {
             setLoading(true);
-            const avatarUrl = avatarFile ? await cloudinaryService.uploadImage(avatarFile) : null;
+
 
             const auth = await authService.register(form);
+            const avatarUrl = avatarFile ? await cloudinaryService.uploadImage(avatarFile) : null;
 
             await profileService.upsertPersonal({
                 username: form.username,

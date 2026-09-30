@@ -10,7 +10,7 @@ const Cart = () => {
 
     const handleSellerCheckout = (sellerGroup) => {
         const shopperId = localStorage.getItem("userId");
-        const token = localStorage.getItem("accessToken");
+        const token = sessionStorage.getItem("accessToken");
 
         if (!shopperId || !token) {
             navigate("/login", {

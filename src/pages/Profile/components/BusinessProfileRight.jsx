@@ -1,3 +1,4 @@
+import { stripeOnboardingUrl } from "@/services/security";
 import React, { useState, useEffect, useCallback } from 'react';
 import { Star } from 'lucide-react';
 import { useLocation, useNavigate } from "react-router-dom";
@@ -142,7 +143,7 @@ export default function BusinessProfileRight({ businessProfile, userId, isOwnPro
             await paymentService.createConnectedAccount(effectiveUserId);
             const res = await paymentService.createOnboardingLink(effectiveUserId);
             if (res?.url) {
-                window.location.href = res.url;
+                window.location.href = stripeOnboardingUrl(res.url);
                 return;
             }
             alert("Could not create Stripe onboarding link.");

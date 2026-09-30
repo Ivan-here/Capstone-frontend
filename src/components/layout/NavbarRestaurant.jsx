@@ -10,7 +10,7 @@ const NavbarRestaurant = () => {
     const [showNotifications, setShowNotifications] = useState(false);
     const isCartActive = location.pathname.startsWith('/cart');
     const isProfileActive = location.pathname.indexOf("/profile") === 0;
-    const token = localStorage.getItem("accessToken");
+    const token = sessionStorage.getItem("accessToken");
     const userLink = token ? "/profile" : "/login";
     const settingsLink = token ? "/settings" : "/login";
     const isSettingsActive = location.pathname.indexOf("/settings") === 0;

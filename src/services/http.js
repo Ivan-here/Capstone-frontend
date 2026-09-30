@@ -1,12 +1,23 @@
-export const BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:9000";
+import { validToken } from "./security";
+const configuredUrl = import.meta.env.VITE_API_BASE_URL || (import.meta.env.DEV ? "http://localhost:9000" : "");
+if (!configuredUrl || (import.meta.env.PROD && new URL(configuredUrl).protocol !== "https:")) {
+    throw new Error("Configure an HTTPS API URL for production.");
+}
+export const BASE_URL = configuredUrl.replace(/\/+$/, "");
+// Discard tokens persisted by older builds; require a fresh login after this upgrade.
+localStorage.removeItem("accessToken");
+localStorage.removeItem("token");
 
 export function getToken() {
-    return localStorage.getItem("accessToken");
+    const token = sessionStorage.getItem("accessToken");
+    if (!validToken(token)) { sessionStorage.removeItem("accessToken"); return null; }
+    return token;
 }
 
 export async function apiFetch(path, options = {}) {
+    if (typeof path !== "string" || !path.startsWith("/") || path.startsWith("//") || path.includes("\\")) throw new Error("Invalid API path");
     const headers = {
-        "Content-Type": "application/json",
+        ...(options.body instanceof FormData ? {} : { "Content-Type": "application/json" }),
         ...(options.headers || {}),
     };
 
@@ -18,12 +29,15 @@ export async function apiFetch(path, options = {}) {
     const res = await fetch(`${BASE_URL}${path}`, {
         ...options,
         headers,
+        credentials: "omit",
+        redirect: "error",
     });
 
     const contentType = res.headers.get("content-type") || "";
     const isJson = contentType.includes("application/json");
     const data = isJson ? await res.json().catch(() => null) : await res.text().catch(() => null);
 
+    if (res.status === 401) sessionStorage.removeItem("accessToken");
     if (!res.ok) {
         let message = "Something went wrong.";
 

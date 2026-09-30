@@ -1,3 +1,4 @@
+import { safeInternalPath } from "@/services/security";
 import React, { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import './Notifications.css';
@@ -75,7 +76,7 @@ const Notifications = ({ isOpen, onClose }) => {
     }
 
     if (note.targetUrl) {
-      navigate(note.targetUrl);
+      navigate(safeInternalPath(note.targetUrl));
       onClose?.();
     }
   };

@@ -7,26 +7,26 @@ export const AuthProvider = ({ children }) => {
     const [user, setUser] = useState(null);
 
     useEffect(() => {
-        const token = localStorage.getItem('token');
+        const token = sessionStorage.getItem('token');
         if (token) {
             try {
                 const decoded = jwtDecode(token);
                 // decoded should contain role: 'NGO', 'CITIZEN', or 'RESTAURANT'
                 setUser(decoded);
             } catch (err) {
-                localStorage.removeItem('token');
+                sessionStorage.removeItem('token');
             }
         }
     }, []);
 
     const login = (token) => {
-        localStorage.setItem('token', token);
+        sessionStorage.setItem('token', token);
         const decoded = jwtDecode(token);
         setUser(decoded);
     };
 
     const logout = () => {
-        localStorage.removeItem('token');
+        sessionStorage.removeItem('token');
         setUser(null);
     };
 
